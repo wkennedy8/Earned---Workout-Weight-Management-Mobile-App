@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useAuth } from '@/context/AuthContext';
 import {
 	computeSessionStats,
 	shareCompletedSession
@@ -81,21 +80,6 @@ export default function WorkoutTab() {
 			templateId: workout.id,
 			dateKey: todayKey
 		});
-
-	const { user } = useAuth();
-
-	console.log('Auth Debug:', {
-		hasUser: !!user,
-		userId: user?.uid,
-		isAnonymous: user?.isAnonymous
-	});
-
-	console.log('Workout Tab Debug:', {
-		completedSession: !!completedSession,
-		inProgressSession: !!inProgressSession,
-		completedSessionId: completedSession?.id,
-		stats: !!stats
-	});
 
 	useFocusEffect(
 		useCallback(() => {
@@ -173,8 +157,6 @@ export default function WorkoutTab() {
 		),
 		[onPressExercise]
 	);
-
-	// TODO: Add component logic here
 
 	return (
 		<SafeAreaView style={styles.safe}>
@@ -264,7 +246,10 @@ export default function WorkoutTab() {
 							<TouchableOpacity
 								style={styles.secondaryButton}
 								onPress={() =>
-									Alert.alert('Details', 'View details coming soon')
+									router.push({
+										pathname: '/workout/details',
+										params: { sessionId: completedSession.id }
+									})
 								}
 								activeOpacity={0.9}
 							>

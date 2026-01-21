@@ -1,9 +1,6 @@
 // app/workout/details.jsx
 // Workout Details Screen (read-only)
 // Expects params: sessionId
-//
-// Navigates to edit:
-//   /workout/session?mode=edit&sessionId=...
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
@@ -17,25 +14,43 @@ import {
 	View
 } from 'react-native';
 
+import { useAuth } from '@/context/AuthContext';
+import {
+	computeSessionStats,
+	getSessionById
+} from '@/controllers/sessionController';
 import { formatDisplayDate, formatTime } from '@/utils/dateUtils';
-import { getSessionById } from '@/utils/sessionStorage';
+import { formatDuration } from '@/utils/numberUtils';
 import { tagColor } from '@/utils/workoutPlan';
-import { computeSessionStats, formatDuration } from '@/utils/workoutStats';
 
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Function #1: Build initial expanded state (auto-expand first exercise)
+ */
 function buildInitialExpanded(session) {
 	const exs = Array.isArray(session?.exercises) ? session.exercises : [];
 	const firstName = exs[0]?.name;
 	return firstName ? { [firstName]: true } : {};
 }
 
+// ============================================================================
+// COMPONENT
+// ============================================================================
+
 export default function WorkoutDetailsScreen() {
 	const router = useRouter();
+	const { user } = useAuth();
 	const params = useLocalSearchParams();
 	const sessionId = params.sessionId ? String(params.sessionId) : null;
 
 	const [session, setSession] = useState(null);
+	const [loading, setLoading] = useState(true);
 	const [expanded, setExpanded] = useState({}); // { [exerciseName]: bool }
 
+	// Load session from Firebase
 	useEffect(() => {
 		let isMounted = true;
 
@@ -47,7 +62,12 @@ export default function WorkoutDetailsScreen() {
 					return;
 				}
 
-				const found = await getSessionById(sessionId);
+				if (!user?.uid) {
+					setLoading(false);
+					return;
+				}
+
+				const found = await getSessionById(user.uid, sessionId);
 
 				if (!found) {
 					Alert.alert('Not found', 'Could not find that workout session.');
@@ -60,26 +80,31 @@ export default function WorkoutDetailsScreen() {
 				setSession(found);
 				setExpanded(buildInitialExpanded(found));
 			} catch (e) {
-				console.warn(e);
+				console.warn('Failed to load session:', e);
 				Alert.alert('Error', 'Could not load workout details.');
 				router.back();
+			} finally {
+				if (isMounted) setLoading(false);
 			}
 		})();
 
 		return () => {
 			isMounted = false;
 		};
-	}, [router, sessionId]);
+	}, [user?.uid, sessionId, router]);
 
+	// Compute stats from session
 	const stats = useMemo(
 		() => (session ? computeSessionStats(session) : null),
 		[session]
 	);
 
+	// Toggle exercise accordion
 	function toggleExercise(name) {
 		setExpanded((prev) => ({ ...prev, [name]: !prev[name] }));
 	}
 
+	// Navigate to edit screen
 	function onEdit() {
 		if (!session) return;
 		router.push({
@@ -92,7 +117,7 @@ export default function WorkoutDetailsScreen() {
 		});
 	}
 
-	if (!session) {
+	if (loading || !session) {
 		return (
 			<SafeAreaView style={styles.safe}>
 				<View style={styles.loadingWrap}>
