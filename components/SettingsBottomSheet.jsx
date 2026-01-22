@@ -45,7 +45,7 @@ export default function SettingsBottomSheet({ visible, onClose }) {
 	const [showTimePicker, setShowTimePicker] = useState(false);
 
 	// Snap points for bottom sheet
-	const snapPoints = ['95%'];
+	const snapPoints = ['98%'];
 
 	// Load settings when modal becomes visible
 	useEffect(() => {
@@ -156,8 +156,10 @@ export default function SettingsBottomSheet({ visible, onClose }) {
 					enablePanDownToClose={true}
 					enableOverDrag={false}
 					overDragResistanceFactor={0}
+					enableContentPanningGesture={false}
 					backgroundStyle={styles.bottomSheetBackground}
 					handleIndicatorStyle={styles.handleIndicator}
+					handleComponent={null}
 				>
 					<BottomSheetScrollView
 						contentContainerStyle={styles.contentContainer}
@@ -172,6 +174,13 @@ export default function SettingsBottomSheet({ visible, onClose }) {
 								{/* Header */}
 								<View style={styles.header}>
 									<Text style={styles.title}>Settings</Text>
+									<TouchableOpacity
+										onPress={onClose}
+										style={styles.closeButton}
+										hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+									>
+										<Text style={styles.closeButtonText}>✕</Text>
+									</TouchableOpacity>
 								</View>
 
 								{/* Profile Information */}
@@ -331,9 +340,9 @@ const styles = StyleSheet.create({
 		flex: 1
 	},
 	bottomSheetBackground: {
-		backgroundColor: '#000000',
-		borderTopLeftRadius: 20,
-		borderTopRightRadius: 20
+		backgroundColor: '#1A1A1A', // Lighter black (matches cards)
+		borderTopLeftRadius: 24, // More rounded
+		borderTopRightRadius: 24
 	},
 	handleIndicator: {
 		backgroundColor: '#666666',
@@ -355,7 +364,24 @@ const styles = StyleSheet.create({
 
 	header: {
 		paddingVertical: 16,
-		alignItems: 'center'
+		alignItems: 'center',
+		position: 'relative' // Add this
+	},
+	closeButton: {
+		position: 'absolute',
+		right: 0,
+		top: 16,
+		width: 32,
+		height: 32,
+		borderRadius: 16,
+		backgroundColor: '#2A2A2A',
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+	closeButtonText: {
+		fontSize: 18,
+		fontWeight: '700',
+		color: '#999999'
 	},
 	title: {
 		fontSize: 20,
