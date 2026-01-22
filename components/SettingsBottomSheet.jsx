@@ -1,9 +1,9 @@
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
 	Alert,
 	Keyboard,
+	Modal,
 	StyleSheet,
 	Text,
 	TextInput,
@@ -31,8 +31,7 @@ function isValidEmail(email) {
 	return emailRegex.test(email.trim());
 }
 
-export default function SettingsScreen() {
-	const router = useRouter();
+export default function SettingsBottomSheet({ visible, onClose }) {
 	const { user } = useAuth();
 	const bottomSheetRef = useRef(null);
 
@@ -45,11 +44,13 @@ export default function SettingsScreen() {
 	const [reminderTime, setReminderTime] = useState('20:00');
 	const [showTimePicker, setShowTimePicker] = useState(false);
 
-	// Snap points for bottom sheet (70% and 90% of screen)
-	const snapPoints = ['70%', '90%'];
+	// Snap points for bottom sheet
+	const snapPoints = ['95%'];
 
-	// Load settings from Firebase
+	// Load settings when modal becomes visible
 	useEffect(() => {
+		if (!visible) return;
+
 		let isMounted = true;
 
 		(async () => {
@@ -79,17 +80,16 @@ export default function SettingsScreen() {
 		return () => {
 			isMounted = false;
 		};
-	}, [user?.uid]);
+	}, [visible, user?.uid]);
 
 	// Handle bottom sheet close
 	const handleSheetChanges = useCallback(
 		(index) => {
 			if (index === -1) {
-				// Sheet is closed
-				router.back();
+				onClose();
 			}
 		},
-		[router]
+		[onClose]
 	);
 
 	// Save settings to Firebase
@@ -129,176 +129,193 @@ export default function SettingsScreen() {
 
 	const timeOptions = getTimePickerOptions();
 
-	if (loading) {
-		return (
-			<View style={styles.loadingContainer}>
-				<Text style={styles.loadingText}>Loading settings…</Text>
-			</View>
-		);
-	}
+	if (!visible) return null;
 
 	return (
-		<GestureHandlerRootView style={styles.container}>
-			<View style={styles.backdrop}>
-				<TouchableOpacity
-					style={styles.backdropTouchable}
-					activeOpacity={1}
-					onPress={() => router.back()}
-				/>
-			</View>
+		<Modal
+			visible={visible}
+			transparent
+			animationType='fade'
+			onRequestClose={onClose}
+			statusBarTranslucent
+		>
+			<GestureHandlerRootView style={styles.container}>
+				<View style={styles.backdrop}>
+					<TouchableOpacity
+						style={styles.backdropTouchable}
+						activeOpacity={1}
+						onPress={onClose}
+					/>
+				</View>
 
-			<BottomSheet
-				ref={bottomSheetRef}
-				index={0}
-				snapPoints={snapPoints}
-				onChange={handleSheetChanges}
-				enablePanDownToClose={true}
-				backgroundStyle={styles.bottomSheetBackground}
-				handleIndicatorStyle={styles.handleIndicator}
-			>
-				<BottomSheetScrollView
-					contentContainerStyle={styles.contentContainer}
-					showsVerticalScrollIndicator={false}
+				<BottomSheet
+					ref={bottomSheetRef}
+					index={0}
+					snapPoints={snapPoints}
+					onChange={handleSheetChanges}
+					enablePanDownToClose={true}
+					enableOverDrag={false}
+					overDragResistanceFactor={0}
+					backgroundStyle={styles.bottomSheetBackground}
+					handleIndicatorStyle={styles.handleIndicator}
 				>
-					{/* Header */}
-					<View style={styles.header}>
-						<Text style={styles.title}>Settings</Text>
-					</View>
-
-					{/* Profile Information */}
-					<View style={styles.card}>
-						<Text style={styles.sectionTitle}>Profile Information</Text>
-
-						<View style={styles.fieldGroup}>
-							<Text style={styles.fieldLabel}>Name</Text>
-							<TextInput
-								value={name}
-								onChangeText={setName}
-								placeholder='Enter your name'
-								placeholderTextColor='#666666'
-								style={styles.textInput}
-								autoCapitalize='words'
-							/>
-						</View>
-
-						<View style={styles.fieldGroup}>
-							<Text style={styles.fieldLabel}>Email</Text>
-							<TextInput
-								value={email}
-								onChangeText={setEmail}
-								placeholder='Enter your email'
-								placeholderTextColor='#666666'
-								style={styles.textInput}
-								keyboardType='email-address'
-								autoCapitalize='none'
-								autoCorrect={false}
-							/>
-						</View>
-
-						<View style={styles.fieldGroup}>
-							<Text style={styles.fieldLabel}>Phone Number</Text>
-							<TextInput
-								value={phone}
-								onChangeText={(text) => setPhone(formatPhoneNumber(text))}
-								placeholder='(555) 123-4567'
-								placeholderTextColor='#666666'
-								style={styles.textInput}
-								keyboardType='phone-pad'
-								maxLength={14}
-							/>
-						</View>
-
-						<TouchableOpacity
-							style={styles.saveButton}
-							onPress={onSaveSettings}
-							activeOpacity={0.9}
-						>
-							<Text style={styles.saveButtonText}>Save Changes</Text>
-						</TouchableOpacity>
-					</View>
-
-					{/* Notification Settings */}
-					<View style={styles.card}>
-						<Text style={styles.sectionTitle}>Notifications</Text>
-						<Text style={styles.sectionSubtitle}>
-							Get reminded to track your progress
-						</Text>
-
-						<View style={styles.toggleRow}>
-							<View style={{ flex: 1 }}>
-								<Text style={styles.toggleLabel}>Daily Photo Reminder</Text>
-								<Text style={styles.toggleSubtext}>
-									Receive a daily reminder to upload a progress photo
-								</Text>
+					<BottomSheetScrollView
+						contentContainerStyle={styles.contentContainer}
+						showsVerticalScrollIndicator={false}
+					>
+						{loading ? (
+							<View style={styles.loadingWrap}>
+								<Text style={styles.loadingText}>Loading settings…</Text>
 							</View>
-							<TouchableOpacity
-								style={[styles.toggle, reminderEnabled && styles.toggleActive]}
-								onPress={() => setReminderEnabled(!reminderEnabled)}
-								activeOpacity={0.8}
-							>
-								<View
-									style={[
-										styles.toggleThumb,
-										reminderEnabled && styles.toggleThumbActive
-									]}
-								/>
-							</TouchableOpacity>
-						</View>
+						) : (
+							<>
+								{/* Header */}
+								<View style={styles.header}>
+									<Text style={styles.title}>Settings</Text>
+								</View>
 
-						{reminderEnabled && (
-							<View style={styles.fieldGroup}>
-								<Text style={styles.fieldLabel}>Reminder Time</Text>
-								<TouchableOpacity
-									style={styles.pickerButton}
-									onPress={() => setShowTimePicker(!showTimePicker)}
-									activeOpacity={0.8}
-								>
-									<Text style={styles.pickerButtonText}>
-										{format12Hour(reminderTime)}
-									</Text>
-									<Text style={styles.pickerChevron}>
-										{showTimePicker ? '˄' : '˅'}
-									</Text>
-								</TouchableOpacity>
+								{/* Profile Information */}
+								<View style={styles.card}>
+									<Text style={styles.sectionTitle}>Profile Information</Text>
 
-								{showTimePicker && (
-									<View style={styles.pickerDropdown}>
-										<BottomSheetScrollView style={styles.pickerScroll}>
-											{timeOptions.map((option) => (
-												<TouchableOpacity
-													key={option.value}
-													style={[
-														styles.pickerOption,
-														reminderTime === option.value &&
-															styles.pickerOptionActive
-													]}
-													onPress={() => {
-														setReminderTime(option.value);
-														setShowTimePicker(false);
-														onSaveSettings();
-													}}
-													activeOpacity={0.7}
-												>
-													<Text
-														style={[
-															styles.pickerOptionText,
-															reminderTime === option.value &&
-																styles.pickerOptionTextActive
-														]}
-													>
-														{option.label}
-													</Text>
-												</TouchableOpacity>
-											))}
-										</BottomSheetScrollView>
+									<View style={styles.fieldGroup}>
+										<Text style={styles.fieldLabel}>Name</Text>
+										<TextInput
+											value={name}
+											onChangeText={setName}
+											placeholder='Enter your name'
+											placeholderTextColor='#666666'
+											style={styles.textInput}
+											autoCapitalize='words'
+										/>
 									</View>
-								)}
-							</View>
+
+									<View style={styles.fieldGroup}>
+										<Text style={styles.fieldLabel}>Email</Text>
+										<TextInput
+											value={email}
+											onChangeText={setEmail}
+											placeholder='Enter your email'
+											placeholderTextColor='#666666'
+											style={styles.textInput}
+											keyboardType='email-address'
+											autoCapitalize='none'
+											autoCorrect={false}
+										/>
+									</View>
+
+									<View style={styles.fieldGroup}>
+										<Text style={styles.fieldLabel}>Phone Number</Text>
+										<TextInput
+											value={phone}
+											onChangeText={(text) => setPhone(formatPhoneNumber(text))}
+											placeholder='(555) 123-4567'
+											placeholderTextColor='#666666'
+											style={styles.textInput}
+											keyboardType='phone-pad'
+											maxLength={14}
+										/>
+									</View>
+
+									<TouchableOpacity
+										style={styles.saveButton}
+										onPress={onSaveSettings}
+										activeOpacity={0.9}
+									>
+										<Text style={styles.saveButtonText}>Save Changes</Text>
+									</TouchableOpacity>
+								</View>
+
+								{/* Notification Settings */}
+								<View style={styles.card}>
+									<Text style={styles.sectionTitle}>Notifications</Text>
+									<Text style={styles.sectionSubtitle}>
+										Get reminded to track your progress
+									</Text>
+
+									<View style={styles.toggleRow}>
+										<View style={{ flex: 1 }}>
+											<Text style={styles.toggleLabel}>
+												Daily Photo Reminder
+											</Text>
+											<Text style={styles.toggleSubtext}>
+												Receive a daily reminder to upload a progress photo
+											</Text>
+										</View>
+										<TouchableOpacity
+											style={[
+												styles.toggle,
+												reminderEnabled && styles.toggleActive
+											]}
+											onPress={() => setReminderEnabled(!reminderEnabled)}
+											activeOpacity={0.8}
+										>
+											<View
+												style={[
+													styles.toggleThumb,
+													reminderEnabled && styles.toggleThumbActive
+												]}
+											/>
+										</TouchableOpacity>
+									</View>
+
+									{reminderEnabled && (
+										<View style={styles.fieldGroup}>
+											<Text style={styles.fieldLabel}>Reminder Time</Text>
+											<TouchableOpacity
+												style={styles.pickerButton}
+												onPress={() => setShowTimePicker(!showTimePicker)}
+												activeOpacity={0.8}
+											>
+												<Text style={styles.pickerButtonText}>
+													{format12Hour(reminderTime)}
+												</Text>
+												<Text style={styles.pickerChevron}>
+													{showTimePicker ? '˄' : '˅'}
+												</Text>
+											</TouchableOpacity>
+
+											{showTimePicker && (
+												<View style={styles.pickerDropdown}>
+													<BottomSheetScrollView style={styles.pickerScroll}>
+														{timeOptions.map((option) => (
+															<TouchableOpacity
+																key={option.value}
+																style={[
+																	styles.pickerOption,
+																	reminderTime === option.value &&
+																		styles.pickerOptionActive
+																]}
+																onPress={() => {
+																	setReminderTime(option.value);
+																	setShowTimePicker(false);
+																	onSaveSettings();
+																}}
+																activeOpacity={0.7}
+															>
+																<Text
+																	style={[
+																		styles.pickerOptionText,
+																		reminderTime === option.value &&
+																			styles.pickerOptionTextActive
+																	]}
+																>
+																	{option.label}
+																</Text>
+															</TouchableOpacity>
+														))}
+													</BottomSheetScrollView>
+												</View>
+											)}
+										</View>
+									)}
+								</View>
+							</>
 						)}
-					</View>
-				</BottomSheetScrollView>
-			</BottomSheet>
-		</GestureHandlerRootView>
+					</BottomSheetScrollView>
+				</BottomSheet>
+			</GestureHandlerRootView>
+		</Modal>
 	);
 }
 
@@ -326,11 +343,9 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 18,
 		paddingBottom: 40
 	},
-	loadingContainer: {
-		flex: 1,
-		alignItems: 'center',
-		justifyContent: 'center',
-		backgroundColor: '#000000'
+	loadingWrap: {
+		paddingVertical: 40,
+		alignItems: 'center'
 	},
 	loadingText: {
 		fontSize: 14,

@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import SettingsBottomSheet from '@/components/SettingsBottomSheet';
 import { useProfile } from '@/hooks/useProfile';
 import { useWeightEntries } from '@/hooks/useWeightEntries';
 import { formatDisplayDate } from '../../utils/dateUtils';
@@ -26,7 +27,6 @@ import {
 } from '../../utils/numberUtils';
 import { getTimeBasedGreeting } from '../../utils/weightUtils';
 
-// TODO: Add remaining functions
 function getFirstEntry(entries) {
 	if (!Array.isArray(entries) || entries.length === 0) return null;
 	return entries[entries.length - 1]; // Last item = oldest (sorted newest-first)
@@ -71,7 +71,7 @@ function shouldSuggestMacroCut(entries) {
 
 export default function HomeScreen() {
 	const router = useRouter();
-
+	const [settingsVisible, setSettingsVisible] = useState(false);
 	const [weightText, setWeightText] = useState('');
 
 	// Hooks
@@ -234,7 +234,7 @@ export default function HomeScreen() {
 						</View>
 
 						<TouchableOpacity
-							onPress={() => router.push('/settings')}
+							onPress={() => setSettingsVisible(true)}
 							hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
 							style={styles.profileButton}
 						>
@@ -396,6 +396,10 @@ export default function HomeScreen() {
 					</View>
 				</ScrollView>
 			</KeyboardAvoidingView>
+			<SettingsBottomSheet
+				visible={settingsVisible}
+				onClose={() => setSettingsVisible(false)}
+			/>
 		</SafeAreaView>
 	);
 }

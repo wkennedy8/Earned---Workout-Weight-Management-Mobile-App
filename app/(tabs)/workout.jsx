@@ -172,12 +172,12 @@ export default function WorkoutTab() {
 						</View>
 					</View>
 
-					<TouchableOpacity
+					{/* <TouchableOpacity
 						onPress={onPressSettings}
 						hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
 					>
 						<Text style={styles.settingsIcon}>⚙️</Text>
-					</TouchableOpacity>
+					</TouchableOpacity> */}
 				</View>
 
 				{/* Workout Title */}
@@ -306,7 +306,7 @@ export default function WorkoutTab() {
 }
 
 const styles = StyleSheet.create({
-	safe: { flex: 1, backgroundColor: '#FFFFFF', paddingBottom: 90 },
+	safe: { flex: 1, backgroundColor: '#000000', paddingBottom: 90 }, // Black background
 	container: { flex: 1, paddingHorizontal: 18, paddingTop: 10 },
 
 	headerRow: {
@@ -320,13 +320,13 @@ const styles = StyleSheet.create({
 		width: 40,
 		height: 40,
 		borderRadius: 12,
-		backgroundColor: '#EFF4FF',
+		backgroundColor: 'rgba(175, 255, 43, 0.15)', // Green tint
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
 	iconText: { fontSize: 18 },
-	title: { fontSize: 18, fontWeight: '900', color: '#0B1220' },
-	settingsIcon: { fontSize: 20, color: '#6B7280' },
+	title: { fontSize: 18, fontWeight: '900', color: '#FFFFFF' }, // White text
+	settingsIcon: { fontSize: 20, color: '#999999' }, // Light gray
 
 	workoutTitleRow: {
 		flexDirection: 'row',
@@ -336,13 +336,13 @@ const styles = StyleSheet.create({
 	},
 	tagPill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
 	tagText: { color: '#FFFFFF', fontWeight: '900', fontSize: 12 },
-	workoutTitle: { fontSize: 22, fontWeight: '900', color: '#0B1220' },
+	workoutTitle: { fontSize: 22, fontWeight: '900', color: '#FFFFFF' }, // White heading
 
 	summaryCard: {
 		borderWidth: 1,
-		borderColor: '#E7EDF6',
+		borderColor: '#333333', // Dark border
 		borderRadius: 16,
-		backgroundColor: '#FFFFFF',
+		backgroundColor: '#1A1A1A', // Dark card
 		padding: 14,
 		marginBottom: 12
 	},
@@ -351,24 +351,24 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between',
 		alignItems: 'baseline'
 	},
-	summaryTitle: { fontSize: 16, fontWeight: '900', color: '#0B1220' },
-	summarySubtitle: { fontSize: 12, fontWeight: '800', color: '#10B981' },
+	summaryTitle: { fontSize: 16, fontWeight: '900', color: '#FFFFFF' }, // White heading
+	summarySubtitle: { fontSize: 12, fontWeight: '800', color: '#AFFF2B' }, // Green accent
 
 	statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
 	statBox: {
 		width: '48%',
 		borderWidth: 1,
-		borderColor: '#EEF2F7',
+		borderColor: '#333333', // Dark border
 		borderRadius: 14,
 		padding: 12,
-		backgroundColor: '#FAFBFF'
+		backgroundColor: '#0D0D0D' // Darker background
 	},
-	statLabel: { fontSize: 12, fontWeight: '800', color: '#6B7280' },
+	statLabel: { fontSize: 12, fontWeight: '800', color: '#999999' }, // Light gray
 	statValue: {
 		marginTop: 4,
 		fontSize: 18,
 		fontWeight: '900',
-		color: '#0B1220'
+		color: '#FFFFFF' // White text
 	},
 
 	summaryRow: {
@@ -377,11 +377,11 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between',
 		gap: 12
 	},
-	summaryRowLabel: { fontSize: 12, fontWeight: '900', color: '#6B7280' },
+	summaryRowLabel: { fontSize: 12, fontWeight: '900', color: '#999999' }, // Light gray
 	summaryRowValue: {
 		fontSize: 12,
 		fontWeight: '900',
-		color: '#111827',
+		color: '#FFFFFF', // White text
 		flex: 1,
 		textAlign: 'right'
 	},
@@ -391,18 +391,18 @@ const styles = StyleSheet.create({
 		flex: 1,
 		height: 44,
 		borderRadius: 14,
-		backgroundColor: '#F3F4F6',
+		backgroundColor: '#2A2A2A', // Dark button
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
-	secondaryButtonText: { fontSize: 14, fontWeight: '900', color: '#1E66F5' },
+	secondaryButtonText: { fontSize: 14, fontWeight: '900', color: '#AFFF2B' }, // Green text
 
 	listCard: {
 		flex: 1,
 		borderWidth: 1,
-		borderColor: '#E7EDF6',
+		borderColor: '#333333', // Dark border
 		borderRadius: 16,
-		backgroundColor: '#FFFFFF',
+		backgroundColor: '#1A1A1A', // Dark card
 		overflow: 'hidden'
 	},
 
@@ -423,62 +423,62 @@ const styles = StyleSheet.create({
 		width: 34,
 		height: 34,
 		borderRadius: 12,
-		backgroundColor: '#F3F4F6',
+		backgroundColor: '#2A2A2A', // Dark icon background
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
-	exerciseIconText: { fontSize: 18, fontWeight: '900', color: '#6B7280' },
-	exerciseName: { fontSize: 16, fontWeight: '900', color: '#111827' },
+	exerciseIconText: { fontSize: 18, fontWeight: '900', color: '#999999' }, // Light gray
+	exerciseName: { fontSize: 16, fontWeight: '900', color: '#FFFFFF' }, // White text
 	exerciseMeta: {
 		fontSize: 12,
 		fontWeight: '700',
-		color: '#6B7280',
+		color: '#999999', // Light gray
 		marginTop: 2
 	},
 	chevron: {
 		fontSize: 24,
 		fontWeight: '900',
-		color: '#9CA3AF',
+		color: '#666666', // Medium gray
 		marginLeft: 10
 	},
-	rowDivider: { height: 1, backgroundColor: '#EEF2F7' },
+	rowDivider: { height: 1, backgroundColor: '#333333' }, // Dark divider
 
 	restCard: {
 		flex: 1,
 		borderWidth: 1,
-		borderColor: '#E7EDF6',
+		borderColor: '#333333', // Dark border
 		borderRadius: 16,
-		backgroundColor: '#FFFFFF',
+		backgroundColor: '#1A1A1A', // Dark card
 		padding: 16
 	},
 	restTitle: {
 		fontSize: 18,
 		fontWeight: '900',
-		color: '#0B1220',
+		color: '#FFFFFF', // White heading
 		marginBottom: 8
 	},
 	restBody: {
 		fontSize: 13,
 		fontWeight: '700',
-		color: '#6B7280',
+		color: '#999999', // Light gray
 		lineHeight: 18
 	},
 
-	placeholder: { fontSize: 14, color: '#6B7280', marginTop: 20 },
+	placeholder: { fontSize: 14, color: '#999999', marginTop: 20 }, // Light gray
 
 	bottomCtaWrap: { paddingTop: 12, paddingBottom: 12 },
 	startButton: {
 		height: 54,
 		borderRadius: 14,
-		backgroundColor: '#1E66F5',
+		backgroundColor: '#AFFF2B', // Green button
 		alignItems: 'center',
 		justifyContent: 'center',
-		shadowColor: '#000',
-		shadowOpacity: 0.08,
+		shadowColor: '#AFFF2B',
+		shadowOpacity: 0.3,
 		shadowRadius: 10,
 		shadowOffset: { width: 0, height: 6 },
-		elevation: 2
+		elevation: 5
 	},
-	startButtonDisabled: { backgroundColor: '#9CA3AF' },
-	startButtonText: { color: '#FFFFFF', fontSize: 18, fontWeight: '900' }
+	startButtonDisabled: { backgroundColor: '#333333' }, // Dark disabled
+	startButtonText: { color: '#000000', fontSize: 18, fontWeight: '900' } // Black text on green
 });

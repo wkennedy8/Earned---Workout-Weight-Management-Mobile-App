@@ -346,14 +346,14 @@ export default function ProfileScreen() {
 					showsVerticalScrollIndicator={false}
 				>
 					{/* Header */}
-					<View style={styles.headerRow}>
+					{/* <View style={styles.headerRow}>
 						<View style={styles.headerLeft}>
 							<View style={styles.iconBadge}>
 								<Text style={styles.iconText}>👤</Text>
 							</View>
 							<Text style={styles.title}>Profile</Text>
 						</View>
-					</View>
+					</View> */}
 
 					{/* Profile Photo */}
 					<View style={styles.card}>
@@ -588,19 +588,18 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-	safe: { flex: 1, backgroundColor: '#FFFFFF', paddingBottom: 90 },
-	container: { flex: 1 },
+	safe: { flex: 1, backgroundColor: '#000000' }, // Black background
 
 	scrollView: { flex: 1 },
 	scrollContent: {
 		paddingHorizontal: 18,
 		paddingTop: 10,
-		paddingBottom: 20,
+		paddingBottom: 120,
 		gap: 12
 	},
 
 	loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-	loadingText: { fontSize: 14, fontWeight: '700', color: '#6B7280' },
+	loadingText: { fontSize: 14, fontWeight: '700', color: '#999999' }, // Light gray
 
 	headerRow: {
 		flexDirection: 'row',
@@ -612,25 +611,25 @@ const styles = StyleSheet.create({
 		width: 40,
 		height: 40,
 		borderRadius: 12,
-		backgroundColor: '#EFF4FF',
+		backgroundColor: 'rgba(175, 255, 43, 0.15)', // Green tint
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
 	iconText: { fontSize: 18 },
-	title: { fontSize: 26, fontWeight: '800', color: '#0B1220' },
+	title: { fontSize: 26, fontWeight: '800', color: '#FFFFFF' }, // White text
 
 	card: {
 		borderWidth: 1,
-		borderColor: '#E7EDF6',
+		borderColor: '#333333', // Dark border
 		borderRadius: 16,
-		backgroundColor: '#FFFFFF',
+		backgroundColor: '#1A1A1A', // Dark card
 		padding: 14
 	},
-	sectionTitle: { fontSize: 16, fontWeight: '900', color: '#0B1220' },
+	sectionTitle: { fontSize: 16, fontWeight: '900', color: '#FFFFFF' }, // White heading
 	subtle: {
 		fontSize: 12,
 		fontWeight: '700',
-		color: '#6B7280',
+		color: '#999999', // Light gray
 		marginTop: 6,
 		lineHeight: 18
 	},
@@ -645,18 +644,18 @@ const styles = StyleSheet.create({
 		width: 72,
 		height: 72,
 		borderRadius: 18,
-		backgroundColor: '#F3F4F6',
+		backgroundColor: '#2A2A2A', // Dark background
 		alignItems: 'center',
 		justifyContent: 'center',
 		overflow: 'hidden',
 		borderWidth: 1,
-		borderColor: '#E5E7EB'
+		borderColor: '#333333' // Dark border
 	},
 	avatarImg: { width: '100%', height: '100%' },
 	avatarPlaceholder: {
 		fontSize: 30,
 		fontWeight: '900',
-		color: '#9CA3AF',
+		color: '#666666', // Medium gray
 		marginTop: -2
 	},
 
@@ -664,13 +663,13 @@ const styles = StyleSheet.create({
 		marginTop: 10,
 		height: 44,
 		borderRadius: 14,
-		backgroundColor: '#1E66F5',
+		backgroundColor: '#AFFF2B', // Green button
 		alignItems: 'center',
 		justifyContent: 'center',
 		alignSelf: 'flex-start',
 		paddingHorizontal: 14
 	},
-	primaryBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
+	primaryBtnText: { color: '#000000', fontSize: 14, fontWeight: '900' }, // Black text on green
 
 	cardHeaderRow: {
 		flexDirection: 'row',
@@ -681,42 +680,42 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 10,
 		paddingVertical: 6,
 		borderRadius: 999,
-		backgroundColor: '#F3F4F6'
+		backgroundColor: '#2A2A2A' // Dark pill
 	},
-	caloriePillText: { fontSize: 12, fontWeight: '900', color: '#111827' },
+	caloriePillText: { fontSize: 12, fontWeight: '900', color: '#FFFFFF' }, // White text
 
 	macroGrid: { flexDirection: 'row', gap: 10, marginTop: 12 },
 	macroBox: {
 		flex: 1,
 		borderWidth: 1,
-		borderColor: '#EEF2F7',
+		borderColor: '#333333', // Dark border
 		borderRadius: 14,
 		padding: 10,
-		backgroundColor: '#FAFBFF'
+		backgroundColor: '#0D0D0D' // Darker background
 	},
-	macroLabel: { fontSize: 11, fontWeight: '800', color: '#6B7280' },
+	macroLabel: { fontSize: 11, fontWeight: '800', color: '#999999' }, // Light gray
 	macroInput: {
 		marginTop: 8,
 		height: 44,
 		borderWidth: 1,
-		borderColor: '#E5E7EB',
+		borderColor: '#333333', // Dark border
 		borderRadius: 12,
 		paddingHorizontal: 12,
 		fontSize: 16,
 		fontWeight: '900',
-		color: '#0B1220',
-		backgroundColor: '#FFFFFF'
+		color: '#FFFFFF', // White text
+		backgroundColor: '#0D0D0D' // Dark input background
 	},
 
 	saveBtn: {
 		marginTop: 12,
 		height: 48,
 		borderRadius: 14,
-		backgroundColor: '#1E66F5',
+		backgroundColor: '#AFFF2B', // Green button
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
-	saveBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
+	saveBtnText: { color: '#000000', fontSize: 16, fontWeight: '900' }, // Black text on green
 
 	goalOptions: { marginTop: 12, gap: 10 },
 	goalOption: {
@@ -727,21 +726,21 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		borderRadius: 14,
 		borderWidth: 1,
-		borderColor: '#E7EDF6',
-		backgroundColor: '#FAFBFF'
+		borderColor: '#333333', // Dark border
+		backgroundColor: '#0D0D0D' // Dark background
 	},
 	goalOptionActive: {
-		backgroundColor: '#1E66F5',
-		borderColor: '#1E66F5'
+		backgroundColor: '#AFFF2B', // Green active
+		borderColor: '#AFFF2B'
 	},
 	goalEmoji: { fontSize: 24 },
 	goalText: {
 		fontSize: 15,
 		fontWeight: '900',
-		color: '#0B1220'
+		color: '#FFFFFF' // White text
 	},
 	goalTextActive: {
-		color: '#FFFFFF'
+		color: '#000000' // Black text on green
 	},
 
 	progressActions: { flexDirection: 'row', gap: 10, marginTop: 10 },
@@ -749,11 +748,11 @@ const styles = StyleSheet.create({
 		flex: 1,
 		height: 44,
 		borderRadius: 14,
-		backgroundColor: '#F3F4F6',
+		backgroundColor: '#2A2A2A', // Dark button
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
-	secondaryBtnText: { fontSize: 14, fontWeight: '900', color: '#1E66F5' },
+	secondaryBtnText: { fontSize: 14, fontWeight: '900', color: '#AFFF2B' }, // Green text
 
 	progressGrid: {
 		flexDirection: 'row',
@@ -768,8 +767,8 @@ const styles = StyleSheet.create({
 		borderRadius: 14,
 		overflow: 'hidden',
 		borderWidth: 1,
-		borderColor: '#E7EDF6',
-		backgroundColor: '#F3F4F6'
+		borderColor: '#333333', // Dark border
+		backgroundColor: '#2A2A2A' // Dark background
 	},
 	progressImg: { width: '100%', height: '100%' },
 	progressBadge: {
@@ -780,7 +779,7 @@ const styles = StyleSheet.create({
 		paddingVertical: 6,
 		paddingHorizontal: 8,
 		borderRadius: 12,
-		backgroundColor: 'rgba(0,0,0,0.35)'
+		backgroundColor: 'rgba(0,0,0,0.6)' // Slightly darker badge
 	},
 	progressBadgeText: {
 		color: '#FFFFFF',
@@ -793,13 +792,13 @@ const styles = StyleSheet.create({
 	emptyTitle: {
 		fontSize: 14,
 		fontWeight: '900',
-		color: '#0B1220',
+		color: '#FFFFFF', // White text
 		marginBottom: 6
 	},
 	emptyBody: {
 		fontSize: 12,
 		fontWeight: '700',
-		color: '#6B7280',
+		color: '#999999', // Light gray
 		lineHeight: 18
 	}
 });
