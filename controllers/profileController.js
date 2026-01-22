@@ -1,11 +1,23 @@
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
 import {
+	addDoc,
+	collection,
+	deleteDoc,
 	doc,
 	getDoc,
+	getDocs,
+	orderBy,
+	query,
 	serverTimestamp,
 	setDoc,
 	updateDoc
 } from 'firebase/firestore';
+import {
+	deleteObject,
+	getDownloadURL,
+	ref,
+	uploadBytes
+} from 'firebase/storage';
 
 function profileRef(uid) {
 	return doc(db, 'users', uid);
@@ -18,7 +30,8 @@ export async function getProfile(uid) {
 			protein: 0,
 			carbs: 0,
 			fats: 0,
-			profilePhotoUri: null
+			profilePhotoUri: null,
+			goal: null
 		};
 	}
 	const data = snap.data() || {};
@@ -26,7 +39,8 @@ export async function getProfile(uid) {
 		protein: Number(data.protein) || 0,
 		carbs: Number(data.carbs) || 0,
 		fats: Number(data.fats) || 0,
-		profilePhotoUri: data.profilePhotoUri || null
+		profilePhotoUri: data.profilePhotoUri || null,
+		goal: data.goal || null
 	};
 }
 
@@ -62,4 +76,148 @@ export async function reduceCarbs(uid, grams) {
 		updatedAt: serverTimestamp()
 	});
 	return nextCarbs;
+}
+
+// ============================================================================
+// IMAGE UPLOAD FUNCTIONS
+// ============================================================================
+
+/**
+ * Upload profile photo to Firebase Storage
+ * @param {string} uid - User ID
+ * @param {string} imageUri - Local image URI from ImagePicker
+ * @returns {Promise<string>} Download URL
+ */
+export async function uploadProfilePhoto(uid, imageUri) {
+	try {
+		// Convert image URI to blob
+		const response = await fetch(imageUri);
+		const blob = await response.blob();
+
+		// Create storage reference
+		const storageRef = ref(storage, `profiles/${uid}/profile-photo.jpg`);
+
+		// Upload blob
+		await uploadBytes(storageRef, blob);
+
+		// Get download URL
+		const downloadURL = await getDownloadURL(storageRef);
+
+		return downloadURL;
+	} catch (error) {
+		console.error('Failed to upload profile photo:', error);
+		throw error;
+	}
+}
+
+/**
+ * Upload progress photo to Firebase Storage
+ * @param {string} uid - User ID
+ * @param {string} imageUri - Local image URI from ImagePicker
+ * @returns {Promise<string>} Download URL
+ */
+export async function uploadProgressPhoto(uid, imageUri) {
+	try {
+		const response = await fetch(imageUri);
+		const blob = await response.blob();
+
+		const timestamp = Date.now();
+		const storageRef = ref(
+			storage,
+			`profiles/${uid}/progress/${timestamp}.jpg`
+		);
+
+		await uploadBytes(storageRef, blob);
+		const downloadURL = await getDownloadURL(storageRef);
+
+		return downloadURL;
+	} catch (error) {
+		console.error('Failed to upload progress photo:', error);
+		throw error;
+	}
+}
+
+/**
+ * Delete progress photo from Firebase Storage
+ * @param {string} storagePath - Full storage path (from photo metadata)
+ */
+export async function deleteProgressPhotoFromStorage(storagePath) {
+	try {
+		const storageRef = ref(storage, storagePath);
+		await deleteObject(storageRef);
+	} catch (error) {
+		console.error('Failed to delete progress photo from storage:', error);
+		throw error;
+	}
+}
+
+// ============================================================================
+// PROGRESS PHOTOS FIRESTORE FUNCTIONS
+// ============================================================================
+
+function progressPhotosRef(uid) {
+	return collection(db, 'users', uid, 'progressPhotos');
+}
+
+/**
+ * Get all progress photos for a user
+ * @param {string} uid - User ID
+ * @returns {Promise<Array>} Array of progress photos sorted by date (newest first)
+ */
+export async function getProgressPhotos(uid) {
+	try {
+		const q = query(progressPhotosRef(uid), orderBy('createdAt', 'desc'));
+		const snapshot = await getDocs(q);
+
+		return snapshot.docs.map((doc) => ({
+			id: doc.id,
+			...doc.data(),
+			createdAt:
+				doc.data().createdAt?.toDate?.()?.toISOString() ||
+				new Date().toISOString()
+		}));
+	} catch (error) {
+		console.error('Failed to get progress photos:', error);
+		return [];
+	}
+}
+
+/**
+ * Add progress photo metadata to Firestore
+ * @param {string} uid - User ID
+ * @param {Object} photoData - Photo data {downloadURL, storagePath}
+ * @returns {Promise<Object>} Created photo document with id
+ */
+export async function addProgressPhoto(uid, photoData) {
+	try {
+		const docRef = await addDoc(progressPhotosRef(uid), {
+			downloadURL: photoData.downloadURL,
+			storagePath: photoData.storagePath,
+			createdAt: serverTimestamp()
+		});
+
+		return {
+			id: docRef.id,
+			downloadURL: photoData.downloadURL,
+			storagePath: photoData.storagePath,
+			createdAt: new Date().toISOString()
+		};
+	} catch (error) {
+		console.error('Failed to add progress photo:', error);
+		throw error;
+	}
+}
+
+/**
+ * Delete progress photo metadata from Firestore
+ * @param {string} uid - User ID
+ * @param {string} photoId - Photo document ID
+ */
+export async function deleteProgressPhotoMetadata(uid, photoId) {
+	try {
+		await deleteDoc(doc(db, 'users', uid, 'progressPhotos', photoId));
+	} catch (error) {
+		console.error('Failed to delete progress photo metadata:', error);
+		throw error;
+	}
 }

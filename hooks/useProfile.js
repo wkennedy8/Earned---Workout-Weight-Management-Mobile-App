@@ -1,9 +1,15 @@
 // hooks/useProfile.js
-import { doc, onSnapshot } from 'firebase/firestore';
+import {
+	collection,
+	doc,
+	onSnapshot,
+	orderBy,
+	query
+} from 'firebase/firestore';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { reduceCarbs as reduceCarbsRepo } from '@/controllers/profileController';
-import { getUidOrThrow } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/auth';
 import { db } from '@/lib/firebase';
 
 export function useProfile() {
@@ -11,35 +17,66 @@ export function useProfile() {
 		protein: 0,
 		carbs: 0,
 		fats: 0,
-		profilePhotoUri: null
+		profilePhotoUri: null,
+		goal: null
 	});
+	const [progressPhotos, setProgressPhotos] = useState([]);
 
 	useEffect(() => {
-		let unsub = null;
+		let unsubProfile = null;
+		let unsubPhotos = null;
 
 		try {
-			const uid = getUidOrThrow();
-			const ref = doc(db, 'users', uid);
+			const user = getCurrentUser();
+			if (!user) {
+				console.warn('useProfile: No authenticated user');
+				return;
+			}
 
-			unsub = onSnapshot(
-				ref,
+			const uid = user.uid;
+			const profileRef = doc(db, 'users', uid);
+
+			// Subscribe to profile data
+			unsubProfile = onSnapshot(
+				profileRef,
 				(snap) => {
 					const data = snap.exists() ? snap.data() || {} : {};
 					setProfile({
 						protein: Number(data.protein) || 0,
 						carbs: Number(data.carbs) || 0,
 						fats: Number(data.fats) || 0,
-						profilePhotoUri: data.profilePhotoUri || null
+						profilePhotoUri: data.profilePhotoUri || null,
+						goal: data.goal || null
 					});
 				},
 				(err) => console.warn('profile subscription error:', err)
+			);
+
+			// Subscribe to progress photos
+			const photosRef = collection(db, 'users', uid, 'progressPhotos');
+			const photosQuery = query(photosRef, orderBy('createdAt', 'desc'));
+
+			unsubPhotos = onSnapshot(
+				photosQuery,
+				(snapshot) => {
+					const photos = snapshot.docs.map((doc) => ({
+						id: doc.id,
+						...doc.data(),
+						createdAt:
+							doc.data().createdAt?.toDate?.()?.toISOString() ||
+							new Date().toISOString()
+					}));
+					setProgressPhotos(photos);
+				},
+				(err) => console.warn('progress photos subscription error:', err)
 			);
 		} catch (e) {
 			console.warn('useProfile init error:', e);
 		}
 
 		return () => {
-			if (unsub) unsub();
+			if (unsubProfile) unsubProfile();
+			if (unsubPhotos) unsubPhotos();
 		};
 	}, []);
 
@@ -51,9 +88,13 @@ export function useProfile() {
 	}, [profile]);
 
 	const reduceCarbs = useCallback(async (grams) => {
-		const uid = getUidOrThrow();
-		await reduceCarbsRepo(uid, grams);
+		const user = getCurrentUser();
+		if (!user) {
+			console.warn('reduceCarbs: No authenticated user');
+			return;
+		}
+		await reduceCarbsRepo(user.uid, grams);
 	}, []);
 
-	return { profile, calories, reduceCarbs };
+	return { profile, calories, progressPhotos, reduceCarbs };
 }
