@@ -5,11 +5,20 @@ import {
 	deleteProgressPhotoMetadata,
 	getProfile,
 	getProgressPhotos,
+	getUserSettings,
+	updateUserSettings,
 	uploadProfilePhoto,
 	uploadProgressPhoto,
 	upsertProfile
 } from '@/controllers/profileController';
+import {
+	cleanPhoneNumber,
+	formatPhoneNumber,
+	isValidPhoneNumber
+} from '@/utils/numberUtils';
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
 	Alert,
@@ -25,7 +34,7 @@ import {
 	View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FontFamily } from '../../constants/fonts'; // Import font utilities
+import { FontFamily } from '../../constants/fonts';
 
 function normalizeInt(text) {
 	return text.replace(/[^\d]/g, '').slice(0, 4);
@@ -40,6 +49,13 @@ function formatDisplayDate(iso) {
 		day: 'numeric',
 		year: 'numeric'
 	});
+}
+
+// Email validation helper
+function isValidEmail(email) {
+	if (!email) return true;
+	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	return emailRegex.test(email.trim());
 }
 
 async function requestMediaPermissions() {
@@ -67,6 +83,7 @@ async function requestCameraPermissions() {
 }
 
 export default function ProfileScreen() {
+	const router = useRouter();
 	const { user } = useAuth();
 	const [loading, setLoading] = useState(true);
 	const [profilePhotoUri, setProfilePhotoUri] = useState(null);
@@ -78,6 +95,11 @@ export default function ProfileScreen() {
 
 	const [progressPhotos, setProgressPhotos] = useState([]); // [{ id, downloadURL, storagePath, createdAt }]
 	const [goal, setGoal] = useState(null); // 'lose' | 'maintain' | 'gain' | null
+
+	// Profile information state
+	const [name, setName] = useState('');
+	const [email, setEmail] = useState('');
+	const [phone, setPhone] = useState('');
 
 	// ---- Derived calories
 	const calories = useMemo(() => {
@@ -108,6 +130,15 @@ export default function ProfileScreen() {
 				setFats(String(profileData.fats || 0));
 				setProfilePhotoUri(profileData.profilePhotoUri);
 				setGoal(profileData.goal);
+
+				// Load user settings (name, email, phone)
+				const settings = await getUserSettings(user.uid);
+
+				if (!isMounted) return;
+
+				setName(settings.name);
+				setEmail(settings.email);
+				setPhone(formatPhoneNumber(settings.phone));
 
 				// Load progress photos
 				const photos = await getProgressPhotos(user.uid);
@@ -143,6 +174,38 @@ export default function ProfileScreen() {
 		} catch (e) {
 			console.warn('Failed to save macros:', e);
 			Alert.alert('Error', 'Failed to save macros. Please try again.');
+		}
+	}
+
+	async function onSaveProfileInfo() {
+		if (!user?.uid) return;
+
+		Keyboard.dismiss();
+
+		if (!isValidEmail(email)) {
+			Alert.alert('Invalid Email', 'Please enter a valid email address.');
+			return;
+		}
+
+		if (!isValidPhoneNumber(phone)) {
+			Alert.alert(
+				'Invalid Phone',
+				'Please enter a valid 10-digit phone number.'
+			);
+			return;
+		}
+
+		try {
+			await updateUserSettings(user.uid, {
+				name: name.trim(),
+				email: email.trim(),
+				phone: cleanPhoneNumber(phone)
+			});
+
+			Alert.alert('Saved', 'Profile information updated.');
+		} catch (e) {
+			console.warn('Failed to save profile info:', e);
+			Alert.alert('Error', 'Failed to save profile info. Please try again.');
 		}
 	}
 
@@ -345,19 +408,17 @@ export default function ProfileScreen() {
 					contentContainerStyle={styles.scrollContent}
 					showsVerticalScrollIndicator={false}
 				>
-					{/* Header */}
-					{/* <View style={styles.headerRow}>
-						<View style={styles.headerLeft}>
-							<View style={styles.iconBadge}>
-								<Text style={styles.iconText}>👤</Text>
-							</View>
-							<Text style={styles.title}>Profile</Text>
-						</View>
-					</View> */}
-
+					<View style={styles.headerRow}>
+						<TouchableOpacity
+							onPress={() => router.back()}
+							hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+							activeOpacity={0.7}
+						>
+							<Ionicons name='chevron-back' size={28} color='#AFFF2B' />
+						</TouchableOpacity>
+					</View>
 					{/* Profile Photo */}
 					<View style={styles.card}>
-						{/* <Text style={styles.sectionTitle}>Profile Photo</Text> */}
 						<Text style={styles.subtle}>
 							Upload a photo to personalize your profile.
 						</Text>
@@ -375,9 +436,6 @@ export default function ProfileScreen() {
 							</View>
 
 							<View style={{ flex: 1 }}>
-								{/* <Text style={styles.subtle}>
-									Upload a photo to personalize your profile.
-								</Text> */}
 								<TouchableOpacity
 									style={styles.primaryBtn}
 									onPress={pickProfilePhoto}
@@ -389,6 +447,58 @@ export default function ProfileScreen() {
 								</TouchableOpacity>
 							</View>
 						</View>
+					</View>
+
+					{/* Profile Information */}
+					<View style={styles.card}>
+						<Text style={styles.sectionTitle}>Profile Information</Text>
+
+						<View style={styles.fieldGroup}>
+							<Text style={styles.fieldLabel}>Name</Text>
+							<TextInput
+								value={name}
+								onChangeText={setName}
+								placeholder='Enter your name'
+								placeholderTextColor='#666666'
+								style={styles.textInput}
+								autoCapitalize='words'
+							/>
+						</View>
+
+						<View style={styles.fieldGroup}>
+							<Text style={styles.fieldLabel}>Email</Text>
+							<TextInput
+								value={email}
+								onChangeText={setEmail}
+								placeholder='Enter your email'
+								placeholderTextColor='#666666'
+								style={styles.textInput}
+								keyboardType='email-address'
+								autoCapitalize='none'
+								autoCorrect={false}
+							/>
+						</View>
+
+						<View style={styles.fieldGroup}>
+							<Text style={styles.fieldLabel}>Phone Number</Text>
+							<TextInput
+								value={phone}
+								onChangeText={(text) => setPhone(formatPhoneNumber(text))}
+								placeholder='(555) 123-4567'
+								placeholderTextColor='#666666'
+								style={styles.textInput}
+								keyboardType='phone-pad'
+								maxLength={14}
+							/>
+						</View>
+
+						<TouchableOpacity
+							style={styles.saveBtn}
+							onPress={onSaveProfileInfo}
+							activeOpacity={0.9}
+						>
+							<Text style={styles.saveBtnText}>Save Changes</Text>
+						</TouchableOpacity>
 					</View>
 
 					{/* Macros */}
@@ -468,7 +578,11 @@ export default function ProfileScreen() {
 								onPress={() => onSelectGoal('lose')}
 								activeOpacity={0.7}
 							>
-								<Text style={styles.goalEmoji}>🔽</Text>
+								<Ionicons
+									name='trending-down'
+									size={28}
+									color={goal === 'lose' ? '#000' : '#666666'}
+								/>
 								<Text
 									style={[
 										styles.goalText,
@@ -487,7 +601,11 @@ export default function ProfileScreen() {
 								onPress={() => onSelectGoal('maintain')}
 								activeOpacity={0.7}
 							>
-								<Text style={styles.goalEmoji}>⚖️</Text>
+								<Ionicons
+									name='remove-outline'
+									size={28}
+									color={goal === 'maintain' ? '#000' : '#666666'}
+								/>
 								<Text
 									style={[
 										styles.goalText,
@@ -506,7 +624,11 @@ export default function ProfileScreen() {
 								onPress={() => onSelectGoal('gain')}
 								activeOpacity={0.7}
 							>
-								<Text style={styles.goalEmoji}>🔼</Text>
+								<Ionicons
+									name='trending-up'
+									size={28}
+									color={goal === 'gain' ? '#000' : '#666666'}
+								/>
 								<Text
 									style={[
 										styles.goalText,
@@ -591,7 +713,7 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-	safe: { flex: 1, backgroundColor: '#000000' }, // Black background
+	safe: { flex: 1, backgroundColor: '#000000' },
 
 	scrollView: { flex: 1 },
 	scrollContent: {
@@ -602,42 +724,24 @@ const styles = StyleSheet.create({
 	},
 
 	loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-	loadingText: { fontSize: 14, fontWeight: '700', color: '#999999' }, // Light gray
-
-	headerRow: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between'
-	},
-	headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-	iconBadge: {
-		width: 40,
-		height: 40,
-		borderRadius: 12,
-		backgroundColor: 'rgba(175, 255, 43, 0.15)', // Green tint
-		alignItems: 'center',
-		justifyContent: 'center'
-	},
-	iconText: { fontSize: 18 },
-	title: { fontSize: 26, fontWeight: '800', color: '#FFFFFF' }, // White text
+	loadingText: { fontSize: 14, fontWeight: '700', color: '#999999' },
 
 	card: {
 		borderWidth: 1,
-		borderColor: '#333333', // Dark border
+		borderColor: '#333333',
 		borderRadius: 16,
-		backgroundColor: '#1A1A1A', // Dark card
+		backgroundColor: '#1A1A1A',
 		padding: 14
 	},
 	sectionTitle: {
 		fontSize: 16,
-		// fontWeight: '900',
 		color: '#FFFFFF',
 		fontFamily: FontFamily.black
-	}, // White heading
+	},
 	subtle: {
 		fontSize: 12,
 		fontWeight: '700',
-		color: '#999999', // Light gray
+		color: '#999999',
 		marginTop: 6,
 		lineHeight: 18
 	},
@@ -652,18 +756,18 @@ const styles = StyleSheet.create({
 		width: 72,
 		height: 72,
 		borderRadius: 18,
-		backgroundColor: '#2A2A2A', // Dark background
+		backgroundColor: '#2A2A2A',
 		alignItems: 'center',
 		justifyContent: 'center',
 		overflow: 'hidden',
 		borderWidth: 1,
-		borderColor: '#333333' // Dark border
+		borderColor: '#333333'
 	},
 	avatarImg: { width: '100%', height: '100%' },
 	avatarPlaceholder: {
 		fontSize: 30,
 		fontWeight: '900',
-		color: '#666666', // Medium gray
+		color: '#666666',
 		marginTop: -2
 	},
 
@@ -671,7 +775,7 @@ const styles = StyleSheet.create({
 		marginTop: 10,
 		height: 44,
 		borderRadius: 14,
-		backgroundColor: '#2A2A2A', //
+		backgroundColor: '#2A2A2A',
 		alignItems: 'center',
 		justifyContent: 'center',
 		alignSelf: 'flex-start',
@@ -680,9 +784,28 @@ const styles = StyleSheet.create({
 	primaryBtnText: {
 		color: '#AFFF2B',
 		fontSize: 14,
-		// fontWeight: '900',
 		fontFamily: FontFamily.black
-	}, // Black text on green
+	},
+
+	// Profile Information styles
+	fieldGroup: { marginTop: 14 },
+	fieldLabel: {
+		fontSize: 12,
+		fontWeight: '800',
+		color: '#999999',
+		marginBottom: 8
+	},
+	textInput: {
+		height: 48,
+		borderWidth: 1,
+		borderColor: '#333333',
+		borderRadius: 12,
+		paddingHorizontal: 14,
+		fontSize: 16,
+		fontWeight: '700',
+		color: '#FFFFFF',
+		backgroundColor: '#0D0D0D'
+	},
 
 	cardHeaderRow: {
 		flexDirection: 'row',
@@ -693,42 +816,42 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 10,
 		paddingVertical: 6,
 		borderRadius: 999,
-		backgroundColor: '#2A2A2A' // Dark pill
+		backgroundColor: '#2A2A2A'
 	},
-	caloriePillText: { fontSize: 12, fontWeight: '900', color: '#FFFFFF' }, // White text
+	caloriePillText: { fontSize: 12, fontWeight: '900', color: '#FFFFFF' },
 
 	macroGrid: { flexDirection: 'row', gap: 10, marginTop: 12 },
 	macroBox: {
 		flex: 1,
 		borderWidth: 1,
-		borderColor: '#333333', // Dark border
+		borderColor: '#333333',
 		borderRadius: 14,
 		padding: 10,
-		backgroundColor: '#0D0D0D' // Darker background
+		backgroundColor: '#0D0D0D'
 	},
-	macroLabel: { fontSize: 11, fontWeight: '800', color: '#999999' }, // Light gray
+	macroLabel: { fontSize: 11, fontWeight: '800', color: '#999999' },
 	macroInput: {
 		marginTop: 8,
 		height: 44,
 		borderWidth: 1,
-		borderColor: '#333333', // Dark border
+		borderColor: '#333333',
 		borderRadius: 12,
 		paddingHorizontal: 12,
 		fontSize: 16,
 		fontWeight: '900',
-		color: '#FFFFFF', // White text
-		backgroundColor: '#0D0D0D' // Dark input background
+		color: '#FFFFFF',
+		backgroundColor: '#0D0D0D'
 	},
 
 	saveBtn: {
 		marginTop: 12,
 		height: 48,
 		borderRadius: 14,
-		backgroundColor: '#AFFF2B', // Green button
+		backgroundColor: '#AFFF2B',
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
-	saveBtnText: { color: '#000000', fontSize: 16, fontFamily: FontFamily.black }, // Black text on green
+	saveBtnText: { color: '#000000', fontSize: 16, fontFamily: FontFamily.black },
 
 	goalOptions: { marginTop: 12, gap: 10 },
 	goalOption: {
@@ -739,22 +862,20 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		borderRadius: 14,
 		borderWidth: 1,
-		borderColor: '#333333', // Dark border
-		backgroundColor: '#0D0D0D' // Dark background
+		borderColor: '#333333',
+		backgroundColor: '#0D0D0D'
 	},
 	goalOptionActive: {
-		backgroundColor: '#AFFF2B', // Green active
+		backgroundColor: '#AFFF2B',
 		borderColor: '#AFFF2B'
 	},
-	goalEmoji: { fontSize: 24 },
 	goalText: {
 		fontSize: 15,
-		// fontWeight: '900',
 		fontFamily: FontFamily.black,
-		color: '#FFFFFF' // White text
+		color: '#FFFFFF'
 	},
 	goalTextActive: {
-		color: '#000000' // Black text on green
+		color: '#000000'
 	},
 
 	progressActions: { flexDirection: 'row', gap: 10, marginTop: 10 },
@@ -762,16 +883,15 @@ const styles = StyleSheet.create({
 		flex: 1,
 		height: 44,
 		borderRadius: 14,
-		backgroundColor: '#2A2A2A', // Dark button
+		backgroundColor: '#2A2A2A',
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
 	secondaryBtnText: {
 		fontSize: 14,
-		// fontWeight: '900',
 		color: '#AFFF2B',
 		fontFamily: FontFamily.black
-	}, // Green text
+	},
 
 	progressGrid: {
 		flexDirection: 'row',
@@ -786,8 +906,8 @@ const styles = StyleSheet.create({
 		borderRadius: 14,
 		overflow: 'hidden',
 		borderWidth: 1,
-		borderColor: '#333333', // Dark border
-		backgroundColor: '#2A2A2A' // Dark background
+		borderColor: '#333333',
+		backgroundColor: '#2A2A2A'
 	},
 	progressImg: { width: '100%', height: '100%' },
 	progressBadge: {
@@ -798,12 +918,11 @@ const styles = StyleSheet.create({
 		paddingVertical: 6,
 		paddingHorizontal: 8,
 		borderRadius: 12,
-		backgroundColor: 'rgba(0,0,0,0.6)' // Slightly darker badge
+		backgroundColor: 'rgba(0,0,0,0.6)'
 	},
 	progressBadgeText: {
 		color: '#FFFFFF',
 		fontSize: 10,
-		// fontWeight: '900',
 		fontFamily: FontFamily.black,
 		textAlign: 'center'
 	},
@@ -812,13 +931,13 @@ const styles = StyleSheet.create({
 	emptyTitle: {
 		fontSize: 14,
 		fontWeight: '900',
-		color: '#FFFFFF', // White text
+		color: '#FFFFFF',
 		marginBottom: 6
 	},
 	emptyBody: {
 		fontSize: 12,
 		fontWeight: '700',
-		color: '#999999', // Light gray
+		color: '#999999',
 		lineHeight: 18
 	}
 });

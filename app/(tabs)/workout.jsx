@@ -6,6 +6,7 @@ import { useTodayWorkoutSession } from '@/hooks/useTodayWorkoutSession';
 import { formatLongDate } from '@/utils/dateUtils';
 import { formatLocalDateKey } from '@/utils/weightUtils';
 import { getWorkoutForDate, tagColor } from '@/utils/workoutPlan';
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import {
@@ -165,7 +166,7 @@ export default function WorkoutTab() {
 				<View style={styles.headerRow}>
 					<View style={styles.headerLeft}>
 						<View style={styles.iconBadge}>
-							<Text style={styles.iconText}>🏋️</Text>
+							<Ionicons name='barbell-outline' size={20} color='#AFFF2B' />
 						</View>
 						<View>
 							<Text style={styles.title}>{formatLongDate(today)}</Text>

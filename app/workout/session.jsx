@@ -642,14 +642,14 @@ export default function WorkoutSessionScreen() {
 						>
 							<Text style={styles.backChevron}>‹</Text>
 						</TouchableOpacity>
-						<TouchableOpacity
+						{/* <TouchableOpacity
 							onPress={() =>
 								Alert.alert('Settings', 'Settings screen not wired yet.')
 							}
 							hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
 						>
 							<Text style={styles.settingsIcon}>⚙️</Text>
-						</TouchableOpacity>
+						</TouchableOpacity> */}
 					</View>
 
 					{/* Header */}
@@ -1015,7 +1015,7 @@ const styles = StyleSheet.create({
 		color: '#FFFFFF',
 		backgroundColor: '#0D0D0D'
 	},
-	inputCellSaved: { backgroundColor: '#F3F4F6', color: '#999999' },
+	inputCellSaved: { color: '#999999' },
 
 	saveSetBtn: {
 		height: 44,

@@ -24,10 +24,10 @@ export default function TabLayout() {
 				}}
 			/>
 			<Tabs.Screen
-				name='profile'
+				name='analytics'
 				options={{
-					title: 'Profile',
-					tabBarLabel: 'Profile'
+					title: 'Analytics',
+					tabBarLabel: 'Analytics'
 				}}
 			/>
 		</Tabs>

@@ -235,7 +235,7 @@ export default function HomeScreen() {
 						</View>
 
 						<TouchableOpacity
-							onPress={() => setSettingsVisible(true)}
+							onPress={() => router.push('/profile')}
 							hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
 							style={styles.profileButton}
 						>

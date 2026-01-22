@@ -55,11 +55,11 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
 											style={{ opacity: iconOpacity }}
 										/>
 									);
-								case 'profile':
+								case 'analytics':
 									return (
 										<IconSymbol
 											size={24}
-											name='person.fill'
+											name='chart.bar.fill'
 											color={iconColor}
 											style={{ opacity: iconOpacity }}
 										/>
