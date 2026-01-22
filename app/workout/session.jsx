@@ -1,19 +1,3 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-	Alert,
-	FlatList,
-	KeyboardAvoidingView,
-	Modal,
-	Platform,
-	SafeAreaView,
-	StyleSheet,
-	Text,
-	TextInput,
-	TouchableOpacity,
-	View
-} from 'react-native';
-
 import { useAuth } from '@/context/AuthContext';
 import {
 	loadExerciseDefaults,
@@ -33,6 +17,26 @@ import {
 	normalizeNumberText,
 	tagColor
 } from '@/utils/workoutUtils';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+	Alert,
+	FlatList,
+	KeyboardAvoidingView,
+	Modal,
+	Platform,
+	SafeAreaView,
+	StyleSheet,
+	Text,
+	TextInput,
+	TouchableOpacity,
+	View
+} from 'react-native';
+import {
+	GestureHandlerRootView,
+	Swipeable
+} from 'react-native-gesture-handler';
+import { FontFamily } from '../../constants/fonts';
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -45,6 +49,107 @@ function formatTimer(seconds) {
 	const m = Math.floor(seconds / 60);
 	const s = seconds % 60;
 	return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+// ============================================================================
+// SWIPEABLE SET ROW COMPONENT
+// ============================================================================
+
+function SwipeableSetRow({
+	item,
+	set,
+	exerciseIndex,
+	setIndex,
+	canRemove,
+	updateSetField,
+	saveSet,
+	removeSet,
+	normalizeNumberText
+}) {
+	const swipeableRef = useRef(null);
+
+	const renderRightActions = (progress, dragX) => {
+		return (
+			<TouchableOpacity
+				style={styles.deleteAction}
+				onPress={() => {
+					swipeableRef.current?.close();
+					removeSet(exerciseIndex, set.setIndex);
+				}}
+				activeOpacity={0.9}
+			>
+				<Text style={styles.deleteActionText}>Delete</Text>
+			</TouchableOpacity>
+		);
+	};
+
+	return (
+		<Swipeable
+			ref={swipeableRef}
+			renderRightActions={canRemove ? renderRightActions : null}
+			rightThreshold={40}
+			friction={2}
+			overshootRight={false}
+		>
+			<View style={styles.tableRow}>
+				<Text style={[styles.tdSet, { width: 44 }]}>{set.setIndex}</Text>
+
+				<TextInput
+					value={String(set.weight)}
+					onChangeText={(t) =>
+						updateSetField(exerciseIndex, set.setIndex, {
+							weight: normalizeNumberText(t, { decimals: 1 })
+						})
+					}
+					editable={!set.saved}
+					placeholder={
+						String(item.targetReps).toLowerCase() === 'time' ? '—' : '0'
+					}
+					placeholderTextColor='#9CA3AF'
+					keyboardType={Platform.OS === 'ios' ? 'decimal-pad' : 'numeric'}
+					style={[
+						styles.inputCell,
+						{ flex: 1 },
+						set.saved && styles.inputCellSaved
+					]}
+				/>
+
+				<TextInput
+					value={String(set.reps)}
+					onChangeText={(t) =>
+						updateSetField(exerciseIndex, set.setIndex, {
+							reps: normalizeNumberText(t, { decimals: 0 })
+						})
+					}
+					editable={!set.saved}
+					placeholder='0'
+					placeholderTextColor='#9CA3AF'
+					keyboardType='numeric'
+					style={[
+						styles.inputCell,
+						{ width: 110 },
+						set.saved && styles.inputCellSaved
+					]}
+				/>
+
+				<View style={{ width: 84 }}>
+					{set.saved ? (
+						<View style={styles.savedPill}>
+							<Text style={styles.savedPillText}>Saved</Text>
+						</View>
+					) : (
+						<TouchableOpacity
+							style={styles.saveSetBtn}
+							onPress={() => saveSet(exerciseIndex, set.setIndex)}
+							activeOpacity={0.9}
+						>
+							<Text style={styles.saveSetBtnText}>Save</Text>
+						</TouchableOpacity>
+					)}
+				</View>
+			</View>
+		</Swipeable>
+	);
 }
 
 // ============================================================================
@@ -523,273 +628,212 @@ export default function WorkoutSessionScreen() {
 	}
 
 	return (
-		<SafeAreaView style={styles.safe}>
-			<KeyboardAvoidingView
-				behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-				style={styles.container}
-			>
-				{/* Custom top bar */}
-				<View style={styles.topBar}>
-					<TouchableOpacity
-						onPress={() => router.back()}
-						hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-					>
-						<Text style={styles.backChevron}>‹</Text>
-					</TouchableOpacity>
-					<Text style={styles.topTitle}>Workout Session</Text>
-					<TouchableOpacity
-						onPress={() =>
-							Alert.alert('Settings', 'Settings screen not wired yet.')
-						}
-						hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-					>
-						<Text style={styles.settingsIcon}>⚙️</Text>
-					</TouchableOpacity>
-				</View>
-
-				{/* Header */}
-				<View style={styles.header}>
-					<View style={styles.headerRow}>
-						<View
-							style={[
-								styles.tagPill,
-								{ backgroundColor: tagColor(session.tag) }
-							]}
-						>
-							<Text style={styles.tagText}>{session.tag}</Text>
-						</View>
-						<Text style={styles.headerTitle}>{session.title}</Text>
-					</View>
-					<Text style={styles.dateText}>{formatLongDate(today)}</Text>
-				</View>
-
-				{/* Rest Timer Modal */}
-				<Modal
-					visible={restVisible}
-					transparent
-					animationType='fade'
-					onRequestClose={skipRest}
+		<GestureHandlerRootView style={{ flex: 1 }}>
+			<SafeAreaView style={styles.safe}>
+				<KeyboardAvoidingView
+					behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+					style={styles.container}
 				>
-					<View style={styles.modalBackdrop}>
-						<View style={styles.modalCard}>
-							<Text style={styles.modalTitle}>Rest</Text>
-							<Text style={styles.modalTimer}>{formatTimer(restSeconds)}</Text>
+					{/* Custom top bar */}
+					<View style={styles.topBar}>
+						<TouchableOpacity
+							onPress={() => router.back()}
+							hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+						>
+							<Text style={styles.backChevron}>‹</Text>
+						</TouchableOpacity>
+						<TouchableOpacity
+							onPress={() =>
+								Alert.alert('Settings', 'Settings screen not wired yet.')
+							}
+							hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+						>
+							<Text style={styles.settingsIcon}>⚙️</Text>
+						</TouchableOpacity>
+					</View>
 
-							<Text style={styles.modalContext}>
-								{restContext?.type === 'exercise'
-									? `Exercise completed: ${restContext.exerciseName}`
-									: restContext?.type === 'set'
-										? `Set saved: ${restContext.exerciseName} (Set ${restContext.setIndex})`
-										: ''}
-							</Text>
+					{/* Header */}
+					<View style={styles.header}>
+						<View style={styles.headerRow}>
+							<View
+								style={[
+									styles.tagPill,
+									{ backgroundColor: tagColor(session.tag) }
+								]}
+							>
+								<Text style={styles.tagText}>{session.tag}</Text>
+							</View>
+							<Text style={styles.headerTitle}>{session.title}</Text>
+						</View>
+						<Text style={styles.dateText}>{formatLongDate(today)}</Text>
+					</View>
 
-							<View style={styles.modalActionsRow}>
+					{/* Rest Timer Modal */}
+					<Modal
+						visible={restVisible}
+						transparent
+						animationType='fade'
+						onRequestClose={skipRest}
+					>
+						<View style={styles.modalBackdrop}>
+							<View style={styles.modalCard}>
+								<Text style={styles.modalTitle}>Rest</Text>
+								<Text style={styles.modalTimer}>
+									{formatTimer(restSeconds)}
+								</Text>
+
+								<Text style={styles.modalContext}>
+									{restContext?.type === 'exercise'
+										? `Exercise completed: ${restContext.exerciseName}`
+										: restContext?.type === 'set'
+											? `Set saved: ${restContext.exerciseName} (Set ${restContext.setIndex})`
+											: ''}
+								</Text>
+
+								<View style={styles.modalActionsRow}>
+									<TouchableOpacity
+										style={styles.modalSecondaryBtn}
+										onPress={() => addRest(30)}
+										activeOpacity={0.9}
+									>
+										<Text style={styles.modalSecondaryText}>+30s</Text>
+									</TouchableOpacity>
+
+									<TouchableOpacity
+										style={styles.modalSecondaryBtn}
+										onPress={skipRest}
+										activeOpacity={0.9}
+									>
+										<Text style={styles.modalSecondaryText}>Skip</Text>
+									</TouchableOpacity>
+								</View>
+
 								<TouchableOpacity
-									style={styles.modalSecondaryBtn}
-									onPress={() => addRest(30)}
-									activeOpacity={0.9}
-								>
-									<Text style={styles.modalSecondaryText}>+30s</Text>
-								</TouchableOpacity>
-
-								<TouchableOpacity
-									style={styles.modalSecondaryBtn}
+									style={styles.modalPrimaryBtn}
 									onPress={skipRest}
 									activeOpacity={0.9}
 								>
-									<Text style={styles.modalSecondaryText}>Skip</Text>
+									<Text style={styles.modalPrimaryText}>Close</Text>
 								</TouchableOpacity>
 							</View>
-
-							<TouchableOpacity
-								style={styles.modalPrimaryBtn}
-								onPress={skipRest}
-								activeOpacity={0.9}
-							>
-								<Text style={styles.modalPrimaryText}>Close</Text>
-							</TouchableOpacity>
 						</View>
-					</View>
-				</Modal>
+					</Modal>
 
-				{/* Exercise List */}
-				<FlatList
-					data={session.exercises}
-					keyExtractor={(item, idx) => `${item.name}-${idx}`}
-					contentContainerStyle={{ paddingBottom: 98 }}
-					renderItem={({ item, index }) => {
-						const completed = isExerciseCompleted(item);
-						return (
-							<View style={styles.exerciseCard}>
-								<TouchableOpacity
-									activeOpacity={0.85}
-									onPress={() => toggleExpanded(index)}
-									style={styles.accordionHeader}
-								>
-									<View style={styles.exerciseHeaderLeft}>
-										<View style={styles.exerciseIcon}>
-											<Text style={styles.exerciseIconText}>🏋️</Text>
-										</View>
-										<View style={{ flex: 1 }}>
-											<Text style={styles.exerciseName}>{item.name}</Text>
-											<Text style={styles.exerciseMeta}>
-												{item.targetSets} sets, {item.targetReps}{' '}
-												{String(item.targetReps).toLowerCase() === 'time'
-													? ''
-													: 'reps'}
-												{item.note ? ` • ${item.note}` : ''}
-											</Text>
-
-											<Text
-												style={[
-													styles.exerciseStatus,
-													completed && styles.exerciseStatusDone
-												]}
-											>
-												{completed ? 'Completed' : 'In progress'}
-											</Text>
-										</View>
-									</View>
-
-									<Text style={styles.chevron}>
-										{item.expanded ? '˅' : '›'}
-									</Text>
-								</TouchableOpacity>
-
-								{item.expanded ? (
-									<View style={{ marginTop: 10 }}>
-										<View style={styles.tableHeader}>
-											<Text style={[styles.th, { width: 44 }]}>Set</Text>
-											<Text style={[styles.th, { flex: 1 }]}>Weight (lbs)</Text>
-											<Text style={[styles.th, { width: 110 }]}>
-												{String(item.targetReps).toLowerCase() === 'time'
-													? 'Time (sec)'
-													: 'Reps'}
-											</Text>
-											<Text
-												style={[styles.th, { width: 84, textAlign: 'right' }]}
-											>
-												Action
-											</Text>
-										</View>
-
-										{item.sets.map((s) => (
-											<View
-												key={`${item.name}-${s.setIndex}`}
-												style={styles.tableRow}
-											>
-												<Text style={[styles.tdSet, { width: 44 }]}>
-													{s.setIndex}
+					{/* Exercise List */}
+					<FlatList
+						data={session.exercises}
+						keyExtractor={(item, idx) => `${item.name}-${idx}`}
+						contentContainerStyle={{ paddingBottom: 98 }}
+						renderItem={({ item, index }) => {
+							const completed = isExerciseCompleted(item);
+							return (
+								<View style={styles.exerciseCard}>
+									<TouchableOpacity
+										activeOpacity={0.85}
+										onPress={() => toggleExpanded(index)}
+										style={styles.accordionHeader}
+									>
+										<View style={styles.exerciseHeaderLeft}>
+											<View style={styles.exerciseIcon}>
+												<Text style={styles.exerciseIconText}>🏋️</Text>
+											</View>
+											<View style={{ flex: 1 }}>
+												<Text style={styles.exerciseName}>{item.name}</Text>
+												<Text style={styles.exerciseMeta}>
+													{item.targetSets} sets, {item.targetReps}{' '}
+													{String(item.targetReps).toLowerCase() === 'time'
+														? ''
+														: 'reps'}
+													{item.note ? ` • ${item.note}` : ''}
 												</Text>
 
-												<TextInput
-													value={String(s.weight)}
-													onChangeText={(t) =>
-														updateSetField(index, s.setIndex, {
-															weight: normalizeNumberText(t, { decimals: 1 })
-														})
-													}
-													editable={!s.saved}
-													placeholder={
-														String(item.targetReps).toLowerCase() === 'time'
-															? '—'
-															: '0'
-													}
-													placeholderTextColor='#9CA3AF'
-													keyboardType={
-														Platform.OS === 'ios' ? 'decimal-pad' : 'numeric'
-													}
+												<Text
 													style={[
-														styles.inputCell,
-														{ flex: 1 },
-														s.saved && styles.inputCellSaved
+														styles.exerciseStatus,
+														completed && styles.exerciseStatusDone
 													]}
-												/>
-
-												<TextInput
-													value={String(s.reps)}
-													onChangeText={(t) =>
-														updateSetField(index, s.setIndex, {
-															reps: normalizeNumberText(t, { decimals: 0 })
-														})
-													}
-													editable={!s.saved}
-													placeholder='0'
-													placeholderTextColor='#9CA3AF'
-													keyboardType='numeric'
-													style={[
-														styles.inputCell,
-														{ width: 110 },
-														s.saved && styles.inputCellSaved
-													]}
-												/>
-
-												<View
-													style={{ width: 84, flexDirection: 'row', gap: 4 }}
 												>
-													{!s.saved && item.sets.length > 1 && (
-														<TouchableOpacity
-															style={styles.removeSetBtn}
-															onPress={() => removeSet(index, s.setIndex)}
-															activeOpacity={0.9}
-														>
-															<Text style={styles.removeSetBtnText}>×</Text>
-														</TouchableOpacity>
-													)}
-
-													{s.saved ? (
-														<View style={[styles.savedPill, { flex: 1 }]}>
-															<Text style={styles.savedPillText}>Saved</Text>
-														</View>
-													) : (
-														<TouchableOpacity
-															style={[styles.saveSetBtn, { flex: 1 }]}
-															onPress={() => saveSet(index, s.setIndex)}
-															activeOpacity={0.9}
-														>
-															<Text style={styles.saveSetBtnText}>Save</Text>
-														</TouchableOpacity>
-													)}
-												</View>
+													{completed ? 'Completed' : 'In progress'}
+												</Text>
 											</View>
-										))}
+										</View>
 
-										{/* Add Set Button */}
-										<TouchableOpacity
-											style={styles.addSetButton}
-											onPress={() => addSet(index)}
-											activeOpacity={0.9}
-										>
-											<Text style={styles.addSetButtonText}>+ Add Set</Text>
-										</TouchableOpacity>
-									</View>
-								) : null}
-							</View>
-						);
-					}}
-				/>
+										<Text style={styles.chevron}>
+											{item.expanded ? '˅' : '›'}
+										</Text>
+									</TouchableOpacity>
 
-				{/* Bottom CTA */}
-				<View style={styles.bottomCta}>
-					<TouchableOpacity
-						style={styles.finishButton}
-						onPress={finishWorkout}
-						activeOpacity={0.9}
-					>
-						<Text style={styles.finishButtonText}>Finish Workout</Text>
-					</TouchableOpacity>
-				</View>
-			</KeyboardAvoidingView>
-		</SafeAreaView>
+									{item.expanded ? (
+										<View style={{ marginTop: 10 }}>
+											<View style={styles.tableHeader}>
+												<Text style={[styles.th, { width: 44 }]}>Set</Text>
+												<Text style={[styles.th, { flex: 1 }]}>
+													Weight (lbs)
+												</Text>
+												<Text style={[styles.th, { width: 110 }]}>
+													{String(item.targetReps).toLowerCase() === 'time'
+														? 'Time (sec)'
+														: 'Reps'}
+												</Text>
+												<Text
+													style={[styles.th, { width: 84, textAlign: 'right' }]}
+												>
+													Action
+												</Text>
+											</View>
+
+											{item.sets.map((s) => (
+												<SwipeableSetRow
+													key={`${item.name}-${s.setIndex}`}
+													item={item}
+													set={s}
+													exerciseIndex={index}
+													setIndex={s.setIndex}
+													canRemove={!s.saved && item.sets.length > 1}
+													updateSetField={updateSetField}
+													saveSet={saveSet}
+													removeSet={removeSet}
+													normalizeNumberText={normalizeNumberText}
+												/>
+											))}
+
+											{/* Add Set Button */}
+											<TouchableOpacity
+												style={styles.addSetButton}
+												onPress={() => addSet(index)}
+												activeOpacity={0.9}
+											>
+												<Text style={styles.addSetButtonText}>+ Add Set</Text>
+											</TouchableOpacity>
+										</View>
+									) : null}
+								</View>
+							);
+						}}
+					/>
+
+					{/* Bottom CTA */}
+					<View style={styles.bottomCta}>
+						<TouchableOpacity
+							style={styles.finishButton}
+							onPress={finishWorkout}
+							activeOpacity={0.9}
+						>
+							<Text style={styles.finishButtonText}>Finish Workout</Text>
+						</TouchableOpacity>
+					</View>
+				</KeyboardAvoidingView>
+			</SafeAreaView>
+		</GestureHandlerRootView>
 	);
 }
 
 const styles = StyleSheet.create({
-	safe: { flex: 1, backgroundColor: '#FFFFFF' },
+	safe: { flex: 1, backgroundColor: '#000000' },
 	container: { flex: 1, paddingHorizontal: 18, paddingTop: 8 },
 
 	loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-	loadingText: { fontSize: 14, fontWeight: '700', color: '#6B7280' },
+	loadingText: { fontSize: 14, color: '#999999', fontFamily: FontFamily.black },
 
 	topBar: {
 		flexDirection: 'row',
@@ -800,22 +844,27 @@ const styles = StyleSheet.create({
 	backChevron: {
 		fontSize: 32,
 		fontWeight: '900',
-		color: '#1E66F5',
+		color: '#AFFF2B',
 		marginTop: -6
 	},
-	topTitle: { fontSize: 18, fontWeight: '900', color: '#0B1220' },
-	settingsIcon: { fontSize: 20, color: '#6B7280' },
+	topTitle: { fontSize: 18, fontFamily: FontFamily.black, color: '#FFFFFF' },
+	settingsIcon: { fontSize: 20, color: '#999999' },
 
 	header: { marginBottom: 12 },
 	headerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 	tagPill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
 	tagText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
-	headerTitle: { fontSize: 22, fontWeight: '900', color: '#0B1220' },
-	dateText: { marginTop: 6, fontSize: 13, fontWeight: '700', color: '#6B7280' },
+	headerTitle: { fontSize: 22, fontFamily: FontFamily.black, color: '#FFFFFF' },
+	dateText: {
+		marginTop: 6,
+		fontSize: 13,
+		fontFamily: FontFamily.black,
+		color: '#999999'
+	},
 
 	modalBackdrop: {
 		flex: 1,
-		backgroundColor: 'rgba(0,0,0,0.35)',
+		backgroundColor: 'rgba(0,0,0,0.85)',
 		alignItems: 'center',
 		justifyContent: 'center',
 		padding: 18
@@ -823,29 +872,29 @@ const styles = StyleSheet.create({
 	modalCard: {
 		width: '100%',
 		borderRadius: 18,
-		backgroundColor: '#FFFFFF',
+		backgroundColor: '#1A1A1A',
 		padding: 18,
 		borderWidth: 1,
-		borderColor: '#E7EDF6'
+		borderColor: '#333333'
 	},
 	modalTitle: {
 		fontSize: 18,
-		fontWeight: '900',
-		color: '#0B1220',
+		fontFamily: FontFamily.black,
+		color: '#AFFF2B',
 		textAlign: 'center'
 	},
 	modalTimer: {
 		marginTop: 10,
 		fontSize: 44,
 		fontWeight: '900',
-		color: '#1E66F5',
+		color: '#AFFF2B',
 		textAlign: 'center'
 	},
 	modalContext: {
 		marginTop: 10,
 		fontSize: 13,
 		fontWeight: '700',
-		color: '#6B7280',
+		color: '#999999',
 		textAlign: 'center'
 	},
 	modalActionsRow: { flexDirection: 'row', gap: 10, marginTop: 16 },
@@ -853,26 +902,34 @@ const styles = StyleSheet.create({
 		flex: 1,
 		height: 48,
 		borderRadius: 14,
-		backgroundColor: '#F3F4F6',
+		backgroundColor: '#2A2A2A',
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
-	modalSecondaryText: { fontSize: 14, fontWeight: '900', color: '#111827' },
+	modalSecondaryText: {
+		fontSize: 14,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
+	},
 	modalPrimaryBtn: {
 		marginTop: 10,
 		height: 50,
 		borderRadius: 14,
-		backgroundColor: '#1E66F5',
+		backgroundColor: '#AFFF2B',
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
-	modalPrimaryText: { fontSize: 16, fontWeight: '900', color: '#FFFFFF' },
+	modalPrimaryText: {
+		fontSize: 16,
+		fontFamily: FontFamily.black,
+		color: '#000000'
+	},
 
 	exerciseCard: {
 		borderWidth: 1,
-		borderColor: '#E7EDF6',
+		borderColor: '#333333',
 		borderRadius: 16,
-		backgroundColor: '#FFFFFF',
+		backgroundColor: '#1A1A1A',
 		padding: 14,
 		marginBottom: 12
 	},
@@ -892,123 +949,140 @@ const styles = StyleSheet.create({
 		width: 36,
 		height: 36,
 		borderRadius: 12,
-		backgroundColor: '#EFF4FF',
+		backgroundColor: '#2A2A2A',
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
 	exerciseIconText: { fontSize: 16 },
-	exerciseName: { fontSize: 16, fontWeight: '900', color: '#111827' },
+	exerciseName: {
+		fontSize: 16,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
+	},
 	exerciseMeta: {
 		fontSize: 12,
-		fontWeight: '700',
-		color: '#6B7280',
+		color: '#999999',
 		marginTop: 2
 	},
 	exerciseStatus: {
 		marginTop: 6,
 		fontSize: 12,
 		fontWeight: '900',
-		color: '#F97316'
+		color: '#FFD60A'
 	},
-	exerciseStatusDone: { color: '#10B981' },
+	exerciseStatusDone: { color: '#AFFF2B' },
 	chevron: {
 		fontSize: 22,
 		fontWeight: '900',
-		color: '#9CA3AF',
+		color: '#666666',
 		marginLeft: 10
 	},
 
 	tableHeader: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		backgroundColor: '#F8FAFC',
+		backgroundColor: '#0D0D0D',
 		borderRadius: 12,
 		paddingVertical: 10,
 		paddingHorizontal: 10,
 		marginBottom: 8
 	},
-	th: { fontSize: 12, fontWeight: '900', color: '#6B7280' },
+	th: { fontSize: 12, fontWeight: '900', color: '#999999' },
 
 	tableRow: {
 		flexDirection: 'row',
 		alignItems: 'center',
 		gap: 10,
-		marginBottom: 8
+		marginBottom: 8,
+		backgroundColor: '#1A1A1A'
 	},
 	tdSet: {
 		fontSize: 14,
 		fontWeight: '900',
-		color: '#111827',
+		color: '#FFFFFF',
 		textAlign: 'center'
 	},
 
 	inputCell: {
 		height: 44,
 		borderWidth: 1,
-		borderColor: '#E5E7EB',
+		borderColor: '#333333',
 		borderRadius: 12,
 		paddingHorizontal: 12,
 		fontSize: 14,
+		fontFamily: FontFamily.black,
 		fontWeight: '800',
-		color: '#0B1220',
-		backgroundColor: '#FFFFFF'
+		color: '#FFFFFF',
+		backgroundColor: '#0D0D0D'
 	},
-	inputCellSaved: { backgroundColor: '#F3F4F6', color: '#6B7280' },
-
-	removeSetBtn: {
-		width: 28,
-		height: 44,
-		borderRadius: 12,
-		backgroundColor: '#FEE2E2',
-		alignItems: 'center',
-		justifyContent: 'center',
-		borderWidth: 1,
-		borderColor: '#FCA5A5'
-	},
-	removeSetBtnText: {
-		color: '#DC2626',
-		fontSize: 20,
-		fontWeight: '900',
-		marginTop: -2
-	},
+	inputCellSaved: { backgroundColor: '#F3F4F6', color: '#999999' },
 
 	saveSetBtn: {
 		height: 44,
 		borderRadius: 12,
-		backgroundColor: '#1E66F5',
+		backgroundColor: '#AFFF2B',
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
-	saveSetBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '900' },
+	saveSetBtnText: {
+		color: '#000000',
+		fontSize: 13,
+		fontFamily: FontFamily.black
+	},
 
 	savedPill: {
 		height: 44,
 		borderRadius: 12,
-		backgroundColor: '#E7F8EF',
+		backgroundColor: '#1A3A1F',
 		alignItems: 'center',
 		justifyContent: 'center',
 		borderWidth: 1,
-		borderColor: '#BDECCF'
+		borderColor: '#2D5F34'
 	},
-	savedPillText: { color: '#10B981', fontSize: 13, fontWeight: '900' },
+	savedPillText: {
+		color: '#AFFF2B',
+		fontSize: 13,
+		fontFamily: FontFamily.black
+	},
+
+	deleteAction: {
+		backgroundColor: '#FF453A',
+		justifyContent: 'center',
+		alignItems: 'flex-end',
+		paddingHorizontal: 20,
+		marginBottom: 8,
+		borderTopRightRadius: 12,
+		borderBottomRightRadius: 12,
+		marginLeft: 10
+	},
+	deleteActionText: {
+		color: '#FFFFFF',
+		fontSize: 14,
+		fontFamily: FontFamily.black,
+		fontWeight: '900'
+	},
 
 	addSetButton: {
 		marginTop: 8,
 		height: 44,
 		borderRadius: 12,
-		backgroundColor: '#F3F4F6',
+		backgroundColor: '#2A2A2A',
 		alignItems: 'center',
 		justifyContent: 'center',
 		borderWidth: 1,
-		borderColor: '#E5E7EB'
+		borderColor: '#333333'
 	},
-	addSetButtonText: { color: '#1E66F5', fontSize: 14, fontWeight: '900' },
+	addSetButtonText: {
+		color: '#AFFF2B',
+		fontSize: 14,
+		fontFamily: FontFamily.black
+	},
 
 	bottomCta: { position: 'absolute', left: 18, right: 18, bottom: 12 },
 	finishButton: {
 		height: 56,
 		borderRadius: 14,
-		backgroundColor: '#1E66F5',
+		backgroundColor: '#AFFF2B',
 		alignItems: 'center',
 		justifyContent: 'center',
 		shadowColor: '#000',
@@ -1017,5 +1091,9 @@ const styles = StyleSheet.create({
 		shadowOffset: { width: 0, height: 6 },
 		elevation: 2
 	},
-	finishButtonText: { color: '#FFFFFF', fontSize: 18, fontWeight: '900' }
+	finishButtonText: {
+		color: '#000000',
+		fontSize: 18,
+		fontFamily: FontFamily.black
+	}
 });
