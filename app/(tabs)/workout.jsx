@@ -1,3 +1,11 @@
+import {
+	computeSessionStats,
+	shareCompletedSession
+} from '@/controllers/sessionController';
+import { useTodayWorkoutSession } from '@/hooks/useTodayWorkoutSession';
+import { formatLongDate } from '@/utils/dateUtils';
+import { formatLocalDateKey } from '@/utils/weightUtils';
+import { getWorkoutForDate, tagColor } from '@/utils/workoutPlan';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import {
@@ -9,15 +17,7 @@ import {
 	View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-import {
-	computeSessionStats,
-	shareCompletedSession
-} from '@/controllers/sessionController';
-import { useTodayWorkoutSession } from '@/hooks/useTodayWorkoutSession';
-import { formatLongDate } from '@/utils/dateUtils';
-import { formatLocalDateKey } from '@/utils/weightUtils';
-import { getWorkoutForDate, tagColor } from '@/utils/workoutPlan';
+import { FontFamily } from '../../constants/fonts'; // Import font utilities
 
 function getStartButtonLabel({
 	isRestDay,
@@ -306,7 +306,7 @@ export default function WorkoutTab() {
 }
 
 const styles = StyleSheet.create({
-	safe: { flex: 1, backgroundColor: '#000000', paddingBottom: 90 }, // Black background
+	safe: { flex: 1, backgroundColor: '#000000', paddingBottom: 90 },
 	container: { flex: 1, paddingHorizontal: 18, paddingTop: 10 },
 
 	headerRow: {
@@ -320,13 +320,17 @@ const styles = StyleSheet.create({
 		width: 40,
 		height: 40,
 		borderRadius: 12,
-		backgroundColor: 'rgba(175, 255, 43, 0.15)', // Green tint
+		backgroundColor: 'rgba(175, 255, 43, 0.15)',
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
 	iconText: { fontSize: 18 },
-	title: { fontSize: 18, fontWeight: '900', color: '#FFFFFF' }, // White text
-	settingsIcon: { fontSize: 20, color: '#999999' }, // Light gray
+	title: {
+		fontSize: 18,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
+	},
+	settingsIcon: { fontSize: 20, color: '#999999' },
 
 	workoutTitleRow: {
 		flexDirection: 'row',
@@ -335,14 +339,22 @@ const styles = StyleSheet.create({
 		marginBottom: 14
 	},
 	tagPill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
-	tagText: { color: '#FFFFFF', fontWeight: '900', fontSize: 12 },
-	workoutTitle: { fontSize: 22, fontWeight: '900', color: '#FFFFFF' }, // White heading
+	tagText: {
+		color: '#FFFFFF',
+		fontFamily: FontFamily.bold,
+		fontSize: 12
+	},
+	workoutTitle: {
+		fontSize: 22,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
+	},
 
 	summaryCard: {
 		borderWidth: 1,
-		borderColor: '#333333', // Dark border
+		borderColor: '#333333',
 		borderRadius: 16,
-		backgroundColor: '#1A1A1A', // Dark card
+		backgroundColor: '#1A1A1A',
 		padding: 14,
 		marginBottom: 12
 	},
@@ -351,24 +363,36 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between',
 		alignItems: 'baseline'
 	},
-	summaryTitle: { fontSize: 16, fontWeight: '900', color: '#FFFFFF' }, // White heading
-	summarySubtitle: { fontSize: 12, fontWeight: '800', color: '#AFFF2B' }, // Green accent
+	summaryTitle: {
+		fontSize: 16,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
+	},
+	summarySubtitle: {
+		fontSize: 12,
+		fontFamily: FontFamily.bold,
+		color: '#AFFF2B'
+	},
 
 	statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
 	statBox: {
 		width: '48%',
 		borderWidth: 1,
-		borderColor: '#333333', // Dark border
+		borderColor: '#333333',
 		borderRadius: 14,
 		padding: 12,
-		backgroundColor: '#0D0D0D' // Darker background
+		backgroundColor: '#0D0D0D'
 	},
-	statLabel: { fontSize: 12, fontWeight: '800', color: '#999999' }, // Light gray
+	statLabel: {
+		fontSize: 12,
+		fontFamily: FontFamily.bold,
+		color: '#999999'
+	},
 	statValue: {
 		marginTop: 4,
 		fontSize: 18,
-		fontWeight: '900',
-		color: '#FFFFFF' // White text
+		fontFamily: FontFamily.bold,
+		color: '#FFFFFF'
 	},
 
 	summaryRow: {
@@ -377,11 +401,15 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between',
 		gap: 12
 	},
-	summaryRowLabel: { fontSize: 12, fontWeight: '900', color: '#999999' }, // Light gray
+	summaryRowLabel: {
+		fontSize: 12,
+		fontFamily: FontFamily.black,
+		color: '#999999'
+	},
 	summaryRowValue: {
 		fontSize: 12,
-		fontWeight: '900',
-		color: '#FFFFFF', // White text
+		fontFamily: FontFamily.bold,
+		color: '#FFFFFF',
 		flex: 1,
 		textAlign: 'right'
 	},
@@ -391,18 +419,22 @@ const styles = StyleSheet.create({
 		flex: 1,
 		height: 44,
 		borderRadius: 14,
-		backgroundColor: '#2A2A2A', // Dark button
+		backgroundColor: '#2A2A2A',
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
-	secondaryButtonText: { fontSize: 14, fontWeight: '900', color: '#AFFF2B' }, // Green text
+	secondaryButtonText: {
+		fontSize: 14,
+		fontFamily: FontFamily.black,
+		color: '#AFFF2B'
+	},
 
 	listCard: {
 		flex: 1,
 		borderWidth: 1,
-		borderColor: '#333333', // Dark border
+		borderColor: '#333333',
 		borderRadius: 16,
-		backgroundColor: '#1A1A1A', // Dark card
+		backgroundColor: '#1A1A1A',
 		overflow: 'hidden'
 	},
 
@@ -423,54 +455,66 @@ const styles = StyleSheet.create({
 		width: 34,
 		height: 34,
 		borderRadius: 12,
-		backgroundColor: '#2A2A2A', // Dark icon background
+		backgroundColor: '#2A2A2A',
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
-	exerciseIconText: { fontSize: 18, fontWeight: '900', color: '#999999' }, // Light gray
-	exerciseName: { fontSize: 16, fontWeight: '900', color: '#FFFFFF' }, // White text
+	exerciseIconText: {
+		fontSize: 18,
+		fontFamily: FontFamily.bold,
+		color: '#999999'
+	},
+	exerciseName: {
+		fontSize: 16,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
+	},
 	exerciseMeta: {
 		fontSize: 12,
-		fontWeight: '700',
-		color: '#999999', // Light gray
+		fontFamily: FontFamily.semiBold,
+		color: '#999999',
 		marginTop: 2
 	},
 	chevron: {
 		fontSize: 24,
-		fontWeight: '900',
-		color: '#666666', // Medium gray
+		fontFamily: FontFamily.bold,
+		color: '#666666',
 		marginLeft: 10
 	},
-	rowDivider: { height: 1, backgroundColor: '#333333' }, // Dark divider
+	rowDivider: { height: 1, backgroundColor: '#333333' },
 
 	restCard: {
 		flex: 1,
 		borderWidth: 1,
-		borderColor: '#333333', // Dark border
+		borderColor: '#333333',
 		borderRadius: 16,
-		backgroundColor: '#1A1A1A', // Dark card
+		backgroundColor: '#1A1A1A',
 		padding: 16
 	},
 	restTitle: {
 		fontSize: 18,
-		fontWeight: '900',
-		color: '#FFFFFF', // White heading
+		fontFamily: FontFamily.bold,
+		color: '#FFFFFF',
 		marginBottom: 8
 	},
 	restBody: {
 		fontSize: 13,
-		fontWeight: '700',
-		color: '#999999', // Light gray
+		fontFamily: FontFamily.semiBold,
+		color: '#999999',
 		lineHeight: 18
 	},
 
-	placeholder: { fontSize: 14, color: '#999999', marginTop: 20 }, // Light gray
+	placeholder: {
+		fontSize: 14,
+		color: '#999999',
+		marginTop: 20
+	},
 
 	bottomCtaWrap: { paddingTop: 12, paddingBottom: 12 },
 	startButton: {
 		height: 54,
 		borderRadius: 14,
-		backgroundColor: '#AFFF2B', // Green button
+		backgroundColor: '#AFFF2B',
 		alignItems: 'center',
 		justifyContent: 'center',
 		shadowColor: '#AFFF2B',
@@ -479,6 +523,10 @@ const styles = StyleSheet.create({
 		shadowOffset: { width: 0, height: 6 },
 		elevation: 5
 	},
-	startButtonDisabled: { backgroundColor: '#333333' }, // Dark disabled
-	startButtonText: { color: '#000000', fontSize: 18, fontWeight: '900' } // Black text on green
+	startButtonDisabled: { backgroundColor: '#333333' },
+	startButtonText: {
+		color: '#000000',
+		fontSize: 18,
+		fontFamily: FontFamily.black
+	}
 });

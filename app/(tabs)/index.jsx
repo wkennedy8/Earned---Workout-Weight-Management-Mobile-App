@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import SettingsBottomSheet from '@/components/SettingsBottomSheet';
 import { useProfile } from '@/hooks/useProfile';
 import { useWeightEntries } from '@/hooks/useWeightEntries';
+import { FontFamily } from '../../constants/fonts'; // Import font utilities
 import { formatDisplayDate } from '../../utils/dateUtils';
 import {
 	isValidWeightNumber,
@@ -405,7 +406,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-	safe: { flex: 1, backgroundColor: '#000000', paddingBottom: 90 }, // Black background
+	safe: { flex: 1, backgroundColor: '#000000', paddingBottom: 90 },
 	container: { flex: 1 },
 
 	scrollView: { flex: 1 },
@@ -426,12 +427,16 @@ const styles = StyleSheet.create({
 		width: 40,
 		height: 40,
 		borderRadius: 12,
-		backgroundColor: 'rgba(175, 255, 43, 0.15)', // Green tint background
+		backgroundColor: 'rgba(175, 255, 43, 0.15)',
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
 	iconText: { fontSize: 18 },
-	title: { fontSize: 26, fontWeight: '800', color: '#FFFFFF' }, // White text
+	title: {
+		fontSize: 26,
+		fontFamily: FontFamily.extraBold,
+		color: '#FFFFFF'
+	},
 
 	profileButton: {
 		width: 40,
@@ -439,8 +444,8 @@ const styles = StyleSheet.create({
 		borderRadius: 20,
 		overflow: 'hidden',
 		borderWidth: 2,
-		borderColor: '#333333', // Dark border
-		backgroundColor: '#1A1A1A' // Dark background
+		borderColor: '#333333',
+		backgroundColor: '#1A1A1A'
 	},
 	profileImage: {
 		width: '100%',
@@ -451,7 +456,7 @@ const styles = StyleSheet.create({
 		height: '100%',
 		alignItems: 'center',
 		justifyContent: 'center',
-		backgroundColor: '#1A1A1A' // Dark background
+		backgroundColor: '#1A1A1A'
 	},
 	profilePlaceholderText: {
 		fontSize: 20
@@ -459,9 +464,9 @@ const styles = StyleSheet.create({
 
 	macrosCard: {
 		borderWidth: 1,
-		borderColor: '#333333', // Dark border
+		borderColor: '#333333',
 		borderRadius: 16,
-		backgroundColor: '#1A1A1A', // Dark card background
+		backgroundColor: '#1A1A1A',
 		padding: 14,
 		marginBottom: 12
 	},
@@ -470,36 +475,48 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'space-between'
 	},
-	macrosTitle: { fontSize: 16, fontWeight: '900', color: '#fff' }, // Green heading
+	macrosTitle: {
+		fontSize: 16,
+		fontFamily: FontFamily.black,
+		color: '#fff'
+	},
 	caloriePill: {
 		paddingHorizontal: 10,
 		paddingVertical: 6,
 		borderRadius: 999,
-		backgroundColor: '#2A2A2A' // Dark pill background
+		backgroundColor: '#2A2A2A'
 	},
-	caloriePillText: { fontSize: 12, fontWeight: '900', color: '#FFFFFF' }, // White text
+	caloriePillText: {
+		fontSize: 12,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
+	},
 	macroRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
 	macroChip: {
 		flex: 1,
 		borderWidth: 1,
-		borderColor: '#333333', // Dark border
+		borderColor: '#333333',
 		borderRadius: 14,
 		padding: 10,
-		backgroundColor: '#0D0D0D' // Darker chip background
+		backgroundColor: '#0D0D0D'
 	},
-	macroChipLabel: { fontSize: 11, fontWeight: '800', color: '#999999' }, // Light gray
+	macroChipLabel: {
+		fontSize: 11,
+		fontFamily: FontFamily.extraBold,
+		color: '#999999'
+	},
 	macroChipValue: {
 		marginTop: 6,
 		fontSize: 16,
-		fontWeight: '900',
-		color: '#FFFFFF' // White text
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
 	},
 
 	section: { marginTop: 6 },
 	sectionTitle: {
 		fontSize: 18,
-		fontWeight: '800',
-		color: '#fff', // Green heading
+		fontFamily: FontFamily.extraBold,
+		color: '#fff',
 		marginBottom: 10
 	},
 
@@ -507,26 +524,35 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		alignItems: 'center',
 		borderWidth: 1,
-		borderColor: '#333333', // Dark border
+		borderColor: '#333333',
 		borderRadius: 14,
 		paddingHorizontal: 14,
 		height: 54,
-		backgroundColor: '#1A1A1A' // Dark input background
+		backgroundColor: '#1A1A1A'
 	},
-	input: { flex: 1, fontSize: 18, color: '#FFFFFF' }, // White text
+	input: {
+		flex: 1,
+		fontSize: 18,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
+	},
 	lbsPill: {
 		paddingHorizontal: 10,
 		paddingVertical: 6,
 		borderRadius: 999,
-		backgroundColor: '#2A2A2A' // Dark pill
+		backgroundColor: '#2A2A2A'
 	},
-	lbsText: { fontSize: 12, fontWeight: '700', color: '#999999' }, // Light gray
+	lbsText: {
+		fontSize: 12,
+		fontFamily: FontFamily.bold,
+		color: '#999999'
+	},
 
 	saveButton: {
 		marginTop: 12,
 		height: 52,
 		borderRadius: 14,
-		backgroundColor: '#AFFF2B', // Green button
+		backgroundColor: '#AFFF2B',
 		alignItems: 'center',
 		justifyContent: 'center',
 		shadowColor: '#AFFF2B',
@@ -535,40 +561,53 @@ const styles = StyleSheet.create({
 		shadowOffset: { width: 0, height: 6 },
 		elevation: 5
 	},
-	saveButtonText: { color: '#000000', fontSize: 18, fontWeight: '800' }, // Black text on green
+	saveButtonText: {
+		color: '#000000',
+		fontSize: 18,
+		fontFamily: FontFamily.extraBold
+	},
 
 	trackerCard: {
 		marginTop: 14,
 		borderWidth: 1,
-		borderColor: '#333333', // Dark border
+		borderColor: '#333333',
 		borderRadius: 16,
-		backgroundColor: '#1A1A1A', // Dark card
+		backgroundColor: '#1A1A1A',
 		padding: 14
 	},
 	trackerTitle: {
 		fontSize: 14,
-		fontWeight: '900',
-		color: '#fff', // White heading
+		fontFamily: FontFamily.black,
+		color: '#fff',
 		marginBottom: 8
 	},
-	trackerValue: { fontSize: 28, fontWeight: '900', marginBottom: 8 },
-	trackerValueGreen: { color: '#AFFF2B' }, // Green for good progress
-	trackerValueRed: { color: '#FF453A' }, // Red for bad progress
-	trackerValueYellow: { color: '#FFD60A' }, // Yellow for neutral
+	trackerValue: {
+		fontSize: 28,
+		fontFamily: FontFamily.black,
+		marginBottom: 8
+	},
+	trackerValueGreen: { color: '#AFFF2B' },
+	trackerValueRed: { color: '#FF453A' },
+	trackerValueYellow: { color: '#FFD60A' },
 	trackerSubtle: {
 		fontSize: 12,
-		fontWeight: '700',
-		color: '#999999', // Light gray
+		fontFamily: FontFamily.bold,
+		color: '#999999',
 		lineHeight: 18
 	},
 
-	subtle: { fontSize: 12, color: '#999999', fontWeight: '600', marginTop: 20 }, // Light gray
+	subtle: {
+		fontSize: 12,
+		color: '#999999',
+		fontFamily: FontFamily.semiBold,
+		marginTop: 20
+	},
 
 	card: {
 		borderWidth: 1,
-		borderColor: '#333333', // Dark border
+		borderColor: '#333333',
 		borderRadius: 16,
-		backgroundColor: '#1A1A1A', // Dark card
+		backgroundColor: '#1A1A1A',
 		overflow: 'hidden'
 	},
 	historyRow: {
@@ -578,21 +617,34 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 14,
 		paddingVertical: 14
 	},
-	historyDate: { fontSize: 16, color: '#FFFFFF', fontWeight: '700' }, // White text
-	historyWeight: { fontSize: 18, color: '#AFFF2B', fontWeight: '800' }, // Green accent
+	historyDate: {
+		fontSize: 16,
+		color: '#FFFFFF',
+		fontFamily: FontFamily.black
+	},
+	historyWeight: {
+		fontSize: 18,
+		color: '#AFFF2B',
+		fontFamily: FontFamily.extraBold
+	},
 
 	emptyState: { paddingHorizontal: 14, paddingVertical: 18 },
 	emptyTitle: {
 		fontSize: 16,
-		fontWeight: '800',
-		color: '#FFFFFF', // White text
+		fontFamily: FontFamily.extraBold,
+		color: '#FFFFFF',
 		marginBottom: 4
 	},
-	emptyBody: { fontSize: 13, color: '#999999', lineHeight: 18 }, // Light gray
+	emptyBody: {
+		fontSize: 13,
+		color: '#999999',
+		fontFamily: FontFamily.semiBold,
+		lineHeight: 18
+	},
 
 	modalBackdrop: {
 		flex: 1,
-		backgroundColor: 'rgba(0,0,0,0.85)', // Darker backdrop
+		backgroundColor: 'rgba(0,0,0,0.85)',
 		alignItems: 'center',
 		justifyContent: 'center',
 		padding: 18
@@ -600,30 +652,30 @@ const styles = StyleSheet.create({
 	modalCard: {
 		width: '100%',
 		borderRadius: 18,
-		backgroundColor: '#1A1A1A', // Dark modal
+		backgroundColor: '#1A1A1A',
 		padding: 18,
 		borderWidth: 1,
-		borderColor: '#333333' // Dark border
+		borderColor: '#333333'
 	},
 	modalTitle: {
 		fontSize: 18,
-		fontWeight: '900',
-		color: '#AFFF2B', // Green heading
+		fontFamily: FontFamily.black,
+		color: '#AFFF2B',
 		textAlign: 'center'
 	},
 	modalBody: {
 		marginTop: 10,
 		fontSize: 13,
-		fontWeight: '700',
-		color: '#FFFFFF', // White text
+		fontFamily: FontFamily.bold,
+		color: '#FFFFFF',
 		textAlign: 'center',
 		lineHeight: 18
 	},
 	modalSubtle: {
 		marginTop: 10,
 		fontSize: 12,
-		fontWeight: '700',
-		color: '#999999', // Light gray
+		fontFamily: FontFamily.bold,
+		color: '#999999',
 		textAlign: 'center'
 	},
 	modalActionsRow: { flexDirection: 'row', gap: 10, marginTop: 16 },
@@ -631,21 +683,29 @@ const styles = StyleSheet.create({
 		flex: 1,
 		height: 48,
 		borderRadius: 14,
-		backgroundColor: '#2A2A2A', // Dark button
+		backgroundColor: '#2A2A2A',
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
-	modalSecondaryText: { fontSize: 14, fontWeight: '900', color: '#FFFFFF' }, // White text
+	modalSecondaryText: {
+		fontSize: 14,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
+	},
 	modalPrimaryBtn: {
 		flex: 1,
 		height: 48,
 		borderRadius: 14,
-		backgroundColor: '#AFFF2B', // Green button
+		backgroundColor: '#AFFF2B',
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
-	modalPrimaryText: { fontSize: 14, fontWeight: '900', color: '#000000' }, // Black text on green
-	divider: { height: 1, backgroundColor: '#333333', marginVertical: 18 }, // Dark divider
+	modalPrimaryText: {
+		fontSize: 14,
+		fontFamily: FontFamily.black,
+		color: '#000000'
+	},
+	divider: { height: 1, backgroundColor: '#333333', marginVertical: 18 },
 
 	historyHeaderRow: {
 		flexDirection: 'row',
@@ -654,7 +714,7 @@ const styles = StyleSheet.create({
 		marginBottom: 10
 	},
 
-	rowDivider: { height: 1, backgroundColor: '#333333' }, // Dark divider
+	rowDivider: { height: 1, backgroundColor: '#333333' },
 
 	viewMoreButton: {
 		marginTop: 12,
@@ -663,15 +723,19 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		gap: 6,
 		borderRadius: 999,
-		backgroundColor: '#2A2A2A', // Dark button
+		backgroundColor: '#2A2A2A',
 		paddingHorizontal: 16,
 		paddingVertical: 10
 	},
-	viewMoreText: { fontSize: 14, fontWeight: '800', color: '#AFFF2B' }, // Green text
+	viewMoreText: {
+		fontSize: 14,
+		fontFamily: FontFamily.extraBold,
+		color: '#AFFF2B'
+	},
 	viewMoreChevron: {
 		fontSize: 18,
-		fontWeight: '900',
-		color: '#AFFF2B', // Green chevron
+		fontFamily: FontFamily.black,
+		color: '#AFFF2B',
 		marginTop: -1
 	}
 });

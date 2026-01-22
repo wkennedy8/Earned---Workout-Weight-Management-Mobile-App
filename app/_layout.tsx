@@ -1,6 +1,14 @@
 // import AuthGate from '@/components/AuthGate';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import {
+	Quicksand_300Light,
+	Quicksand_400Regular,
+	Quicksand_500Medium,
+	Quicksand_600SemiBold,
+	Quicksand_700Bold,
+	useFonts
+} from '@expo-google-fonts/quicksand';
+import {
 	DarkTheme,
 	DefaultTheme,
 	ThemeProvider
@@ -8,7 +16,7 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { AuthGate, AuthProvider } from '../context/AuthContext';
 
@@ -21,28 +29,26 @@ export const unstable_settings = {
 
 export default function RootLayout() {
 	const colorScheme = useColorScheme();
-	const [appReady, setAppReady] = useState(false);
+
+	const [fontsLoaded] = useFonts({
+		Quicksand_300Light,
+		Quicksand_400Regular,
+		Quicksand_500Medium,
+		Quicksand_600SemiBold,
+		Quicksand_700Bold
+	});
 
 	useEffect(() => {
-		(async () => {
-			try {
-				// If you load fonts/images, do it here.
-				// Example:
-				// await Font.loadAsync({ ... });
-			} catch (e) {
-				console.warn('Splash init error:', e);
-			} finally {
-				setAppReady(true);
-				// Hide splash once we're ready
-				await SplashScreen.hideAsync();
-			}
-		})();
-	}, []);
+		if (fontsLoaded) {
+			SplashScreen.hideAsync();
+		}
+	}, [fontsLoaded]);
 
-	if (!appReady) {
-		// Keep native splash visible
+	if (!fontsLoaded) {
+		// Keep native splash visible until fonts load
 		return null;
 	}
+
 	return (
 		<ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
 			<AuthProvider>

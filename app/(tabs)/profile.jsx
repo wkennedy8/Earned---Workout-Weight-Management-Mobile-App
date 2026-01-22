@@ -1,3 +1,14 @@
+import { useAuth } from '@/context/AuthContext';
+import {
+	addProgressPhoto,
+	deleteProgressPhotoFromStorage,
+	deleteProgressPhotoMetadata,
+	getProfile,
+	getProgressPhotos,
+	uploadProfilePhoto,
+	uploadProgressPhoto,
+	upsertProfile
+} from '@/controllers/profileController';
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -14,18 +25,7 @@ import {
 	View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { useAuth } from '@/context/AuthContext';
-import {
-	addProgressPhoto,
-	deleteProgressPhotoFromStorage,
-	deleteProgressPhotoMetadata,
-	getProfile,
-	getProgressPhotos,
-	uploadProfilePhoto,
-	uploadProgressPhoto,
-	upsertProfile
-} from '@/controllers/profileController';
+import { FontFamily } from '../../constants/fonts'; // Import font utilities
 
 function normalizeInt(text) {
 	return text.replace(/[^\d]/g, '').slice(0, 4);
@@ -357,7 +357,10 @@ export default function ProfileScreen() {
 
 					{/* Profile Photo */}
 					<View style={styles.card}>
-						<Text style={styles.sectionTitle}>Profile Photo</Text>
+						{/* <Text style={styles.sectionTitle}>Profile Photo</Text> */}
+						<Text style={styles.subtle}>
+							Upload a photo to personalize your profile.
+						</Text>
 
 						<View style={styles.photoRow}>
 							<View style={styles.avatar}>
@@ -372,9 +375,9 @@ export default function ProfileScreen() {
 							</View>
 
 							<View style={{ flex: 1 }}>
-								<Text style={styles.subtle}>
+								{/* <Text style={styles.subtle}>
 									Upload a photo to personalize your profile.
-								</Text>
+								</Text> */}
 								<TouchableOpacity
 									style={styles.primaryBtn}
 									onPress={pickProfilePhoto}
@@ -625,7 +628,12 @@ const styles = StyleSheet.create({
 		backgroundColor: '#1A1A1A', // Dark card
 		padding: 14
 	},
-	sectionTitle: { fontSize: 16, fontWeight: '900', color: '#FFFFFF' }, // White heading
+	sectionTitle: {
+		fontSize: 16,
+		// fontWeight: '900',
+		color: '#FFFFFF',
+		fontFamily: FontFamily.black
+	}, // White heading
 	subtle: {
 		fontSize: 12,
 		fontWeight: '700',
@@ -663,13 +671,18 @@ const styles = StyleSheet.create({
 		marginTop: 10,
 		height: 44,
 		borderRadius: 14,
-		backgroundColor: '#AFFF2B', // Green button
+		backgroundColor: '#2A2A2A', //
 		alignItems: 'center',
 		justifyContent: 'center',
 		alignSelf: 'flex-start',
 		paddingHorizontal: 14
 	},
-	primaryBtnText: { color: '#000000', fontSize: 14, fontWeight: '900' }, // Black text on green
+	primaryBtnText: {
+		color: '#AFFF2B',
+		fontSize: 14,
+		// fontWeight: '900',
+		fontFamily: FontFamily.black
+	}, // Black text on green
 
 	cardHeaderRow: {
 		flexDirection: 'row',
@@ -715,7 +728,7 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
-	saveBtnText: { color: '#000000', fontSize: 16, fontWeight: '900' }, // Black text on green
+	saveBtnText: { color: '#000000', fontSize: 16, fontFamily: FontFamily.black }, // Black text on green
 
 	goalOptions: { marginTop: 12, gap: 10 },
 	goalOption: {
@@ -736,7 +749,8 @@ const styles = StyleSheet.create({
 	goalEmoji: { fontSize: 24 },
 	goalText: {
 		fontSize: 15,
-		fontWeight: '900',
+		// fontWeight: '900',
+		fontFamily: FontFamily.black,
 		color: '#FFFFFF' // White text
 	},
 	goalTextActive: {
@@ -752,7 +766,12 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
-	secondaryBtnText: { fontSize: 14, fontWeight: '900', color: '#AFFF2B' }, // Green text
+	secondaryBtnText: {
+		fontSize: 14,
+		// fontWeight: '900',
+		color: '#AFFF2B',
+		fontFamily: FontFamily.black
+	}, // Green text
 
 	progressGrid: {
 		flexDirection: 'row',
@@ -784,7 +803,8 @@ const styles = StyleSheet.create({
 	progressBadgeText: {
 		color: '#FFFFFF',
 		fontSize: 10,
-		fontWeight: '900',
+		// fontWeight: '900',
+		fontFamily: FontFamily.black,
 		textAlign: 'center'
 	},
 
