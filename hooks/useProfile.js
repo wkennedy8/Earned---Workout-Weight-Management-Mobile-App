@@ -18,7 +18,8 @@ export function useProfile() {
 		carbs: 0,
 		fats: 0,
 		profilePhotoUri: null,
-		goal: null
+		goal: null,
+		name: ''
 	});
 	const [progressPhotos, setProgressPhotos] = useState([]);
 
@@ -46,7 +47,8 @@ export function useProfile() {
 						carbs: Number(data.carbs) || 0,
 						fats: Number(data.fats) || 0,
 						profilePhotoUri: data.profilePhotoUri || null,
-						goal: data.goal || null
+						goal: data.goal || null,
+						name: data.name || ''
 					});
 				},
 				(err) => console.warn('profile subscription error:', err)

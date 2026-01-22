@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
 	Alert,
@@ -68,13 +69,18 @@ function shouldSuggestMacroCut(entries) {
 }
 
 export default function HomeScreen() {
-	const greeting = useMemo(() => getTimeBasedGreeting('Will'), []);
+	const router = useRouter();
+
 	const [weightText, setWeightText] = useState('');
 
 	// Hooks
 	const { entries, todayKey, getEntryForDate, upsertEntry } =
 		useWeightEntries();
 	const { profile, calories, reduceCarbs } = useProfile();
+	const greeting = useMemo(
+		() => getTimeBasedGreeting(profile.name),
+		[profile.name]
+	);
 	const goal = profile.goal; // 'lose' | 'maintain' | 'gain' | null
 
 	// Stall modal state
@@ -220,16 +226,14 @@ export default function HomeScreen() {
 					{/* Header */}
 					<View style={styles.headerRow}>
 						<View style={styles.headerLeft}>
-							<View style={styles.iconBadge}>
+							{/* <View style={styles.iconBadge}>
 								<Text style={styles.iconText}>⚖️</Text>
-							</View>
+							</View> */}
 							<Text style={styles.title}>{greeting}</Text>
 						</View>
 
 						<TouchableOpacity
-							onPress={() =>
-								Alert.alert('Settings', 'Settings screen not wired yet.')
-							}
+							onPress={() => router.push('/settings')}
 							hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
 						>
 							<Text style={styles.settingsIcon}>⚙️</Text>

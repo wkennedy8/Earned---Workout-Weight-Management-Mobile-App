@@ -61,3 +61,45 @@ export function formatDuration(seconds) {
 
 	return `${secs}s`;
 }
+
+/**
+ * Format phone number as user types
+ * Converts: 5551234567 → (555) 123-4567
+ */
+export function formatPhoneNumber(value) {
+	if (!value) return '';
+
+	// Remove all non-digits
+	const cleaned = value.replace(/\D/g, '');
+
+	// Limit to 10 digits
+	const limited = cleaned.slice(0, 10);
+
+	// Format based on length
+	if (limited.length <= 3) {
+		return limited;
+	} else if (limited.length <= 6) {
+		return `(${limited.slice(0, 3)}) ${limited.slice(3)}`;
+	} else {
+		return `(${limited.slice(0, 3)}) ${limited.slice(3, 6)}-${limited.slice(6)}`;
+	}
+}
+
+/**
+ * Validate phone number format
+ * Requires exactly 10 digits
+ */
+export function isValidPhoneNumber(formatted) {
+	if (!formatted) return true; // Empty is valid (optional field)
+	const cleaned = formatted.replace(/\D/g, '');
+	return cleaned.length === 10;
+}
+
+/**
+ * Extract raw digits from formatted phone number
+ * (555) 123-4567 → 5551234567
+ */
+export function cleanPhoneNumber(formatted) {
+	if (!formatted) return '';
+	return formatted.replace(/\D/g, '');
+}

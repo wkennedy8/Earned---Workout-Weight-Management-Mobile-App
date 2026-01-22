@@ -221,3 +221,41 @@ export async function deleteProgressPhotoMetadata(uid, photoId) {
 		throw error;
 	}
 }
+
+/**
+ * Get user settings (name, email, phone, reminder settings)
+ * @param {string} uid - User ID
+ * @returns {Promise<Object>} User settings
+ */
+export async function getUserSettings(uid) {
+	const snap = await getDoc(profileRef(uid));
+	if (!snap.exists()) {
+		return {
+			name: '',
+			email: '',
+			phone: '',
+			reminderEnabled: false,
+			reminderTime: '20:00' // Default 8:00 PM
+		};
+	}
+	const data = snap.data() || {};
+	return {
+		name: data.name || '',
+		email: data.email || '',
+		phone: data.phone || '',
+		reminderEnabled: data.reminderEnabled || false,
+		reminderTime: data.reminderTime || '20:00'
+	};
+}
+
+/**
+ * Update user settings
+ * @param {string} uid - User ID
+ * @param {Object} settings - { name, email, phone, reminderEnabled, reminderTime }
+ */
+export async function updateUserSettings(uid, settings) {
+	await upsertProfile(uid, {
+		...settings,
+		updatedAt: serverTimestamp()
+	});
+}
