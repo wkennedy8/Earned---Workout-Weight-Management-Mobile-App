@@ -11,6 +11,7 @@ import {
 	uploadProgressPhoto,
 	upsertProfile
 } from '@/controllers/profileController';
+import { auth, db } from '@/lib/firebase';
 import {
 	cleanPhoneNumber,
 	formatPhoneNumber,
@@ -19,6 +20,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
+import { deleteUser, signOut } from 'firebase/auth';
+import { collection, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
 import {
 	Alert,
@@ -80,6 +83,118 @@ async function requestCameraPermissions() {
 		return false;
 	}
 	return true;
+}
+
+// Helper to delete all user data from Firestore
+async function deleteAllUserData(uid) {
+	try {
+		// Delete all subcollections and documents
+		const collections = ['sessions', 'weights', 'progressPhotos', 'profile'];
+
+		for (const collectionName of collections) {
+			const colRef = collection(db, 'users', uid, collectionName);
+			const snapshot = await getDocs(colRef);
+
+			// Delete all documents in this collection
+			const deletePromises = snapshot.docs.map((document) =>
+				deleteDoc(doc(db, 'users', uid, collectionName, document.id))
+			);
+			await Promise.all(deletePromises);
+		}
+
+		// Delete the user document itself
+		await deleteDoc(doc(db, 'users', uid));
+	} catch (e) {
+		console.warn('Error deleting user data:', e);
+		throw e;
+	}
+}
+
+async function handleLogout() {
+	Alert.alert(
+		'Log Out',
+		'Are you sure you want to log out? You are currently signed in anonymously, so you may lose access to your data.',
+		[
+			{ text: 'Cancel', style: 'cancel' },
+			{
+				text: 'Log Out',
+				style: 'destructive',
+				onPress: async () => {
+					try {
+						await signOut(auth);
+						// The ensureSignedIn in AuthContext will create a new anonymous user
+					} catch (e) {
+						console.warn('Logout failed:', e);
+						Alert.alert('Error', 'Failed to log out. Please try again.');
+					}
+				}
+			}
+		]
+	);
+}
+
+async function handleDeleteAccount() {
+	Alert.alert(
+		'Delete Account',
+		'⚠️ This action cannot be undone. All your data will be permanently deleted including:\n\n• Profile information\n• Workout history\n• Progress photos\n• Weight tracking data\n\nAre you absolutely sure?',
+		[
+			{ text: 'Cancel', style: 'cancel' },
+			{
+				text: 'Delete Forever',
+				style: 'destructive',
+				onPress: () => {
+					// Second confirmation
+					Alert.alert(
+						'Final Confirmation',
+						'This is your last chance. Delete your account and all data forever?',
+						[
+							{ text: 'Cancel', style: 'cancel' },
+							{
+								text: 'Yes, Delete Everything',
+								style: 'destructive',
+								onPress: async () => {
+									try {
+										const currentUser = auth.currentUser;
+										if (!currentUser) {
+											Alert.alert('Error', 'No user logged in');
+											return;
+										}
+
+										// First delete all Firestore data
+										await deleteAllUserData(currentUser.uid);
+
+										// Then delete the auth user
+										await deleteUser(currentUser);
+
+										Alert.alert(
+											'Account Deleted',
+											'Your account and all data have been permanently deleted.'
+										);
+
+										// The AuthContext will automatically create a new anonymous user
+									} catch (e) {
+										console.warn('Delete account failed:', e);
+
+										if (e.code === 'auth/requires-recent-login') {
+											Alert.alert(
+												'Re-authentication Required',
+												'For security, please log out and log back in before deleting your account.'
+											);
+										} else {
+											Alert.alert(
+												'Error',
+												'Failed to delete account. Please try again.'
+											);
+										}
+									}
+								}
+							}
+						]
+					);
+				}
+			}
+		]
+	);
 }
 
 export default function ProfileScreen() {
@@ -408,15 +523,6 @@ export default function ProfileScreen() {
 					contentContainerStyle={styles.scrollContent}
 					showsVerticalScrollIndicator={false}
 				>
-					<View style={styles.headerRow}>
-						<TouchableOpacity
-							onPress={() => router.back()}
-							hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-							activeOpacity={0.7}
-						>
-							<Ionicons name='chevron-back' size={28} color='#AFFF2B' />
-						</TouchableOpacity>
-					</View>
 					{/* Profile Photo */}
 					<View style={styles.card}>
 						<Text style={styles.subtle}>
@@ -706,6 +812,31 @@ export default function ProfileScreen() {
 							)}
 						</View>
 					</View>
+					{/* Account Actions */}
+					<View style={styles.card}>
+						<Text style={styles.sectionTitle}>Account</Text>
+						<Text style={styles.subtle}>Manage your account settings</Text>
+
+						<View style={styles.accountActions}>
+							<TouchableOpacity
+								style={styles.logoutButton}
+								onPress={handleLogout}
+								activeOpacity={0.9}
+							>
+								<Ionicons name='log-out-outline' size={20} color='#FFFFFF' />
+								<Text style={styles.logoutButtonText}>Log Out</Text>
+							</TouchableOpacity>
+
+							<TouchableOpacity
+								style={styles.deleteButton}
+								onPress={handleDeleteAccount}
+								activeOpacity={0.9}
+							>
+								<Ionicons name='trash-outline' size={20} color='#FF453A' />
+								<Text style={styles.deleteButtonText}>Delete Account</Text>
+							</TouchableOpacity>
+						</View>
+					</View>
 				</ScrollView>
 			</KeyboardAvoidingView>
 		</SafeAreaView>
@@ -718,7 +849,7 @@ const styles = StyleSheet.create({
 	scrollView: { flex: 1 },
 	scrollContent: {
 		paddingHorizontal: 18,
-		paddingTop: 10,
+		paddingTop: 60, // Adjust as needed
 		paddingBottom: 120,
 		gap: 12
 	},
@@ -939,5 +1070,41 @@ const styles = StyleSheet.create({
 		fontWeight: '700',
 		color: '#999999',
 		lineHeight: 18
+	},
+	accountActions: {
+		gap: 10,
+		marginTop: 12
+	},
+	logoutButton: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+		gap: 8,
+		height: 48,
+		borderRadius: 14,
+		backgroundColor: '#2A2A2A',
+		borderWidth: 1,
+		borderColor: '#333333'
+	},
+	logoutButtonText: {
+		fontSize: 15,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
+	},
+	deleteButton: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+		gap: 8,
+		height: 48,
+		borderRadius: 14,
+		backgroundColor: '#3D1515',
+		borderWidth: 1,
+		borderColor: '#7F1D1D'
+	},
+	deleteButtonText: {
+		fontSize: 15,
+		fontFamily: FontFamily.black,
+		color: '#FF453A'
 	}
 });
