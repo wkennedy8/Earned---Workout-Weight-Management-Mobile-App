@@ -306,7 +306,7 @@ export default function WorkoutTab() {
 }
 
 const styles = StyleSheet.create({
-	safe: { flex: 1, backgroundColor: '#FFFFFF' },
+	safe: { flex: 1, backgroundColor: '#FFFFFF', paddingBottom: 90 },
 	container: { flex: 1, paddingHorizontal: 18, paddingTop: 10 },
 
 	headerRow: {

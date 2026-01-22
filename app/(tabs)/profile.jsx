@@ -588,7 +588,7 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-	safe: { flex: 1, backgroundColor: '#FFFFFF' },
+	safe: { flex: 1, backgroundColor: '#FFFFFF', paddingBottom: 90 },
 	container: { flex: 1 },
 
 	scrollView: { flex: 1 },

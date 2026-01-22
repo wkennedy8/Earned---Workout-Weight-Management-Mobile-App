@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
 	Alert,
 	FlatList,
+	Image,
 	KeyboardAvoidingView,
 	Modal,
 	Platform,
@@ -235,8 +236,18 @@ export default function HomeScreen() {
 						<TouchableOpacity
 							onPress={() => router.push('/settings')}
 							hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+							style={styles.profileButton}
 						>
-							<Text style={styles.settingsIcon}>⚙️</Text>
+							{profile.profilePhotoUri ? (
+								<Image
+									source={{ uri: profile.profilePhotoUri }}
+									style={styles.profileImage}
+								/>
+							) : (
+								<View style={styles.profilePlaceholder}>
+									<Text style={styles.profilePlaceholderText}>👤</Text>
+								</View>
+							)}
 						</TouchableOpacity>
 					</View>
 
@@ -390,7 +401,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-	safe: { flex: 1, backgroundColor: '#FFFFFF' },
+	safe: { flex: 1, backgroundColor: '#000000', paddingBottom: 90 }, // Black background
 	container: { flex: 1 },
 
 	scrollView: { flex: 1 },
@@ -411,19 +422,42 @@ const styles = StyleSheet.create({
 		width: 40,
 		height: 40,
 		borderRadius: 12,
-		backgroundColor: '#EFF4FF',
+		backgroundColor: 'rgba(175, 255, 43, 0.15)', // Green tint background
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
 	iconText: { fontSize: 18 },
-	title: { fontSize: 26, fontWeight: '800', color: '#0B1220' },
-	settingsIcon: { fontSize: 20, color: '#6B7280' },
+	title: { fontSize: 26, fontWeight: '800', color: '#FFFFFF' }, // White text
+
+	profileButton: {
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+		overflow: 'hidden',
+		borderWidth: 2,
+		borderColor: '#333333', // Dark border
+		backgroundColor: '#1A1A1A' // Dark background
+	},
+	profileImage: {
+		width: '100%',
+		height: '100%'
+	},
+	profilePlaceholder: {
+		width: '100%',
+		height: '100%',
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: '#1A1A1A' // Dark background
+	},
+	profilePlaceholderText: {
+		fontSize: 20
+	},
 
 	macrosCard: {
 		borderWidth: 1,
-		borderColor: '#E7EDF6',
+		borderColor: '#333333', // Dark border
 		borderRadius: 16,
-		backgroundColor: '#FFFFFF',
+		backgroundColor: '#1A1A1A', // Dark card background
 		padding: 14,
 		marginBottom: 12
 	},
@@ -432,36 +466,36 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'space-between'
 	},
-	macrosTitle: { fontSize: 16, fontWeight: '900', color: '#0B1220' },
+	macrosTitle: { fontSize: 16, fontWeight: '900', color: '#fff' }, // Green heading
 	caloriePill: {
 		paddingHorizontal: 10,
 		paddingVertical: 6,
 		borderRadius: 999,
-		backgroundColor: '#F3F4F6'
+		backgroundColor: '#2A2A2A' // Dark pill background
 	},
-	caloriePillText: { fontSize: 12, fontWeight: '900', color: '#111827' },
+	caloriePillText: { fontSize: 12, fontWeight: '900', color: '#FFFFFF' }, // White text
 	macroRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
 	macroChip: {
 		flex: 1,
 		borderWidth: 1,
-		borderColor: '#EEF2F7',
+		borderColor: '#333333', // Dark border
 		borderRadius: 14,
 		padding: 10,
-		backgroundColor: '#FAFBFF'
+		backgroundColor: '#0D0D0D' // Darker chip background
 	},
-	macroChipLabel: { fontSize: 11, fontWeight: '800', color: '#6B7280' },
+	macroChipLabel: { fontSize: 11, fontWeight: '800', color: '#999999' }, // Light gray
 	macroChipValue: {
 		marginTop: 6,
 		fontSize: 16,
 		fontWeight: '900',
-		color: '#0B1220'
+		color: '#FFFFFF' // White text
 	},
 
 	section: { marginTop: 6 },
 	sectionTitle: {
 		fontSize: 18,
 		fontWeight: '800',
-		color: '#0B1220',
+		color: '#fff', // Green heading
 		marginBottom: 10
 	},
 
@@ -469,68 +503,68 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		alignItems: 'center',
 		borderWidth: 1,
-		borderColor: '#D9E1EE',
+		borderColor: '#333333', // Dark border
 		borderRadius: 14,
 		paddingHorizontal: 14,
 		height: 54,
-		backgroundColor: '#FFFFFF'
+		backgroundColor: '#1A1A1A' // Dark input background
 	},
-	input: { flex: 1, fontSize: 18, color: '#0B1220' },
+	input: { flex: 1, fontSize: 18, color: '#FFFFFF' }, // White text
 	lbsPill: {
 		paddingHorizontal: 10,
 		paddingVertical: 6,
 		borderRadius: 999,
-		backgroundColor: '#F3F4F6'
+		backgroundColor: '#2A2A2A' // Dark pill
 	},
-	lbsText: { fontSize: 12, fontWeight: '700', color: '#374151' },
+	lbsText: { fontSize: 12, fontWeight: '700', color: '#999999' }, // Light gray
 
 	saveButton: {
 		marginTop: 12,
 		height: 52,
 		borderRadius: 14,
-		backgroundColor: '#1E66F5',
+		backgroundColor: '#AFFF2B', // Green button
 		alignItems: 'center',
 		justifyContent: 'center',
-		shadowColor: '#000',
-		shadowOpacity: 0.08,
+		shadowColor: '#AFFF2B',
+		shadowOpacity: 0.3,
 		shadowRadius: 10,
 		shadowOffset: { width: 0, height: 6 },
-		elevation: 2
+		elevation: 5
 	},
-	saveButtonText: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
+	saveButtonText: { color: '#000000', fontSize: 18, fontWeight: '800' }, // Black text on green
 
 	trackerCard: {
 		marginTop: 14,
 		borderWidth: 1,
-		borderColor: '#E7EDF6',
+		borderColor: '#333333', // Dark border
 		borderRadius: 16,
-		backgroundColor: '#FFFFFF',
+		backgroundColor: '#1A1A1A', // Dark card
 		padding: 14
 	},
 	trackerTitle: {
 		fontSize: 14,
 		fontWeight: '900',
-		color: '#0B1220',
+		color: '#fff', // White heading
 		marginBottom: 8
 	},
 	trackerValue: { fontSize: 28, fontWeight: '900', marginBottom: 8 },
-	trackerValueGreen: { color: '#10B981' },
-	trackerValueRed: { color: '#EF4444' },
-	trackerValueYellow: { color: '#F59E0B' },
+	trackerValueGreen: { color: '#AFFF2B' }, // Green for good progress
+	trackerValueRed: { color: '#FF453A' }, // Red for bad progress
+	trackerValueYellow: { color: '#FFD60A' }, // Yellow for neutral
 	trackerSubtle: {
 		fontSize: 12,
 		fontWeight: '700',
-		color: '#6B7280',
+		color: '#999999', // Light gray
 		lineHeight: 18
 	},
 
-	subtle: { fontSize: 12, color: '#6B7280', fontWeight: '600', marginTop: 20 },
+	subtle: { fontSize: 12, color: '#999999', fontWeight: '600', marginTop: 20 }, // Light gray
 
 	card: {
 		borderWidth: 1,
-		borderColor: '#E7EDF6',
+		borderColor: '#333333', // Dark border
 		borderRadius: 16,
-		backgroundColor: '#FFFFFF',
+		backgroundColor: '#1A1A1A', // Dark card
 		overflow: 'hidden'
 	},
 	historyRow: {
@@ -540,21 +574,21 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 14,
 		paddingVertical: 14
 	},
-	historyDate: { fontSize: 16, color: '#111827', fontWeight: '700' },
-	historyWeight: { fontSize: 18, color: '#0B1220', fontWeight: '800' },
+	historyDate: { fontSize: 16, color: '#FFFFFF', fontWeight: '700' }, // White text
+	historyWeight: { fontSize: 18, color: '#AFFF2B', fontWeight: '800' }, // Green accent
 
 	emptyState: { paddingHorizontal: 14, paddingVertical: 18 },
 	emptyTitle: {
 		fontSize: 16,
 		fontWeight: '800',
-		color: '#0B1220',
+		color: '#FFFFFF', // White text
 		marginBottom: 4
 	},
-	emptyBody: { fontSize: 13, color: '#6B7280', lineHeight: 18 },
+	emptyBody: { fontSize: 13, color: '#999999', lineHeight: 18 }, // Light gray
 
 	modalBackdrop: {
 		flex: 1,
-		backgroundColor: 'rgba(0,0,0,0.35)',
+		backgroundColor: 'rgba(0,0,0,0.85)', // Darker backdrop
 		alignItems: 'center',
 		justifyContent: 'center',
 		padding: 18
@@ -562,22 +596,22 @@ const styles = StyleSheet.create({
 	modalCard: {
 		width: '100%',
 		borderRadius: 18,
-		backgroundColor: '#FFFFFF',
+		backgroundColor: '#1A1A1A', // Dark modal
 		padding: 18,
 		borderWidth: 1,
-		borderColor: '#E7EDF6'
+		borderColor: '#333333' // Dark border
 	},
 	modalTitle: {
 		fontSize: 18,
 		fontWeight: '900',
-		color: '#0B1220',
+		color: '#AFFF2B', // Green heading
 		textAlign: 'center'
 	},
 	modalBody: {
 		marginTop: 10,
 		fontSize: 13,
 		fontWeight: '700',
-		color: '#111827',
+		color: '#FFFFFF', // White text
 		textAlign: 'center',
 		lineHeight: 18
 	},
@@ -585,7 +619,7 @@ const styles = StyleSheet.create({
 		marginTop: 10,
 		fontSize: 12,
 		fontWeight: '700',
-		color: '#6B7280',
+		color: '#999999', // Light gray
 		textAlign: 'center'
 	},
 	modalActionsRow: { flexDirection: 'row', gap: 10, marginTop: 16 },
@@ -593,21 +627,21 @@ const styles = StyleSheet.create({
 		flex: 1,
 		height: 48,
 		borderRadius: 14,
-		backgroundColor: '#F3F4F6',
+		backgroundColor: '#2A2A2A', // Dark button
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
-	modalSecondaryText: { fontSize: 14, fontWeight: '900', color: '#111827' },
+	modalSecondaryText: { fontSize: 14, fontWeight: '900', color: '#FFFFFF' }, // White text
 	modalPrimaryBtn: {
 		flex: 1,
 		height: 48,
 		borderRadius: 14,
-		backgroundColor: '#1E66F5',
+		backgroundColor: '#AFFF2B', // Green button
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
-	modalPrimaryText: { fontSize: 14, fontWeight: '900', color: '#FFFFFF' },
-	divider: { height: 1, backgroundColor: '#EEF2F7', marginVertical: 18 },
+	modalPrimaryText: { fontSize: 14, fontWeight: '900', color: '#000000' }, // Black text on green
+	divider: { height: 1, backgroundColor: '#333333', marginVertical: 18 }, // Dark divider
 
 	historyHeaderRow: {
 		flexDirection: 'row',
@@ -616,7 +650,7 @@ const styles = StyleSheet.create({
 		marginBottom: 10
 	},
 
-	rowDivider: { height: 1, backgroundColor: '#EEF2F7' },
+	rowDivider: { height: 1, backgroundColor: '#333333' }, // Dark divider
 
 	viewMoreButton: {
 		marginTop: 12,
@@ -625,15 +659,15 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		gap: 6,
 		borderRadius: 999,
-		backgroundColor: '#F3F4F6',
+		backgroundColor: '#2A2A2A', // Dark button
 		paddingHorizontal: 16,
 		paddingVertical: 10
 	},
-	viewMoreText: { fontSize: 14, fontWeight: '800', color: '#1E66F5' },
+	viewMoreText: { fontSize: 14, fontWeight: '800', color: '#AFFF2B' }, // Green text
 	viewMoreChevron: {
 		fontSize: 18,
 		fontWeight: '900',
-		color: '#1E66F5',
+		color: '#AFFF2B', // Green chevron
 		marginTop: -1
 	}
 });
