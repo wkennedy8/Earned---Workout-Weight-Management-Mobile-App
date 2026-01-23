@@ -18,7 +18,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-import { AuthGate, AuthProvider } from '../context/AuthContext';
+import { AuthProvider } from '../context/AuthContext';
 
 // Keep the splash screen visible while we load resources
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -52,11 +52,11 @@ export default function RootLayout() {
 	return (
 		<ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
 			<AuthProvider>
-				<AuthGate>
-					<Stack screenOptions={{ headerShown: false }}>
-						<Stack.Screen name='(tabs)' options={{ headerShown: false }} />
-					</Stack>
-				</AuthGate>
+				{/* <AuthGate> */}
+				<Stack screenOptions={{ headerShown: false }}>
+					<Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+				</Stack>
+				{/* </AuthGate> */}
 			</AuthProvider>
 			<StatusBar style='auto' />
 		</ThemeProvider>

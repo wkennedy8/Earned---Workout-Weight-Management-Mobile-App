@@ -1,60 +1,105 @@
+import { useRouter, useSegments } from 'expo-router';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
-import { ensureSignedIn, subscribeToAuth } from '../lib/auth';
+import { isAdmin, subscribeToAuth } from '../lib/auth';
 
 const AuthContext = createContext({
 	user: null,
 	loading: true,
-	error: null
+	error: null,
+	isAdmin: false
 });
 
 export function AuthProvider({ children }) {
 	const [user, setUser] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
+	const [userIsAdmin, setUserIsAdmin] = useState(false);
 
+	const router = useRouter();
+	const segments = useSegments();
+
+	// Subscribe to auth state changes
 	useEffect(() => {
-		let unsubscribe = null;
+		const unsubscribe = subscribeToAuth(async (firebaseUser) => {
+			console.log('Auth state changed:', firebaseUser?.uid);
 
-		(async () => {
-			try {
-				// Ensure we have a user ASAP (anonymous sign-in)
-				await ensureSignedIn();
+			if (firebaseUser) {
+				// Check if user is admin
+				const adminStatus = await isAdmin(firebaseUser.uid);
 
-				// Subscribe to auth state changes
-				unsubscribe = subscribeToAuth((firebaseUser) => {
-					if (firebaseUser) {
-						setUser({
-							uid: firebaseUser.uid,
-							email: firebaseUser.email,
-							displayName: firebaseUser.displayName,
-							photoURL: firebaseUser.photoURL,
-							emailVerified: firebaseUser.emailVerified,
-							isAnonymous: firebaseUser.isAnonymous
-						});
-					} else {
-						setUser(null);
-					}
-					setLoading(false);
-					setError(null);
+				setUser({
+					uid: firebaseUser.uid,
+					email: firebaseUser.email,
+					phoneNumber: firebaseUser.phoneNumber,
+					displayName: firebaseUser.displayName,
+					photoURL: firebaseUser.photoURL,
+					emailVerified: firebaseUser.emailVerified,
+					isAnonymous: firebaseUser.isAnonymous
 				});
-			} catch (e) {
-				console.warn('AuthProvider error:', e);
-				setError(e);
-				setLoading(false);
+				setUserIsAdmin(adminStatus);
+			} else {
+				setUser(null);
+				setUserIsAdmin(false);
 			}
-		})();
 
-		return () => {
-			if (unsubscribe) unsubscribe();
-		};
+			setLoading(false);
+			setError(null);
+		});
+
+		return () => unsubscribe();
 	}, []);
+
+	// Handle navigation based on auth state
+	useEffect(() => {
+		if (loading) return;
+
+		const inAuthGroup = segments[0] === 'login';
+
+		console.log('Navigation check:', { user: !!user, inAuthGroup, segments });
+
+		if (!user && !inAuthGroup) {
+			// No user, redirect to login
+			console.log('Redirecting to login');
+			router.replace('/login');
+		} else if (user && inAuthGroup) {
+			// User exists, redirect to app
+			console.log('Redirecting to app');
+			router.replace('/(tabs)');
+		}
+	}, [user, loading, segments]);
 
 	const value = {
 		user,
 		loading,
-		error
+		error,
+		isAdmin: userIsAdmin
 	};
+
+	if (loading) {
+		return (
+			<View
+				style={{
+					flex: 1,
+					alignItems: 'center',
+					justifyContent: 'center',
+					backgroundColor: '#000000'
+				}}
+			>
+				<ActivityIndicator size='large' color='#AFFF2B' />
+				<Text
+					style={{
+						marginTop: 10,
+						fontSize: 14,
+						fontWeight: '700',
+						color: '#999999'
+					}}
+				>
+					Loading...
+				</Text>
+			</View>
+		);
+	}
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
@@ -67,50 +112,4 @@ export function useAuth() {
 	return context;
 }
 
-// AuthGate component to wrap your app and ensure auth is ready
-export function AuthGate({ children }) {
-	const [ready, setReady] = useState(false);
-
-	useEffect(() => {
-		let unsub = null;
-
-		(async () => {
-			try {
-				// Ensure we have a user ASAP (anonymous for now)
-				await ensureSignedIn();
-
-				// Then subscribe so app reacts to auth changes
-				unsub = subscribeToAuth(() => {
-					setReady(true);
-				});
-			} catch (e) {
-				console.warn('AuthGate error:', e);
-				setReady(true); // allow app to render; hooks may show errors
-			}
-		})();
-
-		return () => {
-			if (unsub) unsub();
-		};
-	}, []);
-
-	if (!ready) {
-		return (
-			<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-				<ActivityIndicator size='large' color='#1E66F5' />
-				<Text
-					style={{
-						marginTop: 10,
-						fontSize: 14,
-						fontWeight: '700',
-						color: '#6B7280'
-					}}
-				>
-					Signing you in…
-				</Text>
-			</View>
-		);
-	}
-
-	return children;
-}
+// Remove AuthGate - we're handling navigation in AuthProvider now
