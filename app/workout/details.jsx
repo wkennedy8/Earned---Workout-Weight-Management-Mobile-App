@@ -1,18 +1,14 @@
-// app/workout/details.jsx
-// Workout Details Screen (read-only)
-// Expects params: sessionId
-
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
 	Alert,
-	FlatList,
-	SafeAreaView,
+	ScrollView,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
 	View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -22,6 +18,7 @@ import {
 import { formatDisplayDate, formatTime } from '@/utils/dateUtils';
 import { formatDuration } from '@/utils/numberUtils';
 import { tagColor } from '@/utils/workoutPlan';
+import { FontFamily } from '../../constants/fonts';
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -130,27 +127,12 @@ export default function WorkoutDetailsScreen() {
 	const exercises = Array.isArray(session.exercises) ? session.exercises : [];
 
 	return (
-		<SafeAreaView style={styles.safe}>
-			<View style={styles.container}>
-				{/* Top bar */}
-				<View style={styles.topBar}>
-					<TouchableOpacity
-						onPress={() => router.back()}
-						hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-					>
-						<Text style={styles.backChevron}>‹</Text>
-					</TouchableOpacity>
-
-					<Text style={styles.topTitle}>Workout Details</Text>
-
-					<TouchableOpacity
-						onPress={onEdit}
-						hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-					>
-						<Text style={styles.editText}>Edit</Text>
-					</TouchableOpacity>
-				</View>
-
+		<SafeAreaView style={styles.safe} edges={['bottom']}>
+			<ScrollView
+				style={styles.scrollView}
+				contentContainerStyle={styles.scrollContent}
+				showsVerticalScrollIndicator={false}
+			>
 				{/* Header */}
 				<View style={styles.headerCard}>
 					<View style={styles.headerRow}>
@@ -241,155 +223,144 @@ export default function WorkoutDetailsScreen() {
 				) : null}
 
 				{/* Exercises */}
-				<FlatList
-					data={exercises}
-					keyExtractor={(item, idx) => `${item.name}-${idx}`}
-					contentContainerStyle={{ paddingBottom: 20 }}
-					renderItem={({ item }) => {
-						const isExpanded = !!expanded[item.name];
-						const isTime = String(item.targetReps).toLowerCase() === 'time';
+				{exercises.map((item, idx) => {
+					const isExpanded = !!expanded[item.name];
+					const isTime = String(item.targetReps).toLowerCase() === 'time';
 
-						return (
-							<View style={styles.exerciseCard}>
-								<TouchableOpacity
-									style={styles.exerciseHeader}
-									activeOpacity={0.85}
-									onPress={() => toggleExercise(item.name)}
-								>
-									<View style={{ flex: 1 }}>
-										<Text style={styles.exerciseName}>{item.name}</Text>
-										<Text style={styles.exerciseMeta}>
-											{item.targetSets} sets, {item.targetReps}{' '}
-											{isTime ? '' : 'reps'}
-											{item.note ? ` • ${item.note}` : ''}
+					return (
+						<View key={`${item.name}-${idx}`} style={styles.exerciseCard}>
+							<TouchableOpacity
+								style={styles.exerciseHeader}
+								activeOpacity={0.85}
+								onPress={() => toggleExercise(item.name)}
+							>
+								<View style={{ flex: 1 }}>
+									<Text style={styles.exerciseName}>{item.name}</Text>
+									<Text style={styles.exerciseMeta}>
+										{item.targetSets} sets, {item.targetReps}{' '}
+										{isTime ? '' : 'reps'}
+										{item.note ? ` • ${item.note}` : ''}
+									</Text>
+								</View>
+								<Text style={styles.chevron}>{isExpanded ? '˅' : '›'}</Text>
+							</TouchableOpacity>
+
+							{isExpanded ? (
+								<View style={{ marginTop: 10 }}>
+									<View style={styles.tableHeader}>
+										<Text style={[styles.th, { width: 44 }]}>Set</Text>
+										<Text style={[styles.th, { flex: 1 }]}>Weight</Text>
+										<Text style={[styles.th, { width: 110 }]}>
+											{isTime ? 'Time (sec)' : 'Reps'}
+										</Text>
+										<Text
+											style={[styles.th, { width: 80, textAlign: 'right' }]}
+										>
+											Saved
 										</Text>
 									</View>
-									<Text style={styles.chevron}>{isExpanded ? '˅' : '›'}</Text>
-								</TouchableOpacity>
 
-								{isExpanded ? (
-									<View style={{ marginTop: 10 }}>
-										<View style={styles.tableHeader}>
-											<Text style={[styles.th, { width: 44 }]}>Set</Text>
-											<Text style={[styles.th, { flex: 1 }]}>Weight</Text>
-											<Text style={[styles.th, { width: 110 }]}>
-												{isTime ? 'Time (sec)' : 'Reps'}
+									{(item.sets || []).map((s) => (
+										<View
+											key={`${item.name}-${s.setIndex}`}
+											style={styles.tableRow}
+										>
+											<Text style={[styles.td, { width: 44 }]}>
+												{s.setIndex}
 											</Text>
-											<Text
-												style={[styles.th, { width: 80, textAlign: 'right' }]}
-											>
-												Saved
+											<Text style={[styles.td, { flex: 1 }]}>
+												{String(s.weight || '—')}
+											</Text>
+											<Text style={[styles.td, { width: 110 }]}>
+												{String(s.reps || '—')}
+											</Text>
+											<Text style={[styles.tdRight, { width: 80 }]}>
+												{s.saved ? 'Yes' : '—'}
 											</Text>
 										</View>
-
-										{(item.sets || []).map((s) => (
-											<View
-												key={`${item.name}-${s.setIndex}`}
-												style={styles.tableRow}
-											>
-												<Text style={[styles.td, { width: 44 }]}>
-													{s.setIndex}
-												</Text>
-												<Text style={[styles.td, { flex: 1 }]}>
-													{String(s.weight || '—')}
-												</Text>
-												<Text style={[styles.td, { width: 110 }]}>
-													{String(s.reps || '—')}
-												</Text>
-												<Text style={[styles.tdRight, { width: 80 }]}>
-													{s.saved ? 'Yes' : '—'}
-												</Text>
-											</View>
-										))}
-									</View>
-								) : null}
-							</View>
-						);
-					}}
-				/>
-			</View>
+									))}
+								</View>
+							) : null}
+						</View>
+					);
+				})}
+			</ScrollView>
 		</SafeAreaView>
 	);
 }
 
 const styles = StyleSheet.create({
-	safe: { flex: 1, backgroundColor: '#FFFFFF' },
-	container: { flex: 1, paddingHorizontal: 18, paddingTop: 8 },
+	safe: { flex: 1, backgroundColor: '#000000' },
+	scrollView: { flex: 1 },
+	scrollContent: {
+		paddingHorizontal: 18,
+		paddingTop: 120,
+		paddingBottom: 20
+	},
 
 	loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-	loadingText: { fontSize: 14, fontWeight: '700', color: '#6B7280' },
-
-	topBar: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-		marginBottom: 10
-	},
-	backChevron: {
-		fontSize: 32,
-		fontWeight: '900',
-		color: '#1E66F5',
-		marginTop: -6
-	},
-	topTitle: { fontSize: 18, fontWeight: '900', color: '#0B1220' },
-	editText: { fontSize: 16, fontWeight: '900', color: '#1E66F5' },
+	loadingText: { fontSize: 14, fontWeight: '700', color: '#999999' },
 
 	headerCard: {
 		borderWidth: 1,
-		borderColor: '#E7EDF6',
+		borderColor: '#333333',
 		borderRadius: 16,
-		backgroundColor: '#FFFFFF',
+		backgroundColor: '#1A1A1A',
 		padding: 14,
 		marginBottom: 12
 	},
 	headerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 	tagPill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
 	tagText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
-	headerTitle: { fontSize: 20, fontWeight: '900', color: '#0B1220' },
-	dateText: { marginTop: 8, fontSize: 13, fontWeight: '700', color: '#6B7280' },
+	headerTitle: { fontSize: 20, fontFamily: FontFamily.black, color: '#FFFFFF' },
+	dateText: { marginTop: 8, fontSize: 13, fontWeight: '700', color: '#999999' },
 
 	metaRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
 	metaItem: {
 		flex: 1,
 		borderWidth: 1,
-		borderColor: '#EEF2F7',
+		borderColor: '#333333',
 		borderRadius: 14,
 		padding: 10,
-		backgroundColor: '#FAFBFF'
+		backgroundColor: '#0D0D0D'
 	},
-	metaLabel: { fontSize: 11, fontWeight: '800', color: '#6B7280' },
+	metaLabel: { fontSize: 11, fontWeight: '800', color: '#999999' },
 	metaValue: {
 		marginTop: 4,
 		fontSize: 13,
 		fontWeight: '900',
-		color: '#0B1220'
+		color: '#FFFFFF'
 	},
 
 	statsCard: {
 		borderWidth: 1,
-		borderColor: '#E7EDF6',
+		borderColor: '#333333',
 		borderRadius: 16,
-		backgroundColor: '#FFFFFF',
+		backgroundColor: '#1A1A1A',
 		padding: 14,
 		marginBottom: 12
 	},
-	sectionTitle: { fontSize: 16, fontWeight: '900', color: '#0B1220' },
+	sectionTitle: {
+		fontSize: 16,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
+	},
 
 	statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
 	statBox: {
 		width: '48%',
 		borderWidth: 1,
-		borderColor: '#EEF2F7',
+		borderColor: '#333333',
 		borderRadius: 14,
 		padding: 12,
-		backgroundColor: '#FAFBFF'
+		backgroundColor: '#0D0D0D'
 	},
-	statLabel: { fontSize: 12, fontWeight: '800', color: '#6B7280' },
+	statLabel: { fontSize: 12, fontWeight: '800', color: '#999999' },
 	statValue: {
 		marginTop: 4,
 		fontSize: 18,
 		fontWeight: '900',
-		color: '#0B1220'
+		color: '#FFFFFF'
 	},
 
 	summaryRow: {
@@ -398,20 +369,20 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between',
 		gap: 12
 	},
-	summaryLabel: { fontSize: 12, fontWeight: '900', color: '#6B7280' },
+	summaryLabel: { fontSize: 12, fontWeight: '900', color: '#999999' },
 	summaryValue: {
 		fontSize: 12,
 		fontWeight: '900',
-		color: '#111827',
+		color: '#FFFFFF',
 		flex: 1,
 		textAlign: 'right'
 	},
 
 	exerciseCard: {
 		borderWidth: 1,
-		borderColor: '#E7EDF6',
+		borderColor: '#333333',
 		borderRadius: 16,
-		backgroundColor: '#FFFFFF',
+		backgroundColor: '#1A1A1A',
 		padding: 14,
 		marginBottom: 12
 	},
@@ -420,30 +391,34 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'space-between'
 	},
-	exerciseName: { fontSize: 16, fontWeight: '900', color: '#111827' },
+	exerciseName: {
+		fontSize: 16,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
+	},
 	exerciseMeta: {
 		marginTop: 4,
 		fontSize: 12,
 		fontWeight: '700',
-		color: '#6B7280'
+		color: '#999999'
 	},
 	chevron: {
 		fontSize: 22,
 		fontWeight: '900',
-		color: '#9CA3AF',
+		color: '#666666',
 		marginLeft: 10
 	},
 
 	tableHeader: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		backgroundColor: '#F8FAFC',
+		backgroundColor: '#0D0D0D',
 		borderRadius: 12,
 		paddingVertical: 10,
 		paddingHorizontal: 10,
 		marginBottom: 8
 	},
-	th: { fontSize: 12, fontWeight: '900', color: '#6B7280' },
+	th: { fontSize: 12, fontWeight: '900', color: '#999999' },
 
 	tableRow: {
 		flexDirection: 'row',
@@ -451,11 +426,11 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 10,
 		paddingVertical: 10
 	},
-	td: { fontSize: 13, fontWeight: '900', color: '#111827' },
+	td: { fontSize: 13, fontWeight: '900', color: '#FFFFFF' },
 	tdRight: {
 		fontSize: 13,
 		fontWeight: '900',
-		color: '#6B7280',
+		color: '#999999',
 		textAlign: 'right'
 	}
 });

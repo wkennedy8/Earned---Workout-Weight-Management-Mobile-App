@@ -680,22 +680,15 @@ export default function WorkoutSessionScreen() {
 					style={styles.container}
 				>
 					{/* Custom top bar */}
-					<View style={styles.topBar}>
+					{/* <View style={styles.topBar}>
 						<TouchableOpacity
 							onPress={() => router.back()}
 							hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
 						>
 							<Text style={styles.backChevron}>‹</Text>
 						</TouchableOpacity>
-						{/* <TouchableOpacity
-							onPress={() =>
-								Alert.alert('Settings', 'Settings screen not wired yet.')
-							}
-							hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-						>
-							<Text style={styles.settingsIcon}>⚙️</Text>
-						</TouchableOpacity> */}
-					</View>
+						
+					</View> */}
 
 					{/* Header */}
 					<View style={styles.header}>
