@@ -1,4 +1,5 @@
 import { useAuth } from '@/context/AuthContext';
+import { CARDIO_TYPES, getAllCardio } from '@/controllers/cardioController';
 import { computeSessionStats } from '@/controllers/sessionController';
 import { getRecentWeights } from '@/controllers/weightController';
 import { db } from '@/lib/firebase';
@@ -72,6 +73,53 @@ function calculateStreak(sessions) {
 	return streak;
 }
 
+// Helper to calculate cardio streak
+function calculateCardioStreak(sessions) {
+	if (!sessions.length) return 0;
+
+	// Sort by date descending (most recent first)
+	const sorted = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
+
+	// Get unique dates
+	const uniqueDates = [...new Set(sorted.map((s) => s.date))];
+
+	let streak = 0;
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+
+	for (let i = 0; i < uniqueDates.length; i++) {
+		const sessionDate = new Date(uniqueDates[i]);
+		sessionDate.setHours(0, 0, 0, 0);
+
+		const diffTime = today - sessionDate;
+		const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+		if (i === 0) {
+			// First session must be today or within the last 7 days for cardio
+			if (diffDays <= 7) {
+				streak++;
+			} else {
+				break;
+			}
+		} else {
+			// Check if this date is within 7 days of the previous date
+			const prevDate = new Date(uniqueDates[i - 1]);
+			prevDate.setHours(0, 0, 0, 0);
+
+			const daysBetween = Math.floor(
+				(prevDate - sessionDate) / (1000 * 60 * 60 * 24)
+			);
+
+			if (daysBetween <= 7) {
+				streak++;
+			} else {
+				break;
+			}
+		}
+	}
+	return streak;
+}
+
 export default function AnalyticsScreen() {
 	const { user } = useAuth();
 	const [loading, setLoading] = useState(true);
@@ -91,6 +139,12 @@ export default function AnalyticsScreen() {
 	const [bestVolumeSession, setBestVolumeSession] = useState(null);
 	const [bestSet, setBestSet] = useState(null);
 	const [mostSetsSession, setMostSetsSession] = useState(null);
+
+	//Cardio
+	const [cardioSessions, setCardioSessions] = useState([]);
+	const [totalCardioTime, setTotalCardioTime] = useState(0);
+	const [totalCardioDistance, setTotalCardioDistance] = useState(0);
+	const [cardioStreak, setCardioStreak] = useState(0);
 
 	useEffect(() => {
 		if (!user?.uid) return;
@@ -117,6 +171,10 @@ export default function AnalyticsScreen() {
 					});
 
 				setCompletedSessions(sessions);
+
+				// Load cardio sessions
+				const cardioData = await getAllCardio(user.uid);
+				setCardioSessions(cardioData);
 
 				// Calculate overall stats
 				let volumeSum = 0;
@@ -176,6 +234,22 @@ export default function AnalyticsScreen() {
 				// Calculate streak
 				const currentStreak = calculateStreak(sessions);
 				setStreak(currentStreak);
+
+				// Calculate cardio stats
+				let cardioTimeSum = 0;
+				let cardioDistanceSum = 0;
+
+				cardioData.forEach((session) => {
+					cardioTimeSum += session.duration || 0;
+					cardioDistanceSum += session.distance || 0;
+				});
+
+				setTotalCardioTime(cardioTimeSum);
+				setTotalCardioDistance(cardioDistanceSum);
+
+				// Calculate cardio streak
+				const currentCardioStreak = calculateCardioStreak(cardioData);
+				setCardioStreak(currentCardioStreak);
 			} catch (e) {
 				console.warn('Failed to load analytics:', e);
 			} finally {
@@ -435,6 +509,140 @@ export default function AnalyticsScreen() {
 							<Text style={styles.statLabel}>Avg Volume</Text>
 						</View>
 					</View>
+				</View>
+
+				{/* Cardio Stats */}
+				<View style={styles.card}>
+					<View style={styles.cardHeader}>
+						<Text style={styles.sectionTitle}>Cardio Stats</Text>
+						<Ionicons name='bicycle' size={20} color='#AFFF2B' />
+					</View>
+
+					<View style={styles.statsGrid}>
+						<View style={styles.statBox}>
+							<View style={styles.statIconBadge}>
+								<Ionicons name='bicycle-outline' size={20} color='#AFFF2B' />
+							</View>
+							<Text style={styles.statValue}>{cardioSessions.length}</Text>
+							<Text style={styles.statLabel}>Sessions</Text>
+						</View>
+
+						<View style={styles.statBox}>
+							<View style={styles.statIconBadge}>
+								<Ionicons name='time-outline' size={20} color='#AFFF2B' />
+							</View>
+							<Text style={styles.statValue}>
+								{Math.round(totalCardioTime)}
+							</Text>
+							<Text style={styles.statLabel}>Minutes</Text>
+						</View>
+
+						<View style={styles.statBox}>
+							<View style={styles.statIconBadge}>
+								<Ionicons name='location-outline' size={20} color='#AFFF2B' />
+							</View>
+							<Text style={styles.statValue}>
+								{totalCardioDistance > 0 ? totalCardioDistance.toFixed(1) : 0}
+							</Text>
+							<Text style={styles.statLabel}>Miles</Text>
+						</View>
+
+						<View style={styles.statBox}>
+							<View style={styles.statIconBadge}>
+								<Ionicons name='flame-outline' size={20} color='#AFFF2B' />
+							</View>
+							<Text style={styles.statValue}>{cardioStreak}</Text>
+							<Text style={styles.statLabel}>Week Streak</Text>
+						</View>
+
+						<View style={styles.statBox}>
+							<View style={styles.statIconBadge}>
+								<Ionicons
+									name='speedometer-outline'
+									size={20}
+									color='#AFFF2B'
+								/>
+							</View>
+							<Text style={styles.statValue}>
+								{cardioSessions.length > 0
+									? Math.round(totalCardioTime / cardioSessions.length)
+									: 0}
+							</Text>
+							<Text style={styles.statLabel}>Avg Duration</Text>
+						</View>
+
+						<View style={styles.statBox}>
+							<View style={styles.statIconBadge}>
+								<Ionicons name='calendar-outline' size={20} color='#AFFF2B' />
+							</View>
+							<Text style={styles.statValue}>
+								{cardioSessions.length > 0 && totalCardioDistance > 0
+									? (
+											totalCardioDistance /
+											cardioSessions.filter((s) => s.distance).length
+										).toFixed(1)
+									: 0}
+							</Text>
+							<Text style={styles.statLabel}>Avg Distance</Text>
+						</View>
+					</View>
+
+					{/* Recent Cardio Activity */}
+					{cardioSessions.length > 0 && (
+						<View style={styles.recentCardio}>
+							<Text style={styles.recentCardioTitle}>Recent Activity</Text>
+							<View style={styles.recentCardioList}>
+								{cardioSessions.slice(0, 5).map((session) => {
+									const cardioType = CARDIO_TYPES.find(
+										(t) => t.id === session.type
+									);
+									return (
+										<View key={session.id} style={styles.recentCardioItem}>
+											<View style={styles.recentCardioLeft}>
+												<View style={styles.recentCardioIcon}>
+													<Ionicons
+														name={cardioType?.icon || 'bicycle'}
+														size={16}
+														color='#AFFF2B'
+													/>
+												</View>
+												<View>
+													<Text style={styles.recentCardioType}>
+														{cardioType?.label || session.type}
+													</Text>
+													<Text style={styles.recentCardioDate}>
+														{new Date(session.date).toLocaleDateString()}
+													</Text>
+												</View>
+											</View>
+											<View style={styles.recentCardioStats}>
+												<Text style={styles.recentCardioStat}>
+													{session.duration} min
+												</Text>
+												{session.distance && (
+													<Text style={styles.recentCardioStat}>
+														{session.distance} mi
+													</Text>
+												)}
+											</View>
+										</View>
+									);
+								})}
+							</View>
+						</View>
+					)}
+
+					{cardioSessions.length === 0 && (
+						<View style={styles.emptyRecords}>
+							<Ionicons name='bicycle-outline' size={48} color='#333333' />
+							<Text style={styles.emptyRecordsText}>
+								No cardio sessions yet
+							</Text>
+							<Text style={styles.emptyRecordsSubtext}>
+								Start logging cardio from the Workout tab
+							</Text>
+						</View>
+					)}
 				</View>
 
 				{/* Personal Records */}
@@ -734,5 +942,65 @@ const styles = StyleSheet.create({
 		marginTop: 4,
 		textAlign: 'center',
 		paddingHorizontal: 20
+	},
+	recentCardio: {
+		marginTop: 16,
+		paddingTop: 16,
+		borderTopWidth: 1,
+		borderTopColor: '#2A2A2A'
+	},
+	recentCardioTitle: {
+		fontSize: 13,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF',
+		marginBottom: 12,
+		textTransform: 'uppercase',
+		letterSpacing: 0.5
+	},
+	recentCardioList: {
+		gap: 10
+	},
+	recentCardioItem: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		backgroundColor: '#0D0D0D',
+		borderWidth: 1,
+		borderColor: '#2A2A2A',
+		borderRadius: 10,
+		padding: 10
+	},
+	recentCardioLeft: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 10,
+		flex: 1
+	},
+	recentCardioIcon: {
+		width: 32,
+		height: 32,
+		borderRadius: 8,
+		backgroundColor: 'rgba(175, 255, 43, 0.1)',
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+	recentCardioType: {
+		fontSize: 13,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
+	},
+	recentCardioDate: {
+		fontSize: 10,
+		fontWeight: '700',
+		color: '#666666',
+		marginTop: 2
+	},
+	recentCardioStats: {
+		alignItems: 'flex-end'
+	},
+	recentCardioStat: {
+		fontSize: 11,
+		fontWeight: '700',
+		color: '#999999'
 	}
 });

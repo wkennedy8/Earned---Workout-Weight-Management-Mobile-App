@@ -1,4 +1,9 @@
+import CardioModal from '@/components/CardioModal';
 import { useAuth } from '@/context/AuthContext';
+import {
+	getCardioForDate,
+	logCardioSession
+} from '@/controllers/cardioController';
 import { getUserWorkoutPlan } from '@/controllers/plansController';
 import {
 	computeSessionStats,
@@ -77,6 +82,9 @@ export default function WorkoutTab() {
 	const [userPlan, setUserPlan] = useState(null);
 	const [loadingPlan, setLoadingPlan] = useState(true);
 
+	const [cardioModalVisible, setCardioModalVisible] = useState(false);
+	const [cardioSession, setCardioSession] = useState(null);
+
 	const today = useMemo(() => new Date(), []);
 	const todayKey = useMemo(() => formatLocalDateKey(today), [today]);
 
@@ -106,8 +114,14 @@ export default function WorkoutTab() {
 				try {
 					const plan = await getUserWorkoutPlan(user.uid);
 					setUserPlan(plan);
+
+					const session = await getCardioForDate(user.uid, todayKey);
+					setCardioSession(session);
 				} catch (error) {
-					console.error('Failed to reload workout plan:', error);
+					console.error(
+						'Failed to reload workout plan or cardio session:',
+						error
+					);
 				}
 			})();
 		}, [user?.uid])
@@ -137,10 +151,6 @@ export default function WorkoutTab() {
 		if (!completedSession) return null;
 		return computeSessionStats(completedSession);
 	}, [completedSession]);
-
-	const onPressSettings = useCallback(() => {
-		Alert.alert('Settings', 'Settings screen not wired yet.');
-	}, []);
 
 	const onPressShare = useCallback(() => {
 		if (!completedSession) return;
@@ -204,6 +214,27 @@ export default function WorkoutTab() {
 		[onPressExercise]
 	);
 
+	async function handleSaveCardio(data) {
+		if (!user?.uid) return;
+
+		try {
+			await logCardioSession(user.uid, {
+				date: todayKey,
+				...data
+			});
+
+			// Reload cardio session
+			const session = await getCardioForDate(user.uid, todayKey);
+			setCardioSession(session);
+
+			setCardioModalVisible(false);
+			Alert.alert('Success', 'Cardio session logged!');
+		} catch (error) {
+			console.error('Failed to save cardio:', error);
+			Alert.alert('Error', 'Failed to log cardio session');
+		}
+	}
+
 	// Loading state
 	if (loadingPlan || !workout) {
 		return (
@@ -239,6 +270,47 @@ export default function WorkoutTab() {
 						<Text style={styles.tagText}>{workout.tag}</Text>
 					</View>
 					<Text style={styles.workoutTitle}>{workout.title}</Text>
+				</View>
+
+				{/* Optional Cardio Card */}
+				<View style={styles.cardioCard}>
+					<View style={styles.cardioHeader}>
+						<View style={styles.cardioLeft}>
+							<View style={styles.cardioIcon}>
+								<Ionicons name='bicycle-outline' size={22} color='#AFFF2B' />
+							</View>
+							<View>
+								<Text style={styles.cardioTitle}>Cardio (Optional)</Text>
+								<Text style={styles.cardioSubtitle}>
+									{cardioSession
+										? `${cardioSession.duration} min ${cardioSession.type}`
+										: 'Log your cardio session'}
+								</Text>
+							</View>
+						</View>
+
+						{cardioSession ? (
+							<View style={styles.cardioCompleted}>
+								<Ionicons name='checkmark-circle' size={28} color='#AFFF2B' />
+							</View>
+						) : (
+							<TouchableOpacity
+								style={styles.cardioButton}
+								onPress={() => setCardioModalVisible(true)}
+								activeOpacity={0.9}
+							>
+								<Text style={styles.cardioButtonText}>Log</Text>
+							</TouchableOpacity>
+						)}
+					</View>
+
+					{cardioSession && cardioSession.distance && (
+						<View style={styles.cardioDetails}>
+							<Text style={styles.cardioDetailsText}>
+								Distance: {cardioSession.distance} miles
+							</Text>
+						</View>
+					)}
 				</View>
 
 				{/* Post-workout Summary */}
@@ -352,6 +424,12 @@ export default function WorkoutTab() {
 					</TouchableOpacity>
 				</View>
 			</View>
+			{/* Cardio Modal */}
+			<CardioModal
+				visible={cardioModalVisible}
+				onClose={() => setCardioModalVisible(false)}
+				onSave={handleSaveCardio}
+			/>
 		</SafeAreaView>
 	);
 }
@@ -591,5 +669,69 @@ const styles = StyleSheet.create({
 		color: '#000000',
 		fontSize: 18,
 		fontFamily: FontFamily.black
+	},
+	cardioCard: {
+		borderWidth: 1,
+		borderColor: '#333333',
+		borderRadius: 16,
+		backgroundColor: '#1A1A1A',
+		padding: 16,
+		marginBottom: 12
+	},
+	cardioHeader: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between'
+	},
+	cardioLeft: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 12,
+		flex: 1
+	},
+	cardioIcon: {
+		width: 40,
+		height: 40,
+		borderRadius: 12,
+		backgroundColor: 'rgba(175, 255, 43, 0.15)',
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+	cardioTitle: {
+		fontSize: 16,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
+	},
+	cardioSubtitle: {
+		fontSize: 12,
+		fontWeight: '700',
+		color: '#999999',
+		marginTop: 2
+	},
+	cardioCompleted: {
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+	cardioButton: {
+		paddingHorizontal: 20,
+		paddingVertical: 10,
+		borderRadius: 10,
+		backgroundColor: '#AFFF2B'
+	},
+	cardioButtonText: {
+		fontSize: 14,
+		fontFamily: FontFamily.black,
+		color: '#000000'
+	},
+	cardioDetails: {
+		marginTop: 12,
+		paddingTop: 12,
+		borderTopWidth: 1,
+		borderTopColor: '#2A2A2A'
+	},
+	cardioDetailsText: {
+		fontSize: 12,
+		fontWeight: '700',
+		color: '#999999'
 	}
 });

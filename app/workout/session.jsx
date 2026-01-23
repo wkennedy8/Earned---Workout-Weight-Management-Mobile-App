@@ -17,6 +17,8 @@ import {
 	normalizeNumberText,
 	tagColor
 } from '@/utils/workoutUtils';
+import { Audio } from 'expo-av';
+import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -155,6 +157,27 @@ function SwipeableSetRow({
 	);
 }
 
+// Play notification chime
+async function playChime() {
+	try {
+		// Try to use a simple web-hosted beep sound
+		const { sound } = await Audio.Sound.createAsync(
+			{
+				uri: 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'
+			},
+			{ shouldPlay: true }
+		);
+
+		// Unload after playing
+		setTimeout(() => {
+			sound.unloadAsync();
+		}, 1000);
+	} catch (error) {
+		console.log('Sound playback failed, using haptics only');
+		// Fallback: just use haptics
+	}
+}
+
 // ============================================================================
 // COMPONENT
 // ============================================================================
@@ -183,7 +206,7 @@ export default function WorkoutSessionScreen() {
 	const [exerciseDefaults, setExerciseDefaults] = useState({});
 
 	// Rest modal state
-	const [restVisible, setRestVisible] = useState(false);
+	const [restVisible, setRestVisible] = useState(true);
 	const [restSeconds, setRestSeconds] = useState(0);
 	const [restPaused, setRestPaused] = useState(false);
 	const [initialRestSeconds, setInitialRestSeconds] = useState(0);
@@ -331,9 +354,13 @@ export default function WorkoutSessionScreen() {
 		restIntervalRef.current = setInterval(() => {
 			setRestSeconds((prev) => {
 				if (prev <= 1) {
+					// Play chime and vibrate
+					playChime();
+					Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
 					if (restIntervalRef.current) clearInterval(restIntervalRef.current);
 					restIntervalRef.current = null;
-					setTimeout(() => setRestVisible(false), 350);
+					setTimeout(() => setRestVisible(false), 500); // Increased delay to let chime play
 					return 0;
 				}
 				return prev - 1;
@@ -364,9 +391,13 @@ export default function WorkoutSessionScreen() {
 			restIntervalRef.current = setInterval(() => {
 				setRestSeconds((prev) => {
 					if (prev <= 1) {
+						// Play chime and vibrate
+						playChime();
+						Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
 						if (restIntervalRef.current) clearInterval(restIntervalRef.current);
 						restIntervalRef.current = null;
-						setTimeout(() => setRestVisible(false), 350);
+						setTimeout(() => setRestVisible(false), 500);
 						return 0;
 					}
 					return prev - 1;
@@ -724,7 +755,7 @@ export default function WorkoutSessionScreen() {
 					>
 						<View style={styles.modalBackdrop}>
 							<View style={styles.modalCard}>
-								<Text style={styles.modalTitle}>Rest</Text>
+								{/* <Text style={styles.modalTitle}>Rest</Text> */}
 
 								{/* Circular Progress */}
 								<View style={styles.circleContainer}>
@@ -1005,7 +1036,7 @@ const styles = StyleSheet.create({
 	modalTimer: {
 		fontSize: 48,
 		fontWeight: '900',
-		color: '#AFFF2B',
+		color: '#fff',
 		textAlign: 'center'
 	},
 	modalContext: {
