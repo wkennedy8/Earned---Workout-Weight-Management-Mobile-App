@@ -1,5 +1,10 @@
 import { useAuth } from '@/context/AuthContext';
 import {
+	getDefaultPlans,
+	getUserWorkoutPlan,
+	setUserWorkoutPlan
+} from '@/controllers/plansController';
+import {
 	addProgressPhoto,
 	deleteProgressPhotoFromStorage,
 	deleteProgressPhotoMetadata,
@@ -216,6 +221,10 @@ export default function ProfileScreen() {
 	const [email, setEmail] = useState('');
 	const [phone, setPhone] = useState('');
 
+	//Workout plan state
+	const [selectedPlan, setSelectedPlan] = useState(null);
+	const defaultPlans = getDefaultPlans();
+
 	// ---- Derived calories
 	const calories = useMemo(() => {
 		const p = Number(protein) || 0;
@@ -255,6 +264,13 @@ export default function ProfileScreen() {
 				setEmail(settings.email);
 				setPhone(formatPhoneNumber(settings.phone));
 
+				// Load workout plan
+				const userPlan = await getUserWorkoutPlan(user.uid);
+
+				if (!isMounted) return;
+
+				setSelectedPlan(userPlan);
+
 				// Load progress photos
 				const photos = await getProgressPhotos(user.uid);
 
@@ -272,6 +288,19 @@ export default function ProfileScreen() {
 			isMounted = false;
 		};
 	}, [user?.uid]);
+
+	async function onSelectPlan(planId) {
+		if (!user?.uid) return;
+
+		try {
+			setSelectedPlan(PLAN[planId]);
+			await setUserWorkoutPlan(user.uid, { selectedPlanId: planId });
+			Alert.alert('Success', 'Workout plan updated!');
+		} catch (e) {
+			console.warn('Failed to save plan:', e);
+			Alert.alert('Error', 'Failed to update plan. Please try again.');
+		}
+	}
 
 	async function onSaveMacros() {
 		if (!user?.uid) return;
@@ -746,6 +775,60 @@ export default function ProfileScreen() {
 							</TouchableOpacity>
 						</View>
 					</View>
+					{/* Workout Plan */}
+					<View style={styles.card}>
+						<Text style={styles.sectionTitle}>Workout Plan</Text>
+						<Text style={styles.subtle}>Choose your training program</Text>
+
+						<View style={styles.planOptions}>
+							{defaultPlans.map((plan) => (
+								<TouchableOpacity
+									key={plan.id}
+									style={[
+										styles.planOption,
+										selectedPlan?.id === plan.id && styles.planOptionActive
+									]}
+									onPress={() => onSelectPlan(plan.id)}
+									activeOpacity={0.7}
+								>
+									<View style={styles.planHeader}>
+										<Text
+											style={[
+												styles.planTitle,
+												selectedPlan?.id === plan.id && styles.planTitleActive
+											]}
+										>
+											{plan.title}
+										</Text>
+										{selectedPlan?.id === plan.id && (
+											<Ionicons
+												name='checkmark-circle'
+												size={20}
+												color='#AFFF2B'
+											/>
+										)}
+									</View>
+									<Text
+										style={[
+											styles.planDescription,
+											selectedPlan?.id === plan.id &&
+												styles.planDescriptionActive
+										]}
+									>
+										{plan.description}
+									</Text>
+									<Text
+										style={[
+											styles.planWorkouts,
+											selectedPlan?.id === plan.id && styles.planWorkoutsActive
+										]}
+									>
+										{Object.keys(plan.workouts).length} workouts
+									</Text>
+								</TouchableOpacity>
+							))}
+						</View>
+					</View>
 
 					{/* Progress Photos */}
 					<View style={styles.card}>
@@ -1106,5 +1189,52 @@ const styles = StyleSheet.create({
 		fontSize: 15,
 		fontFamily: FontFamily.black,
 		color: '#FF453A'
+	},
+	planOptions: {
+		gap: 10,
+		marginTop: 12
+	},
+	planOption: {
+		padding: 14,
+		borderRadius: 14,
+		borderWidth: 1,
+		borderColor: '#333333',
+		backgroundColor: '#0D0D0D'
+	},
+	planOptionActive: {
+		backgroundColor: 'rgba(175, 255, 43, 0.1)',
+		borderColor: '#AFFF2B'
+	},
+	planHeader: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		marginBottom: 6
+	},
+	planTitle: {
+		fontSize: 15,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
+	},
+	planTitleActive: {
+		color: '#AFFF2B'
+	},
+	planDescription: {
+		fontSize: 12,
+		fontWeight: '700',
+		color: '#999999',
+		marginBottom: 6,
+		lineHeight: 18
+	},
+	planDescriptionActive: {
+		color: '#AFFF2B'
+	},
+	planWorkouts: {
+		fontSize: 11,
+		fontWeight: '700',
+		color: '#666666'
+	},
+	planWorkoutsActive: {
+		color: '#AFFF2B'
 	}
 });
