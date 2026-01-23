@@ -92,7 +92,7 @@ export function AuthProvider({ children }) {
 				router.replace('/(tabs)');
 			} else {
 				console.log('Redirecting to onboarding from login');
-				router.replace('/onboarding/name');
+				router.replace('/onboarding');
 			}
 		} else if (inOnboarding && (onboardingCompleted || userIsAdmin)) {
 			// User completed onboarding but still on onboarding screens

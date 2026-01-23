@@ -8,7 +8,6 @@ import {
 } from '@/controllers/profileController';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
 	ActivityIndicator,
@@ -19,11 +18,16 @@ import {
 	TouchableOpacity,
 	View
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontFamily } from '../../constants/fonts';
+import ProgressBar from './ProgressBar';
 
-export default function PhotoScreen() {
-	const router = useRouter();
+export default function PhotoStep({
+	onBack,
+	onComplete,
+	currentStep,
+	totalSteps,
+	canGoBack
+}) {
 	const { user } = useAuth();
 	const { data, resetData } = useOnboarding();
 	const [photoUri, setPhotoUri] = useState(data.profilePhotoUri);
@@ -70,40 +74,46 @@ export default function PhotoScreen() {
 
 			// Upload photo if selected
 			if (photoUri) {
+				console.log('Uploading profile photo...');
 				profilePhotoUrl = await uploadProfilePhoto(user.uid, photoUri);
 			}
 
+			console.log('Saving onboarding data...');
+
 			// Save all onboarding data to Firebase
 			await Promise.all([
-				// Save profile info (name, email)
+				// Save profile info (name, email, phone)
 				updateUserSettings(user.uid, {
 					name: data.name,
 					email: data.email,
 					phone: user.phoneNumber || ''
 				}),
-				// Save goal and profile photo
+				// Save goal, profile photo, AND onboarding flag together
 				upsertProfile(user.uid, {
 					goal: data.goal,
-					profilePhotoUri: profilePhotoUrl
+					profilePhotoUri: profilePhotoUrl,
+					onboardingCompleted: true,
+					onboardingCompletedAt: new Date().toISOString()
 				}),
 				// Save selected workout plan
 				setUserWorkoutPlan(user.uid, {
 					selectedPlanId: data.selectedPlanId
-				}),
-				// Mark onboarding as complete
-				upsertProfile(user.uid, {
-					onboardingCompleted: true,
-					onboardingCompletedAt: new Date().toISOString()
 				})
 			]);
+
+			console.log('✅ Onboarding completed successfully');
 
 			// Clear onboarding data
 			resetData();
 
+			// Small delay to ensure Firestore write completes
+			await new Promise((resolve) => setTimeout(resolve, 500));
+
 			// Navigate to main app
-			router.replace('/(tabs)');
+			console.log('Navigating to app...');
+			onComplete();
 		} catch (error) {
-			console.error('Failed to complete onboarding:', error);
+			console.error('❌ Failed to complete onboarding:', error);
 			Alert.alert(
 				'Error',
 				'Failed to save your information. Please try again.'
@@ -113,99 +123,88 @@ export default function PhotoScreen() {
 		}
 	}
 
-	function handleSkip() {
+	async function handleSkip() {
 		handleFinish();
 	}
 
-	function handleBack() {
-		router.back();
-	}
-
 	return (
-		<SafeAreaView style={styles.safe}>
-			<View style={styles.container}>
-				<View style={styles.content}>
-					{/* Back Button */}
-					<TouchableOpacity style={styles.backButton} onPress={handleBack}>
+		<View style={styles.container}>
+			<View style={styles.content}>
+				{/* Back Button */}
+				{canGoBack && (
+					<TouchableOpacity style={styles.backButton} onPress={onBack}>
 						<Ionicons name='chevron-back' size={28} color='#AFFF2B' />
 					</TouchableOpacity>
+				)}
 
-					{/* Progress */}
-					<View style={styles.progressBar}>
-						<View style={[styles.progressSegment, styles.progressActive]} />
-						<View style={[styles.progressSegment, styles.progressActive]} />
-						<View style={[styles.progressSegment, styles.progressActive]} />
-						<View style={[styles.progressSegment, styles.progressActive]} />
-						<View style={[styles.progressSegment, styles.progressActive]} />
-					</View>
+				{/* Progress */}
+				<ProgressBar currentStep={currentStep} totalSteps={totalSteps} />
 
-					{/* Header */}
-					<View style={styles.header}>
-						<Text style={styles.title}>Add a profile photo</Text>
-						<Text style={styles.subtitle}>
-							Optional, but helps personalize your experience
-						</Text>
-					</View>
-
-					{/* Photo Picker */}
-					<View style={styles.photoSection}>
-						<TouchableOpacity
-							style={styles.photoCircle}
-							onPress={pickPhoto}
-							activeOpacity={0.8}
-						>
-							{photoUri ? (
-								<Image source={{ uri: photoUri }} style={styles.photoImage} />
-							) : (
-								<View style={styles.photoPlaceholder}>
-									<Ionicons name='camera-outline' size={48} color='#666666' />
-								</View>
-							)}
-						</TouchableOpacity>
-
-						<TouchableOpacity
-							style={styles.changePhotoButton}
-							onPress={pickPhoto}
-							activeOpacity={0.9}
-						>
-							<Text style={styles.changePhotoText}>
-								{photoUri ? 'Change Photo' : 'Upload Photo'}
-							</Text>
-						</TouchableOpacity>
-					</View>
+				{/* Header */}
+				<View style={styles.header}>
+					<Text style={styles.title}>Add a profile photo</Text>
+					<Text style={styles.subtitle}>
+						Optional, but helps personalize your experience
+					</Text>
 				</View>
 
-				{/* Bottom Buttons */}
-				<View style={styles.bottomButtons}>
+				{/* Photo Picker */}
+				<View style={styles.photoSection}>
 					<TouchableOpacity
-						style={styles.skipButton}
-						onPress={handleSkip}
-						disabled={uploading}
-						activeOpacity={0.9}
+						style={styles.photoCircle}
+						onPress={pickPhoto}
+						activeOpacity={0.8}
 					>
-						<Text style={styles.skipButtonText}>Skip</Text>
+						{photoUri ? (
+							<Image source={{ uri: photoUri }} style={styles.photoImage} />
+						) : (
+							<View style={styles.photoPlaceholder}>
+								<Ionicons name='camera-outline' size={48} color='#666666' />
+							</View>
+						)}
 					</TouchableOpacity>
 
 					<TouchableOpacity
-						style={styles.button}
-						onPress={handleFinish}
-						disabled={uploading}
+						style={styles.changePhotoButton}
+						onPress={pickPhoto}
 						activeOpacity={0.9}
 					>
-						{uploading ? (
-							<ActivityIndicator color='#000000' />
-						) : (
-							<Text style={styles.buttonText}>Finish</Text>
-						)}
+						<Text style={styles.changePhotoText}>
+							{photoUri ? 'Change Photo' : 'Upload Photo'}
+						</Text>
 					</TouchableOpacity>
 				</View>
 			</View>
-		</SafeAreaView>
+
+			{/* Bottom Buttons */}
+			<View style={styles.bottomButtons}>
+				<TouchableOpacity
+					style={styles.skipButton}
+					onPress={handleSkip}
+					disabled={uploading}
+					activeOpacity={0.9}
+				>
+					<Text style={styles.skipButtonText}>Skip</Text>
+				</TouchableOpacity>
+
+				<TouchableOpacity
+					style={styles.button}
+					onPress={handleFinish}
+					disabled={uploading}
+					activeOpacity={0.9}
+				>
+					{uploading ? (
+						<ActivityIndicator color='#000000' />
+					) : (
+						<Text style={styles.buttonText}>Finish</Text>
+					)}
+				</TouchableOpacity>
+			</View>
+		</View>
 	);
 }
 
 const styles = StyleSheet.create({
-	safe: { flex: 1, backgroundColor: '#000000' },
 	container: { flex: 1, paddingHorizontal: 24 },
 	content: { flex: 1, paddingTop: 20 },
 
@@ -216,21 +215,6 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		marginLeft: -12,
 		marginBottom: 12
-	},
-
-	progressBar: {
-		flexDirection: 'row',
-		gap: 8,
-		marginBottom: 40
-	},
-	progressSegment: {
-		flex: 1,
-		height: 4,
-		borderRadius: 2,
-		backgroundColor: '#333333'
-	},
-	progressActive: {
-		backgroundColor: '#AFFF2B'
 	},
 
 	header: {

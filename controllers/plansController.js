@@ -27,16 +27,22 @@ export async function setUserWorkoutPlan(
 	uid,
 	{ selectedPlanId, customPlan = null }
 ) {
-	const ref = doc(db, 'users', uid, 'settings', 'workoutPlan');
-	await setDoc(
-		ref,
-		{
-			selectedPlanId,
-			customPlan,
-			updatedAt: new Date().toISOString()
-		},
-		{ merge: true }
-	);
+	try {
+		await setDoc(
+			doc(db, 'users', uid, 'settings', 'workoutPlan'),
+			{
+				selectedPlanId,
+				customPlan,
+				updatedAt: new Date().toISOString()
+			},
+			{ merge: true }
+		);
+
+		return true;
+	} catch (error) {
+		console.error('Error setting workout plan:', error);
+		throw error;
+	}
 }
 
 // Get all available default plans

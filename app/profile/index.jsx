@@ -22,6 +22,7 @@ import {
 	formatPhoneNumber,
 	isValidPhoneNumber
 } from '@/utils/numberUtils';
+import { PLAN } from '@/utils/workoutPlan';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
@@ -293,7 +294,6 @@ export default function ProfileScreen() {
 
 	async function onSelectPlan(planId) {
 		if (!user?.uid) return;
-
 		try {
 			setSelectedPlan(PLAN[planId]);
 			await setUserWorkoutPlan(user.uid, { selectedPlanId: planId });

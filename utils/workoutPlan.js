@@ -165,3 +165,32 @@ export function tagColor(tag) {
 	if (tag === 'Legs') return '#8B5CF6';
 	return '#6B7280';
 }
+
+// Helper function to get workout for a specific date FROM A SPECIFIC PLAN
+export function getWorkoutForDateFromPlan(date, plan) {
+	const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
+
+	if (!plan || !plan.workouts) {
+		return {
+			id: 'rest',
+			title: 'Rest Day',
+			tag: 'Rest',
+			exercises: []
+		};
+	}
+
+	// Find which workout is scheduled for this day
+	for (const workout of Object.values(plan.workouts)) {
+		if (workout && workout.days && workout.days.includes(dayOfWeek)) {
+			return workout;
+		}
+	}
+
+	// Rest day
+	return {
+		id: 'rest',
+		title: 'Rest Day',
+		tag: 'Rest',
+		exercises: []
+	};
+}

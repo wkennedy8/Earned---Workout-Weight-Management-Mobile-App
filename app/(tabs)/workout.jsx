@@ -1,3 +1,5 @@
+import { useAuth } from '@/context/AuthContext';
+import { getUserWorkoutPlan } from '@/controllers/plansController';
 import {
 	computeSessionStats,
 	shareCompletedSession
@@ -5,11 +7,12 @@ import {
 import { useTodayWorkoutSession } from '@/hooks/useTodayWorkoutSession';
 import { formatLongDate } from '@/utils/dateUtils';
 import { formatLocalDateKey } from '@/utils/weightUtils';
-import { getWorkoutForDate, tagColor } from '@/utils/workoutPlan';
+import { getWorkoutForDateFromPlan, tagColor } from '@/utils/workoutPlan';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+	ActivityIndicator,
 	Alert,
 	FlatList,
 	StyleSheet,
@@ -18,7 +21,7 @@ import {
 	View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FontFamily } from '../../constants/fonts'; // Import font utilities
+import { FontFamily } from '../../constants/fonts';
 
 function getStartButtonLabel({
 	isRestDay,
@@ -69,21 +72,58 @@ function getStartNavigationParams({
 
 export default function WorkoutTab() {
 	const router = useRouter();
+	const { user } = useAuth();
+
+	const [userPlan, setUserPlan] = useState(null);
+	const [loadingPlan, setLoadingPlan] = useState(true);
 
 	const today = useMemo(() => new Date(), []);
 	const todayKey = useMemo(() => formatLocalDateKey(today), [today]);
-	// const workout = useMemo(() => getWorkoutForDate(today), [today]);
-	const workout = useMemo(() => {
-		const result = getWorkoutForDate(today);
-		console.log('Workout for today:', result);
-		return result;
-	}, [today]);
 
-	const isRestDay = workout.id === 'rest';
+	// Load user's selected plan
+	useEffect(() => {
+		if (!user?.uid) return;
+
+		(async () => {
+			try {
+				setLoadingPlan(true);
+				const plan = await getUserWorkoutPlan(user.uid);
+				setUserPlan(plan);
+			} catch (error) {
+				console.error('Failed to load workout plan:', error);
+			} finally {
+				setLoadingPlan(false);
+			}
+		})();
+	}, [user?.uid]);
+
+	// Reload plan when screen comes into focus
+	useFocusEffect(
+		useCallback(() => {
+			if (!user?.uid) return;
+
+			(async () => {
+				try {
+					const plan = await getUserWorkoutPlan(user.uid);
+					setUserPlan(plan);
+				} catch (error) {
+					console.error('Failed to reload workout plan:', error);
+				}
+			})();
+		}, [user?.uid])
+	);
+
+	// Get today's workout from the user's plan
+	const workout = useMemo(() => {
+		if (!userPlan) return null;
+		return getWorkoutForDateFromPlan(today, userPlan);
+	}, [today, userPlan]);
+
+	const isRestDay = workout?.id === 'rest';
 
 	const { completedSession, inProgressSession, refresh } =
 		useTodayWorkoutSession({
-			templateId: workout.id,
+			templateId: workout?.id || 'rest',
 			dateKey: todayKey
 		});
 
@@ -97,6 +137,10 @@ export default function WorkoutTab() {
 		if (!completedSession) return null;
 		return computeSessionStats(completedSession);
 	}, [completedSession]);
+
+	const onPressSettings = useCallback(() => {
+		Alert.alert('Settings', 'Settings screen not wired yet.');
+	}, []);
 
 	const onPressShare = useCallback(() => {
 		if (!completedSession) return;
@@ -160,6 +204,18 @@ export default function WorkoutTab() {
 		[onPressExercise]
 	);
 
+	// Loading state
+	if (loadingPlan || !workout) {
+		return (
+			<SafeAreaView style={styles.safe}>
+				<View style={styles.loadingWrap}>
+					<ActivityIndicator size='large' color='#AFFF2B' />
+					<Text style={styles.loadingText}>Loading workout...</Text>
+				</View>
+			</SafeAreaView>
+		);
+	}
+
 	return (
 		<SafeAreaView style={styles.safe}>
 			<View style={styles.container}>
@@ -173,13 +229,6 @@ export default function WorkoutTab() {
 							<Text style={styles.title}>{formatLongDate(today)}</Text>
 						</View>
 					</View>
-
-					{/* <TouchableOpacity
-						onPress={onPressSettings}
-						hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-					>
-						<Text style={styles.settingsIcon}>⚙️</Text>
-					</TouchableOpacity> */}
 				</View>
 
 				{/* Workout Title */}
@@ -310,6 +359,18 @@ export default function WorkoutTab() {
 const styles = StyleSheet.create({
 	safe: { flex: 1, backgroundColor: '#000000', paddingBottom: 90 },
 	container: { flex: 1, paddingHorizontal: 18, paddingTop: 10 },
+
+	loadingWrap: {
+		flex: 1,
+		alignItems: 'center',
+		justifyContent: 'center',
+		gap: 12
+	},
+	loadingText: {
+		fontSize: 14,
+		fontWeight: '700',
+		color: '#999999'
+	},
 
 	headerRow: {
 		flexDirection: 'row',

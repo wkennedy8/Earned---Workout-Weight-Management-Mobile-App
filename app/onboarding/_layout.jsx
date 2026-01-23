@@ -5,15 +5,10 @@ export default function OnboardingLayout() {
 		<Stack
 			screenOptions={{
 				headerShown: false,
-				animation: 'slide_from_right',
-				gestureEnabled: false // Prevent swiping back
+				gestureEnabled: false
 			}}
 		>
-			<Stack.Screen name='name' />
-			<Stack.Screen name='email' />
-			<Stack.Screen name='goal' />
-			<Stack.Screen name='program' />
-			<Stack.Screen name='photo' />
+			<Stack.Screen name='index' />
 		</Stack>
 	);
 }
