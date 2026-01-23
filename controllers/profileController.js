@@ -31,7 +31,21 @@ export async function getProfile(uid) {
 			carbs: 0,
 			fats: 0,
 			profilePhotoUri: null,
-			goal: null
+			goal: null,
+			onboardingCompleted: false,
+			onboardingCompletedAt: null,
+			height: null,
+			currentWeight: null,
+			targetWeight: null,
+			age: null,
+			weightUnit: 'lbs',
+			distanceUnit: 'miles',
+			notifications: {
+				workoutReminders: true,
+				progressUpdates: true,
+				achievements: true,
+				weeklyReports: false
+			}
 		};
 	}
 	const data = snap.data() || {};
@@ -40,7 +54,21 @@ export async function getProfile(uid) {
 		carbs: Number(data.carbs) || 0,
 		fats: Number(data.fats) || 0,
 		profilePhotoUri: data.profilePhotoUri || null,
-		goal: data.goal || null
+		goal: data.goal || null,
+		onboardingCompleted: data.onboardingCompleted || false,
+		onboardingCompletedAt: data.onboardingCompletedAt || null,
+		height: data.height || null,
+		currentWeight: data.currentWeight || null,
+		targetWeight: data.targetWeight || null,
+		age: data.age || null,
+		weightUnit: data.weightUnit || 'lbs',
+		distanceUnit: data.distanceUnit || 'miles',
+		notifications: data.notifications || {
+			workoutReminders: true,
+			progressUpdates: true,
+			achievements: true,
+			weeklyReports: false
+		}
 	};
 }
 
