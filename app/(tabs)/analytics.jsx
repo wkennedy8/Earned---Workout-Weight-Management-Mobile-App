@@ -24,29 +24,51 @@ const screenWidth = Dimensions.get('window').width;
 function calculateStreak(sessions) {
 	if (!sessions.length) return 0;
 
-	// Sort by date descending
+	// Sort by date descending (most recent first)
 	const sorted = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
 
-	let streak = 0;
-	let currentDate = new Date();
-	currentDate.setHours(0, 0, 0, 0);
+	// Get unique dates (in case multiple sessions on same day)
+	const uniqueDates = [...new Set(sorted.map((s) => s.date))];
 
-	for (const session of sorted) {
-		const sessionDate = new Date(session.date);
+	let streak = 0;
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+
+	for (let i = 0; i < uniqueDates.length; i++) {
+		const sessionDate = new Date(uniqueDates[i]);
 		sessionDate.setHours(0, 0, 0, 0);
 
-		const diffTime = currentDate - sessionDate;
+		const diffTime = today - sessionDate;
 		const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-		// If session is today or yesterday, continue streak
-		if (diffDays === streak) {
-			streak++;
-		} else if (diffDays > streak) {
-			// Gap in streak
-			break;
+		// Check if this session is part of the consecutive streak
+		// First session should be today (0) or yesterday (1)
+		// Each subsequent session should be exactly 1 day before the previous
+		if (i === 0) {
+			// First session must be today or yesterday
+			if (diffDays === 0 || diffDays === 1) {
+				streak++;
+			} else {
+				// No recent activity, streak is 0
+				break;
+			}
+		} else {
+			// Check if this date is exactly 1 day before the previous date
+			const prevDate = new Date(uniqueDates[i - 1]);
+			prevDate.setHours(0, 0, 0, 0);
+
+			const daysBetween = Math.floor(
+				(prevDate - sessionDate) / (1000 * 60 * 60 * 24)
+			);
+
+			if (daysBetween === 1) {
+				streak++;
+			} else {
+				// Gap in streak
+				break;
+			}
 		}
 	}
-
 	return streak;
 }
 
