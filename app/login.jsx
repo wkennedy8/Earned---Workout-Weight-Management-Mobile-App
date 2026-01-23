@@ -1,6 +1,11 @@
-import { sendPhoneVerification, verifyPhoneCode } from '@/lib/auth';
+import {
+	ensureSignedIn,
+	sendPhoneVerification,
+	verifyPhoneCode
+} from '@/lib/auth';
 import { app } from '@/lib/firebase';
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
 	ActivityIndicator,
@@ -68,14 +73,47 @@ function isValidPhone(phoneNumber) {
 }
 
 export default function LoginScreen() {
+	const router = useRouter();
 	const [phoneNumber, setPhoneNumber] = useState('');
 	const [displayPhone, setDisplayPhone] = useState('');
 	const [verificationCode, setVerificationCode] = useState('');
 	const [confirmationResult, setConfirmationResult] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const [phoneError, setPhoneError] = useState('');
+	const [tapCount, setTapCount] = useState(0);
 
 	const recaptchaVerifier = useRef(null);
+
+	// Admin login handler
+	async function handleAdminLogin() {
+		try {
+			setLoading(true);
+			await ensureSignedIn(); // Signs in anonymously as admin
+			router.replace('/(tabs)');
+		} catch (error) {
+			console.error('Admin login error:', error);
+			Alert.alert('Error', 'Failed to sign in as admin');
+		} finally {
+			setLoading(false);
+		}
+	}
+
+	// Secret tap gesture handler
+	function handleTitlePress() {
+		const newCount = tapCount + 1;
+		setTapCount(newCount);
+
+		if (newCount >= 5) {
+			setTapCount(0);
+			Alert.alert('Admin Login', 'Sign in as admin user?', [
+				{ text: 'Cancel', style: 'cancel' },
+				{ text: 'Sign In', onPress: handleAdminLogin }
+			]);
+		}
+
+		// Reset tap count after 2 seconds
+		setTimeout(() => setTapCount(0), 2000);
+	}
 
 	function handlePhoneChange(text) {
 		setPhoneError('');
@@ -182,7 +220,13 @@ export default function LoginScreen() {
 			/>
 
 			<View style={styles.container}>
-				<Text style={styles.title}>Welcome</Text>
+				<TouchableOpacity
+					onPress={handleTitlePress}
+					activeOpacity={1}
+					disabled={loading}
+				>
+					<Text style={styles.title}>Welcome</Text>
+				</TouchableOpacity>
 				<Text style={styles.subtitle}>
 					Enter your phone number to get started
 				</Text>

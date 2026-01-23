@@ -1,4 +1,5 @@
 // import AuthGate from '@/components/AuthGate';
+import { OnboardingProvider } from '@/context/OnboardingContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import {
 	Quicksand_300Light,
@@ -52,11 +53,15 @@ export default function RootLayout() {
 	return (
 		<ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
 			<AuthProvider>
-				{/* <AuthGate> */}
-				<Stack screenOptions={{ headerShown: false }}>
-					<Stack.Screen name='(tabs)' options={{ headerShown: false }} />
-				</Stack>
-				{/* </AuthGate> */}
+				<OnboardingProvider>
+					<Stack screenOptions={{ headerShown: false }}>
+						<Stack.Screen name='login' options={{ headerShown: false }} />
+						<Stack.Screen name='onboarding' options={{ headerShown: false }} />
+						<Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+						<Stack.Screen name='workout' options={{ headerShown: false }} />
+						<Stack.Screen name='profile' options={{ headerShown: false }} />
+					</Stack>
+				</OnboardingProvider>
 			</AuthProvider>
 			<StatusBar style='auto' />
 		</ThemeProvider>

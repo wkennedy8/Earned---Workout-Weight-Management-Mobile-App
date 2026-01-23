@@ -165,7 +165,16 @@ export default function WorkoutSessionScreen() {
 	const params = useLocalSearchParams();
 	const templateId = String(params.templateId || 'push');
 
-	const template = useMemo(() => PLAN[templateId] || PLAN.push, [templateId]);
+	const template = useMemo(() => {
+		// Look through all plans to find the workout with this templateId
+		for (const plan of Object.values(PLAN)) {
+			if (plan.workouts && plan.workouts[templateId]) {
+				return plan.workouts[templateId];
+			}
+		}
+		// Fallback to push workout if not found
+		return PLAN.ppl?.workouts?.push || null;
+	}, [templateId]);
 	const today = useMemo(() => new Date(), []);
 	const dateKey = useMemo(() => formatLocalDateKey(today), [today]);
 

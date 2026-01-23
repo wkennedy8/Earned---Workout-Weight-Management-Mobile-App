@@ -1,3 +1,4 @@
+import { getProfile } from '@/controllers/profileController';
 import { useRouter, useSegments } from 'expo-router';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
@@ -15,6 +16,7 @@ export function AuthProvider({ children }) {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
 	const [userIsAdmin, setUserIsAdmin] = useState(false);
+	const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
 	const router = useRouter();
 	const segments = useSegments();
@@ -22,11 +24,15 @@ export function AuthProvider({ children }) {
 	// Subscribe to auth state changes
 	useEffect(() => {
 		const unsubscribe = subscribeToAuth(async (firebaseUser) => {
-			console.log('Auth state changed:', firebaseUser?.uid);
+			// console.log('Auth state changed:', firebaseUser?.uid);
 
 			if (firebaseUser) {
 				// Check if user is admin
 				const adminStatus = await isAdmin(firebaseUser.uid);
+
+				// Check if onboarding is completed
+				const profile = await getProfile(firebaseUser.uid);
+				const hasCompletedOnboarding = profile?.onboardingCompleted || false;
 
 				setUser({
 					uid: firebaseUser.uid,
@@ -38,9 +44,11 @@ export function AuthProvider({ children }) {
 					isAnonymous: firebaseUser.isAnonymous
 				});
 				setUserIsAdmin(adminStatus);
+				setOnboardingCompleted(hasCompletedOnboarding);
 			} else {
 				setUser(null);
 				setUserIsAdmin(false);
+				setOnboardingCompleted(false);
 			}
 
 			setLoading(false);
@@ -55,19 +63,44 @@ export function AuthProvider({ children }) {
 		if (loading) return;
 
 		const inAuthGroup = segments[0] === 'login';
+		const inOnboarding = segments[0] === 'onboarding';
 
-		console.log('Navigation check:', { user: !!user, inAuthGroup, segments });
+		// console.log('Navigation check:', {
+		// 	user: !!user,
+		// 	onboardingCompleted,
+		// 	userIsAdmin,
+		// 	inAuthGroup,
+		// 	inOnboarding,
+		// 	segments,
+		// 	user
+		// });
 
 		if (!user && !inAuthGroup) {
 			// No user, redirect to login
 			console.log('Redirecting to login');
 			router.replace('/login');
-		} else if (user && inAuthGroup) {
-			// User exists, redirect to app
-			console.log('Redirecting to app');
+			return;
+		}
+
+		if (!user) return; // Exit early if no user
+
+		// Handle authenticated users
+		if (inAuthGroup) {
+			// User is authenticated but on login screen - redirect to appropriate place
+			if (onboardingCompleted || userIsAdmin) {
+				console.log('Redirecting to app from login');
+				router.replace('/(tabs)');
+			} else {
+				console.log('Redirecting to onboarding from login');
+				router.replace('/onboarding/name');
+			}
+		} else if (inOnboarding && (onboardingCompleted || userIsAdmin)) {
+			// User completed onboarding but still on onboarding screens
+			console.log('Redirecting to app from onboarding');
 			router.replace('/(tabs)');
 		}
-	}, [user, loading, segments]);
+		// If user is in app screens, don't redirect anywhere
+	}, [user, loading, onboardingCompleted, userIsAdmin, segments]);
 
 	const value = {
 		user,
@@ -111,5 +144,3 @@ export function useAuth() {
 	}
 	return context;
 }
-
-// Remove AuthGate - we're handling navigation in AuthProvider now

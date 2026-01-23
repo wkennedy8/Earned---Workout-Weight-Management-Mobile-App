@@ -126,15 +126,26 @@ export function getDayName(date = new Date()) {
 	return date.toLocaleDateString(undefined, { weekday: 'long' });
 }
 
+// Helper function to get workout for a specific date
 export function getWorkoutForDate(date) {
 	const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
 
 	// For now, only PPL plan is supported
 	const pplPlan = PLAN.ppl;
 
+	if (!pplPlan || !pplPlan.workouts) {
+		console.warn('PPL plan not found');
+		return {
+			id: 'rest',
+			title: 'Rest Day',
+			tag: 'Rest',
+			exercises: []
+		};
+	}
+
 	// Find which workout is scheduled for this day
 	for (const workout of Object.values(pplPlan.workouts)) {
-		if (workout.days.includes(dayOfWeek)) {
+		if (workout && workout.days && workout.days.includes(dayOfWeek)) {
 			return workout;
 		}
 	}

@@ -72,7 +72,12 @@ export default function WorkoutTab() {
 
 	const today = useMemo(() => new Date(), []);
 	const todayKey = useMemo(() => formatLocalDateKey(today), [today]);
-	const workout = useMemo(() => getWorkoutForDate(today), [today]);
+	// const workout = useMemo(() => getWorkoutForDate(today), [today]);
+	const workout = useMemo(() => {
+		const result = getWorkoutForDate(today);
+		console.log('Workout for today:', result);
+		return result;
+	}, [today]);
 
 	const isRestDay = workout.id === 'rest';
 
@@ -92,10 +97,6 @@ export default function WorkoutTab() {
 		if (!completedSession) return null;
 		return computeSessionStats(completedSession);
 	}, [completedSession]);
-
-	const onPressSettings = useCallback(() => {
-		Alert.alert('Settings', 'Settings screen not wired yet.');
-	}, []);
 
 	const onPressShare = useCallback(() => {
 		if (!completedSession) return;

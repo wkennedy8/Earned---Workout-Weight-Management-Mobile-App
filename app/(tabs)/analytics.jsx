@@ -200,9 +200,17 @@ export default function AnalyticsScreen() {
 				? filteredWeights
 						.slice()
 						.reverse()
-						.map((w) => {
-							const d = new Date(w.date);
-							return `${d.getMonth() + 1}/${d.getDate()}`;
+						.map((w, index, array) => {
+							// Show label every 5 days, or first and last
+							if (
+								index === 0 ||
+								index === array.length - 1 ||
+								index % 5 === 0
+							) {
+								const d = new Date(w.date);
+								return `${d.getMonth() + 1}/${d.getDate()}`;
+							}
+							return ''; // Empty string for dates we don't want to show
 						})
 				: [''],
 		datasets: [

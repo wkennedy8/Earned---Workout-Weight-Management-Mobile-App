@@ -262,7 +262,9 @@ export default function ProfileScreen() {
 
 				setName(settings.name);
 				setEmail(settings.email);
-				setPhone(formatPhoneNumber(settings.phone));
+				const phoneWithoutCountryCode =
+					settings.phone?.replace(/^\+1/, '') || '';
+				setPhone(formatPhoneNumber(phoneWithoutCountryCode));
 
 				// Load workout plan
 				const userPlan = await getUserWorkoutPlan(user.uid);
@@ -618,12 +620,13 @@ export default function ProfileScreen() {
 							<Text style={styles.fieldLabel}>Phone Number</Text>
 							<TextInput
 								value={phone}
-								onChangeText={(text) => setPhone(formatPhoneNumber(text))}
-								placeholder='(555) 123-4567'
+								// onChangeText={(text) => setPhone(formatPhoneNumber(text))}
+								// placeholder='(555) 123-4567'
 								placeholderTextColor='#666666'
-								style={styles.textInput}
+								style={[styles.textInput, styles.textInputDisabled]}
 								keyboardType='phone-pad'
 								maxLength={14}
+								editable={false}
 							/>
 						</View>
 
@@ -1236,5 +1239,9 @@ const styles = StyleSheet.create({
 	},
 	planWorkoutsActive: {
 		color: '#AFFF2B'
+	},
+	textInputDisabled: {
+		backgroundColor: '#0A0A0A',
+		opacity: 0.6
 	}
 });

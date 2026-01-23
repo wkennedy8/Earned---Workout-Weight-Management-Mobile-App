@@ -16,10 +16,17 @@ import {
 import { Alert, Share } from 'react-native';
 import { db } from '../lib/firebase';
 import { formatLocalDateKey } from '../utils/dateUtils';
-import { defaultSetCount, normalizeExerciseKey } from '../utils/workoutUtils';
+import { normalizeExerciseKey } from '../utils/workoutUtils';
 
 function sessionsCol(uid) {
 	return collection(db, 'users', uid, 'sessions');
+}
+
+/**
+ * Generate a unique session ID
+ */
+function generateSessionId() {
+	return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
 export async function getSessionById(uid, sessionId) {
@@ -177,40 +184,63 @@ export async function shareCompletedSession(completedSession) {
 	}
 }
 
-export function buildEmptySession({ template, defaultsMap }) {
-	const dateKey = formatLocalDateKey(new Date());
+export function buildEmptySession({ template, defaultsMap = {} }) {
+	// Handle both old template object or new nested structure
+	let workoutTemplate = template;
+
+	// If template is just an ID string, look it up
+	if (typeof template === 'string') {
+		// Try to find in nested structure
+		for (const plan of Object.values(PLAN)) {
+			if (plan.workouts && plan.workouts[template]) {
+				workoutTemplate = plan.workouts[template];
+				break;
+			}
+		}
+	}
+
+	if (!workoutTemplate || !workoutTemplate.id) {
+		throw new Error('Invalid workout template');
+	}
+
+	const exercises = (workoutTemplate.exercises || []).map((ex) => {
+		const exKey = normalizeExerciseKey(ex.name);
+		const defaultWeight =
+			defaultsMap?.[exKey]?.defaultWeight != null
+				? String(defaultsMap[exKey].defaultWeight)
+				: '';
+
+		const numSets = ex.sets?.includes('-')
+			? parseInt(ex.sets.split('-')[0], 10)
+			: parseInt(ex.sets, 10);
+
+		const sets = Array.from({ length: numSets }, (_, i) => ({
+			setIndex: i + 1,
+			weight: defaultWeight,
+			reps: '',
+			saved: false,
+			savedAt: null
+		}));
+
+		return {
+			name: ex.name,
+			targetSets: ex.sets,
+			targetReps: ex.reps,
+			note: ex.note || '',
+			sets,
+			expanded: false
+		};
+	});
 
 	return {
-		id: `${dateKey}_${template.id}`,
-		date: dateKey,
-		templateId: template.id,
-		title: template.title,
-		tag: template.tag,
-		status: 'in_progress',
-		exercises: template.exercises.map((ex) => {
-			const count = defaultSetCount(ex.sets);
-			const exKey = normalizeExerciseKey(ex.name);
-
-			// Get default weight from Firebase (progressive overload)
-			const defaultWeight =
-				defaultsMap?.[exKey]?.defaultWeight != null
-					? String(defaultsMap[exKey].defaultWeight)
-					: '';
-
-			return {
-				name: ex.name,
-				targetSets: ex.sets,
-				targetReps: ex.reps,
-				note: ex.note || '',
-				expanded: false,
-				sets: Array.from({ length: count }).map((_, idx) => ({
-					setIndex: idx + 1,
-					weight: defaultWeight, // Pre-filled from previous workout!
-					reps: '',
-					saved: false,
-					savedAt: null
-				}))
-			};
-		})
+		id: generateSessionId(),
+		templateId: workoutTemplate.id,
+		title: workoutTemplate.title || 'Workout',
+		tag: workoutTemplate.tag || 'Workout',
+		date: formatLocalDateKey(new Date()),
+		status: 'in-progress',
+		startedAt: new Date().toISOString(),
+		completedAt: null,
+		exercises
 	};
 }
