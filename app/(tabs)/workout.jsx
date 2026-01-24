@@ -23,7 +23,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	ActivityIndicator,
 	Alert,
-	FlatList,
+	ScrollView,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
@@ -365,7 +365,11 @@ export default function WorkoutTab() {
 	console.log('completedSession:', completedSession);
 	return (
 		<SafeAreaView style={styles.safe}>
-			<View style={styles.container}>
+			<ScrollView
+				style={styles.scrollView}
+				contentContainerStyle={styles.scrollContent}
+				showsVerticalScrollIndicator={false}
+			>
 				{/* Header */}
 				<View style={styles.headerRow}>
 					<View style={styles.headerLeft}>
@@ -445,7 +449,6 @@ export default function WorkoutTab() {
 					)}
 				</View>
 
-				{/* Post-workout Summary */}
 				{/* Post-workout Summary or Rest Day Summary */}
 				{completedSession && stats ? (
 					<View style={styles.summaryCard}>
@@ -520,6 +523,17 @@ export default function WorkoutTab() {
 								<Text style={styles.secondaryButtonText}>Share</Text>
 							</TouchableOpacity>
 						</View>
+
+						{/* Start/Edit Workout Button */}
+						<TouchableOpacity
+							style={styles.primaryActionButton}
+							onPress={onStartWorkout}
+							activeOpacity={0.9}
+						>
+							<Text style={styles.primaryActionButtonText}>
+								{startButtonLabel}
+							</Text>
+						</TouchableOpacity>
 					</View>
 				) : markedAsRest ? (
 					<View style={styles.summaryCard}>
@@ -569,31 +583,69 @@ export default function WorkoutTab() {
 						</Text>
 					</View>
 				) : (
-					<View style={styles.listCard}>
-						<FlatList
-							data={workout.exercises}
-							keyExtractor={(item, idx) => `${item.name}-${idx}`}
-							ItemSeparatorComponent={() => <View style={styles.rowDivider} />}
-							renderItem={renderExerciseItem}
-						/>
-					</View>
+					<>
+						<View style={styles.listCard}>
+							<Text style={styles.exerciseListTitle}>Exercises</Text>
+							{workout.exercises.map((item, idx) => (
+								<View key={`${item.name}-${idx}`}>
+									{idx > 0 && <View style={styles.rowDivider} />}
+									<TouchableOpacity
+										activeOpacity={0.85}
+										onPress={() => onPressExercise(item)}
+										style={styles.exerciseRow}
+									>
+										<View style={styles.exerciseLeft}>
+											<View style={styles.exerciseIcon}>
+												<Text style={styles.exerciseIconText}>•</Text>
+											</View>
+											<View>
+												<Text style={styles.exerciseName}>{item.name}</Text>
+												<Text style={styles.exerciseMeta}>
+													{item.sets} sets, {item.reps}{' '}
+													{String(item.reps).toLowerCase() === 'time'
+														? ''
+														: 'reps'}
+													{item.note ? ` • ${item.note}` : ''}
+												</Text>
+											</View>
+										</View>
+										<Text style={styles.chevron}>›</Text>
+									</TouchableOpacity>
+								</View>
+							))}
+						</View>
+
+						{/* Start/Resume Workout Button - Only show if no completed session */}
+						{!completedSession && (
+							<TouchableOpacity
+								style={styles.primaryActionButton}
+								onPress={onStartWorkout}
+								activeOpacity={0.9}
+							>
+								<Text style={styles.primaryActionButtonText}>
+									{startButtonLabel}
+								</Text>
+							</TouchableOpacity>
+						)}
+					</>
 				)}
 
-				{/* Bottom CTA */}
-				<View style={styles.bottomCtaWrap}>
-					<TouchableOpacity
-						style={[
-							styles.startButton,
-							isRestDay && styles.startButtonDisabled
-						]}
-						onPress={onStartWorkout}
-						activeOpacity={0.9}
-						disabled={isRestDay}
-					>
-						<Text style={styles.startButtonText}>{startButtonLabel}</Text>
-					</TouchableOpacity>
-				</View>
-			</View>
+				{/* Bottom spacing for CTA button */}
+				<View style={{ height: 80 }} />
+			</ScrollView>
+
+			{/* Bottom CTA - Fixed at bottom */}
+			{/* <View style={styles.bottomCtaWrap}>
+				<TouchableOpacity
+					style={[styles.startButton, isRestDay && styles.startButtonDisabled]}
+					onPress={onStartWorkout}
+					activeOpacity={0.9}
+					disabled={isRestDay}
+				>
+					<Text style={styles.startButtonText}>{startButtonLabel}</Text>
+				</TouchableOpacity>
+			</View> */}
+
 			{/* Cardio Modal */}
 			<CardioModal
 				visible={cardioModalVisible}
@@ -605,9 +657,20 @@ export default function WorkoutTab() {
 }
 
 const styles = StyleSheet.create({
-	safe: { flex: 1, backgroundColor: '#000000', paddingBottom: 90 },
-	container: { flex: 1, paddingHorizontal: 18, paddingTop: 10 },
-
+	// safe: { flex: 1, backgroundColor: '#000000' },
+	// scrollView: { flex: 1 },
+	// scrollContent: {
+	// 	paddingHorizontal: 18,
+	// 	paddingTop: 10,
+	// 	paddingBottom: 20
+	// },
+	safe: { flex: 1, backgroundColor: '#000000' },
+	scrollView: { flex: 1 },
+	scrollContent: {
+		paddingHorizontal: 18,
+		paddingTop: 10,
+		paddingBottom: 100
+	},
 	loadingWrap: {
 		flex: 1,
 		alignItems: 'center',
@@ -702,6 +765,9 @@ const styles = StyleSheet.create({
 		fontFamily: FontFamily.bold,
 		color: '#AFFF2B'
 	},
+	summarySubtitleRest: {
+		color: '#FFD60A'
+	},
 
 	statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
 	statBox: {
@@ -758,13 +824,66 @@ const styles = StyleSheet.create({
 		color: '#AFFF2B'
 	},
 
+	restDaySummary: {
+		alignItems: 'center',
+		paddingVertical: 24,
+		borderBottomWidth: 1,
+		borderBottomColor: '#2A2A2A'
+	},
+	restDayIcon: {
+		width: 64,
+		height: 64,
+		borderRadius: 32,
+		backgroundColor: 'rgba(175, 255, 43, 0.15)',
+		alignItems: 'center',
+		justifyContent: 'center',
+		marginBottom: 16
+	},
+	restDayTitle: {
+		fontSize: 18,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF',
+		marginBottom: 8
+	},
+	restDayDescription: {
+		fontSize: 13,
+		fontWeight: '700',
+		color: '#999999',
+		textAlign: 'center',
+		lineHeight: 20,
+		paddingHorizontal: 20
+	},
+	restDayInfo: {
+		gap: 12,
+		marginTop: 16
+	},
+	restDayInfoRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 10
+	},
+	restDayInfoText: {
+		fontSize: 13,
+		fontWeight: '700',
+		color: '#FFFFFF',
+		flex: 1
+	},
+
 	listCard: {
-		flex: 1,
 		borderWidth: 1,
 		borderColor: '#333333',
 		borderRadius: 16,
 		backgroundColor: '#1A1A1A',
-		overflow: 'hidden'
+		overflow: 'hidden',
+		marginBottom: 12
+	},
+	exerciseListTitle: {
+		fontSize: 14,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF',
+		paddingHorizontal: 14,
+		paddingTop: 14,
+		paddingBottom: 8
 	},
 
 	exerciseRow: {
@@ -810,15 +929,15 @@ const styles = StyleSheet.create({
 		color: '#666666',
 		marginLeft: 10
 	},
-	rowDivider: { height: 1, backgroundColor: '#333333' },
+	rowDivider: { height: 1, backgroundColor: '#333333', marginHorizontal: 14 },
 
 	restCard: {
-		flex: 1,
 		borderWidth: 1,
 		borderColor: '#333333',
 		borderRadius: 16,
 		backgroundColor: '#1A1A1A',
-		padding: 16
+		padding: 16,
+		marginBottom: 12
 	},
 	restTitle: {
 		fontSize: 18,
@@ -839,21 +958,20 @@ const styles = StyleSheet.create({
 		marginTop: 20
 	},
 
-	bottomCtaWrap: { paddingTop: 12, paddingBottom: 12 },
-	startButton: {
+	primaryActionButton: {
 		height: 54,
 		borderRadius: 14,
 		backgroundColor: '#AFFF2B',
 		alignItems: 'center',
 		justifyContent: 'center',
+		marginTop: 12,
 		shadowColor: '#AFFF2B',
 		shadowOpacity: 0.3,
 		shadowRadius: 10,
 		shadowOffset: { width: 0, height: 6 },
 		elevation: 5
 	},
-	startButtonDisabled: { backgroundColor: '#333333' },
-	startButtonText: {
+	primaryActionButtonText: {
 		color: '#000000',
 		fontSize: 18,
 		fontFamily: FontFamily.black
@@ -921,52 +1039,5 @@ const styles = StyleSheet.create({
 		fontSize: 12,
 		fontWeight: '700',
 		color: '#999999'
-	},
-	summarySubtitleRest: {
-		color: '#FFD60A'
-	},
-	restDaySummary: {
-		alignItems: 'center',
-		paddingVertical: 24,
-		borderBottomWidth: 1,
-		borderBottomColor: '#2A2A2A'
-	},
-	restDayIcon: {
-		width: 64,
-		height: 64,
-		borderRadius: 32,
-		backgroundColor: 'rgba(175, 255, 43, 0.15)',
-		alignItems: 'center',
-		justifyContent: 'center',
-		marginBottom: 16
-	},
-	restDayTitle: {
-		fontSize: 18,
-		fontFamily: FontFamily.black,
-		color: '#FFFFFF',
-		marginBottom: 8
-	},
-	restDayDescription: {
-		fontSize: 13,
-		fontWeight: '700',
-		color: '#999999',
-		textAlign: 'center',
-		lineHeight: 20,
-		paddingHorizontal: 20
-	},
-	restDayInfo: {
-		gap: 12,
-		marginTop: 16
-	},
-	restDayInfoRow: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 10
-	},
-	restDayInfoText: {
-		fontSize: 13,
-		fontWeight: '700',
-		color: '#FFFFFF',
-		flex: 1
 	}
 });
