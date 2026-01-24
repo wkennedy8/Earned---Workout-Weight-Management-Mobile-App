@@ -1,21 +1,24 @@
 import { CARDIO_TYPES } from '@/controllers/cardioController';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
 	ActivityIndicator,
 	Dimensions,
+	Keyboard,
 	Modal,
+	ScrollView,
 	StyleSheet,
 	Text,
 	TextInput,
 	TouchableOpacity,
+	TouchableWithoutFeedback,
 	View
 } from 'react-native';
 import { FontFamily } from '../constants/fonts';
 
 const { width } = Dimensions.get('window');
 const MODAL_WIDTH = width - 48;
-const CARD_WIDTH = (MODAL_WIDTH - 72) / 3; // 3 columns with gaps and padding
+const CARD_WIDTH = (MODAL_WIDTH - 72) / 3;
 
 export default function CardioModal({
 	visible,
@@ -30,8 +33,26 @@ export default function CardioModal({
 	const [distance, setDistance] = useState(
 		initialData?.distance?.toString() || ''
 	);
+	const [speed, setSpeed] = useState(initialData?.speed?.toString() || '');
+	const [incline, setIncline] = useState(
+		initialData?.incline?.toString() || ''
+	);
+	const [level, setLevel] = useState(initialData?.level?.toString() || '');
+	const [pace, setPace] = useState(initialData?.pace?.toString() || '');
 	const [notes, setNotes] = useState(initialData?.notes || '');
 	const [saving, setSaving] = useState(false);
+
+	// Auto-calculate pace for running if duration and distance are provided
+	useEffect(() => {
+		if (type === 'running' && duration && distance) {
+			const durationMin = parseFloat(duration);
+			const distanceMi = parseFloat(distance);
+			if (durationMin > 0 && distanceMi > 0) {
+				const paceValue = durationMin / distanceMi;
+				setPace(paceValue.toFixed(2));
+			}
+		}
+	}, [type, duration, distance]);
 
 	function handleSave() {
 		if (!type || !duration) {
@@ -39,95 +60,47 @@ export default function CardioModal({
 			return;
 		}
 
+		Keyboard.dismiss();
 		setSaving(true);
-		onSave({
+		const data = {
 			type,
 			duration: parseInt(duration),
-			distance: distance ? parseFloat(distance) : null,
 			notes: notes.trim()
-		});
+		};
+
+		// Add optional fields based on type
+		if (distance) data.distance = parseFloat(distance);
+		if (speed) data.speed = parseFloat(speed);
+		if (incline) data.incline = parseFloat(incline);
+		if (level) data.level = parseInt(level);
+		if (pace) data.pace = parseFloat(pace);
+
+		onSave(data);
 	}
 
 	function handleClose() {
+		Keyboard.dismiss();
 		// Reset form
 		setType(null);
 		setDuration('');
 		setDistance('');
+		setSpeed('');
+		setIncline('');
+		setLevel('');
+		setPace('');
 		setNotes('');
 		setSaving(false);
 		onClose();
 	}
 
-	return (
-		<Modal
-			visible={visible}
-			animationType='fade'
-			transparent={true}
-			onRequestClose={handleClose}
-		>
-			<View style={styles.modalOverlay}>
-				<TouchableOpacity
-					style={styles.backdrop}
-					activeOpacity={1}
-					onPress={handleClose}
-				/>
-
-				<View style={styles.modalContainer}>
-					{/* Header */}
-					<View style={styles.modalHeader}>
-						<Text style={styles.modalTitle}>Log Cardio</Text>
-						<TouchableOpacity
-							onPress={handleClose}
-							hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-							style={styles.closeButton}
-						>
-							<Ionicons name='close-circle' size={28} color='#666666' />
-						</TouchableOpacity>
-					</View>
-
-					<View style={styles.modalContent}>
-						{/* Type Selection */}
-						<View style={styles.section}>
-							<Text style={styles.label}>Activity Type *</Text>
-							<View style={styles.typeGrid}>
-								{CARDIO_TYPES.map((cardioType) => (
-									<TouchableOpacity
-										key={cardioType.id}
-										style={[
-											styles.typeCard,
-											type === cardioType.id && styles.typeCardActive
-										]}
-										onPress={() => setType(cardioType.id)}
-										activeOpacity={0.7}
-									>
-										<View
-											style={[
-												styles.typeIconContainer,
-												type === cardioType.id && styles.typeIconContainerActive
-											]}
-										>
-											<Ionicons
-												name={cardioType.icon}
-												size={20}
-												color={type === cardioType.id ? '#000000' : '#AFFF2B'}
-											/>
-										</View>
-										<Text
-											style={[
-												styles.typeLabel,
-												type === cardioType.id && styles.typeLabelActive
-											]}
-										>
-											{cardioType.label}
-										</Text>
-									</TouchableOpacity>
-								))}
-							</View>
-						</View>
-
-						{/* Duration & Distance Row */}
+	// Render input fields based on selected cardio type
+	function renderTypeInputs() {
+		switch (type) {
+			case 'treadmill':
+				return (
+					<>
 						<View style={styles.row}>
-							<View style={styles.halfSection}>
+							<View style={styles.thirdSection}>
 								<Text style={styles.label}>Duration *</Text>
 								<View style={styles.inputContainer}>
 									<TextInput
@@ -137,12 +110,68 @@ export default function CardioModal({
 										placeholder='30'
 										placeholderTextColor='#666666'
 										keyboardType='numeric'
+										returnKeyType='done'
 									/>
 									<Text style={styles.inputSuffix}>min</Text>
 								</View>
 							</View>
 
-							<View style={styles.halfSection}>
+							<View style={styles.thirdSection}>
+								<Text style={styles.label}>Incline</Text>
+								<View style={styles.inputContainer}>
+									<TextInput
+										style={styles.input}
+										value={incline}
+										onChangeText={setIncline}
+										placeholder='5.0'
+										placeholderTextColor='#666666'
+										keyboardType='decimal-pad'
+										returnKeyType='done'
+									/>
+									<Text style={styles.inputSuffix}>%</Text>
+								</View>
+							</View>
+
+							<View style={styles.thirdSection}>
+								<Text style={styles.label}>Speed</Text>
+								<View style={styles.inputContainer}>
+									<TextInput
+										style={styles.input}
+										value={speed}
+										onChangeText={setSpeed}
+										placeholder='6.0'
+										placeholderTextColor='#666666'
+										keyboardType='decimal-pad'
+										returnKeyType='done'
+									/>
+									<Text style={styles.inputSuffix}>mph</Text>
+								</View>
+							</View>
+						</View>
+					</>
+				);
+
+			case 'running':
+				return (
+					<>
+						<View style={styles.row}>
+							<View style={styles.thirdSection}>
+								<Text style={styles.label}>Duration *</Text>
+								<View style={styles.inputContainer}>
+									<TextInput
+										style={styles.input}
+										value={duration}
+										onChangeText={setDuration}
+										placeholder='30'
+										placeholderTextColor='#666666'
+										keyboardType='numeric'
+										returnKeyType='done'
+									/>
+									<Text style={styles.inputSuffix}>min</Text>
+								</View>
+							</View>
+
+							<View style={styles.thirdSection}>
 								<Text style={styles.label}>Distance</Text>
 								<View style={styles.inputContainer}>
 									<TextInput
@@ -152,52 +181,284 @@ export default function CardioModal({
 										placeholder='3.5'
 										placeholderTextColor='#666666'
 										keyboardType='decimal-pad'
+										returnKeyType='done'
 									/>
 									<Text style={styles.inputSuffix}>mi</Text>
 								</View>
 							</View>
+
+							<View style={styles.thirdSection}>
+								<Text style={styles.label}>Pace</Text>
+								<View style={styles.inputContainer}>
+									<TextInput
+										style={styles.input}
+										value={pace}
+										onChangeText={setPace}
+										placeholder='8.5'
+										placeholderTextColor='#666666'
+										keyboardType='decimal-pad'
+										returnKeyType='done'
+										editable={!(duration && distance)} // Auto-calc if both present
+									/>
+									<Text style={styles.inputSuffix}>min/mi</Text>
+								</View>
+							</View>
+						</View>
+						{duration && distance && (
+							<Text style={styles.autoCalcNote}>
+								Pace auto-calculated from duration and distance
+							</Text>
+						)}
+					</>
+				);
+
+			case 'walking':
+				return (
+					<View style={styles.row}>
+						<View style={styles.halfSection}>
+							<Text style={styles.label}>Duration *</Text>
+							<View style={styles.inputContainer}>
+								<TextInput
+									style={styles.input}
+									value={duration}
+									onChangeText={setDuration}
+									placeholder='30'
+									placeholderTextColor='#666666'
+									keyboardType='numeric'
+									returnKeyType='done'
+								/>
+								<Text style={styles.inputSuffix}>min</Text>
+							</View>
 						</View>
 
-						{/* Notes */}
-						<View style={styles.section}>
-							<Text style={styles.label}>Notes (optional)</Text>
-							<TextInput
-								style={styles.textArea}
-								value={notes}
-								onChangeText={setNotes}
-								placeholder='How did it feel?'
-								placeholderTextColor='#666666'
-								multiline
-								numberOfLines={2}
-								textAlignVertical='top'
-								maxLength={100}
-							/>
+						<View style={styles.halfSection}>
+							<Text style={styles.label}>Distance</Text>
+							<View style={styles.inputContainer}>
+								<TextInput
+									style={styles.input}
+									value={distance}
+									onChangeText={setDistance}
+									placeholder='2.0'
+									placeholderTextColor='#666666'
+									keyboardType='decimal-pad'
+									returnKeyType='done'
+								/>
+								<Text style={styles.inputSuffix}>mi</Text>
+							</View>
 						</View>
 					</View>
+				);
 
-					{/* Save Button */}
-					<View style={styles.modalFooter}>
-						<TouchableOpacity
-							style={[
-								styles.saveButton,
-								(!type || !duration) && styles.saveButtonDisabled
-							]}
-							onPress={handleSave}
-							disabled={!type || !duration || saving}
-							activeOpacity={0.9}
-						>
-							{saving ? (
-								<ActivityIndicator color='#000000' />
-							) : (
-								<>
-									<Ionicons name='checkmark-circle' size={20} color='#000000' />
-									<Text style={styles.saveButtonText}>Save Session</Text>
-								</>
-							)}
-						</TouchableOpacity>
+			case 'stairmaster':
+				return (
+					<View style={styles.row}>
+						<View style={styles.halfSection}>
+							<Text style={styles.label}>Duration *</Text>
+							<View style={styles.inputContainer}>
+								<TextInput
+									style={styles.input}
+									value={duration}
+									onChangeText={setDuration}
+									placeholder='30'
+									placeholderTextColor='#666666'
+									keyboardType='numeric'
+									returnKeyType='done'
+								/>
+								<Text style={styles.inputSuffix}>min</Text>
+							</View>
+						</View>
+
+						<View style={styles.halfSection}>
+							<Text style={styles.label}>Level</Text>
+							<View style={styles.inputContainer}>
+								<TextInput
+									style={styles.input}
+									value={level}
+									onChangeText={setLevel}
+									placeholder='8'
+									placeholderTextColor='#666666'
+									keyboardType='numeric'
+									returnKeyType='done'
+								/>
+							</View>
+						</View>
 					</View>
+				);
+
+			case 'cycling':
+			case 'swimming':
+			case 'other':
+			default:
+				return (
+					<View style={styles.row}>
+						<View style={styles.halfSection}>
+							<Text style={styles.label}>Duration *</Text>
+							<View style={styles.inputContainer}>
+								<TextInput
+									style={styles.input}
+									value={duration}
+									onChangeText={setDuration}
+									placeholder='30'
+									placeholderTextColor='#666666'
+									keyboardType='numeric'
+									returnKeyType='done'
+								/>
+								<Text style={styles.inputSuffix}>min</Text>
+							</View>
+						</View>
+
+						<View style={styles.halfSection}>
+							<Text style={styles.label}>Distance</Text>
+							<View style={styles.inputContainer}>
+								<TextInput
+									style={styles.input}
+									value={distance}
+									onChangeText={setDistance}
+									placeholder='5.0'
+									placeholderTextColor='#666666'
+									keyboardType='decimal-pad'
+									returnKeyType='done'
+								/>
+								<Text style={styles.inputSuffix}>mi</Text>
+							</View>
+						</View>
+					</View>
+				);
+		}
+	}
+
+	return (
+		<Modal
+			visible={visible}
+			animationType='fade'
+			transparent={true}
+			onRequestClose={handleClose}
+		>
+			<TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+				<View style={styles.modalOverlay}>
+					<TouchableOpacity
+						style={styles.backdrop}
+						activeOpacity={1}
+						onPress={handleClose}
+					/>
+
+					<TouchableWithoutFeedback onPress={() => {}}>
+						<View style={styles.modalContainer}>
+							{/* Header */}
+							<View style={styles.modalHeader}>
+								<Text style={styles.modalTitle}>Log Cardio</Text>
+								<TouchableOpacity
+									onPress={handleClose}
+									hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+									style={styles.closeButton}
+								>
+									<Ionicons name='close-circle' size={28} color='#666666' />
+								</TouchableOpacity>
+							</View>
+
+							<ScrollView
+								style={styles.scrollView}
+								contentContainerStyle={styles.modalContent}
+								keyboardShouldPersistTaps='handled'
+								showsVerticalScrollIndicator={false}
+								bounces={false}
+							>
+								{/* Type Selection */}
+								<View style={styles.section}>
+									<Text style={styles.label}>Activity Type *</Text>
+									<View style={styles.typeGrid}>
+										{CARDIO_TYPES.map((cardioType) => (
+											<TouchableOpacity
+												key={cardioType.id}
+												style={[
+													styles.typeCard,
+													type === cardioType.id && styles.typeCardActive
+												]}
+												onPress={() => {
+													setType(cardioType.id);
+													Keyboard.dismiss();
+												}}
+												activeOpacity={0.7}
+											>
+												<View
+													style={[
+														styles.typeIconContainer,
+														type === cardioType.id &&
+															styles.typeIconContainerActive
+													]}
+												>
+													<Ionicons
+														name={cardioType.icon}
+														size={20}
+														color={
+															type === cardioType.id ? '#000000' : '#AFFF2B'
+														}
+													/>
+												</View>
+												<Text
+													style={[
+														styles.typeLabel,
+														type === cardioType.id && styles.typeLabelActive
+													]}
+												>
+													{cardioType.label}
+												</Text>
+											</TouchableOpacity>
+										))}
+									</View>
+								</View>
+
+								{/* Dynamic inputs based on type */}
+								{type && renderTypeInputs()}
+
+								{/* Notes */}
+								<View style={styles.section}>
+									<Text style={styles.label}>Notes (optional)</Text>
+									<TextInput
+										style={styles.textArea}
+										value={notes}
+										onChangeText={setNotes}
+										placeholder='How did it feel?'
+										placeholderTextColor='#666666'
+										multiline
+										numberOfLines={2}
+										textAlignVertical='top'
+										maxLength={100}
+										returnKeyType='done'
+										blurOnSubmit={true}
+									/>
+								</View>
+							</ScrollView>
+
+							{/* Save Button */}
+							<View style={styles.modalFooter}>
+								<TouchableOpacity
+									style={[
+										styles.saveButton,
+										(!type || !duration) && styles.saveButtonDisabled
+									]}
+									onPress={handleSave}
+									disabled={!type || !duration || saving}
+									activeOpacity={0.9}
+								>
+									{saving ? (
+										<ActivityIndicator color='#000000' />
+									) : (
+										<>
+											<Ionicons
+												name='checkmark-circle'
+												size={20}
+												color='#000000'
+											/>
+											<Text style={styles.saveButtonText}>Save Session</Text>
+										</>
+									)}
+								</TouchableOpacity>
+							</View>
+						</View>
+					</TouchableWithoutFeedback>
 				</View>
-			</View>
+			</TouchableWithoutFeedback>
 		</Modal>
 	);
 }
@@ -221,7 +482,8 @@ const styles = StyleSheet.create({
 		backgroundColor: '#0D0D0D',
 		borderRadius: 20,
 		borderWidth: 1,
-		borderColor: '#333333'
+		borderColor: '#333333',
+		maxHeight: '85%'
 	},
 	modalHeader: {
 		flexDirection: 'row',
@@ -244,6 +506,9 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
+	scrollView: {
+		flexGrow: 0
+	},
 	modalContent: {
 		paddingHorizontal: 20,
 		paddingVertical: 16
@@ -257,6 +522,9 @@ const styles = StyleSheet.create({
 		marginBottom: 16
 	},
 	halfSection: {
+		flex: 1
+	},
+	thirdSection: {
 		flex: 1
 	},
 	label: {
@@ -343,6 +611,14 @@ const styles = StyleSheet.create({
 		fontWeight: '700',
 		color: '#FFFFFF',
 		backgroundColor: '#1A1A1A'
+	},
+	autoCalcNote: {
+		fontSize: 10,
+		fontWeight: '700',
+		color: '#AFFF2B',
+		marginTop: -8,
+		marginBottom: 8,
+		fontStyle: 'italic'
 	},
 	modalFooter: {
 		paddingHorizontal: 20,

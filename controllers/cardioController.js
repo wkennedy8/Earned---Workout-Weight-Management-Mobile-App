@@ -1,6 +1,7 @@
 import { db } from '@/lib/firebase';
 import {
 	collection,
+	deleteDoc,
 	doc,
 	getDoc,
 	getDocs,
@@ -24,21 +25,49 @@ export const CARDIO_TYPES = [
 /**
  * Log a cardio session
  */
-export async function logCardioSession(
-	uid,
-	{ date, type, duration, distance, notes = '' }
-) {
+export async function logCardioSession(uid, data) {
 	try {
+		const {
+			date,
+			type,
+			duration,
+			distance,
+			speed,
+			incline,
+			level,
+			pace,
+			notes = ''
+		} = data;
 		const cardioRef = doc(db, 'users', uid, 'cardio', date);
 
-		await setDoc(cardioRef, {
+		const sessionData = {
 			date,
 			type,
 			duration: Number(duration) || 0,
-			distance: distance ? Number(distance) : null,
-			notes,
 			completedAt: new Date().toISOString()
-		});
+		};
+
+		// Add optional fields if present
+		if (distance !== null && distance !== undefined) {
+			sessionData.distance = Number(distance);
+		}
+		if (speed !== null && speed !== undefined) {
+			sessionData.speed = Number(speed);
+		}
+		if (incline !== null && incline !== undefined) {
+			sessionData.incline = Number(incline);
+		}
+		if (level !== null && level !== undefined) {
+			sessionData.level = Number(level);
+		}
+		if (pace !== null && pace !== undefined) {
+			sessionData.pace = Number(pace);
+		}
+		if (notes) {
+			sessionData.notes = notes;
+		}
+
+		await setDoc(cardioRef, sessionData);
 
 		return true;
 	} catch (error) {
