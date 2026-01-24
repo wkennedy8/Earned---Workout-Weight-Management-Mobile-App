@@ -1,5 +1,4 @@
-// utils/workoutPlan.js
-// Plan + day-based selection (no TypeScript)
+import { formatLocalDateKey } from './dateUtils';
 
 export const PLAN = {
 	ppl: {
@@ -193,4 +192,43 @@ export function getWorkoutForDateFromPlan(date, plan) {
 		tag: 'Rest',
 		exercises: []
 	};
+}
+
+import { getScheduleOverride } from '@/controllers/rescheduleController';
+
+/**
+ * Get workout for a specific date with override support (async)
+ * Checks for schedule overrides first, then falls back to regular schedule
+ */
+export async function getWorkoutForDateWithOverride(date, plan, uid) {
+	const dateKey = formatLocalDateKey(date);
+
+	// Check for schedule override first
+	const override = await getScheduleOverride(uid, dateKey);
+
+	if (override) {
+		if (override.workoutId === 'rest') {
+			return {
+				id: 'rest',
+				title: 'Rest Day',
+				tag: 'Rest',
+				exercises: []
+			};
+		}
+
+		// Find the workout by ID in the plan
+		if (plan.workouts && plan.workouts[override.workoutId]) {
+			return plan.workouts[override.workoutId];
+		}
+
+		// If not found in current plan, search all plans
+		for (const planObj of Object.values(PLAN)) {
+			if (planObj.workouts && planObj.workouts[override.workoutId]) {
+				return planObj.workouts[override.workoutId];
+			}
+		}
+	}
+
+	// Fall back to regular schedule
+	return getWorkoutForDateFromPlan(date, plan);
 }

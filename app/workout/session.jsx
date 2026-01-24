@@ -206,7 +206,7 @@ export default function WorkoutSessionScreen() {
 	const [exerciseDefaults, setExerciseDefaults] = useState({});
 
 	// Rest modal state
-	const [restVisible, setRestVisible] = useState(true);
+	const [restVisible, setRestVisible] = useState(false);
 	const [restSeconds, setRestSeconds] = useState(0);
 	const [restPaused, setRestPaused] = useState(false);
 	const [initialRestSeconds, setInitialRestSeconds] = useState(0);

@@ -6,13 +6,17 @@ import {
 } from '@/controllers/cardioController';
 import { getUserWorkoutPlan } from '@/controllers/plansController';
 import {
+	getScheduleOverride,
+	markAsRestDayAndReschedule
+} from '@/controllers/rescheduleController';
+import {
 	computeSessionStats,
 	shareCompletedSession
 } from '@/controllers/sessionController';
 import { useTodayWorkoutSession } from '@/hooks/useTodayWorkoutSession';
 import { formatLongDate } from '@/utils/dateUtils';
 import { formatLocalDateKey } from '@/utils/weightUtils';
-import { getWorkoutForDateFromPlan, tagColor } from '@/utils/workoutPlan';
+import { getWorkoutForDateWithOverride, tagColor } from '@/utils/workoutPlan';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -81,13 +85,17 @@ export default function WorkoutTab() {
 
 	const [userPlan, setUserPlan] = useState(null);
 	const [loadingPlan, setLoadingPlan] = useState(true);
+	const [workout, setWorkout] = useState(null);
 
 	const [cardioModalVisible, setCardioModalVisible] = useState(false);
 	const [cardioSession, setCardioSession] = useState(null);
 
+	const [markedAsRest, setMarkedAsRest] = useState(false);
+
 	const today = useMemo(() => new Date(), []);
 	const todayKey = useMemo(() => formatLocalDateKey(today), [today]);
 
+	// Load user's selected plan
 	// Load user's selected plan
 	useEffect(() => {
 		if (!user?.uid) return;
@@ -97,6 +105,20 @@ export default function WorkoutTab() {
 				setLoadingPlan(true);
 				const plan = await getUserWorkoutPlan(user.uid);
 				setUserPlan(plan);
+
+				// Load today's workout with override support
+				const todayWorkout = await getWorkoutForDateWithOverride(
+					today,
+					plan,
+					user.uid
+				);
+				setWorkout(todayWorkout);
+
+				// Check if today was marked as rest
+				const override = await getScheduleOverride(user.uid, todayKey);
+				if (override && override.workoutId === 'rest') {
+					setMarkedAsRest(true);
+				}
 			} catch (error) {
 				console.error('Failed to load workout plan:', error);
 			} finally {
@@ -105,33 +127,64 @@ export default function WorkoutTab() {
 		})();
 	}, [user?.uid]);
 
-	// Reload plan when screen comes into focus
+	// Initial workout (will be updated by useFocusEffect)
+	// const initialWorkout = useMemo(() => {
+	// 	if (!userPlan) return null;
+	// 	return getWorkoutForDateFromPlan(today, userPlan);
+	// }, [today, userPlan]);
+
+	// Set initial workout
+	// useEffect(() => {
+	// 	if (initialWorkout && !workout) {
+	// 		setWorkout(initialWorkout);
+	// 	}
+	// }, [initialWorkout, workout]);
+
+	/// Check for schedule overrides and reload data
 	useFocusEffect(
 		useCallback(() => {
-			if (!user?.uid) return;
+			if (!user?.uid || !userPlan) return;
+
+			console.log('=== USE FOCUS EFFECT ===');
+			console.log('Today key:', todayKey);
 
 			(async () => {
 				try {
+					// Check for schedule override
+					const overriddenWorkout = await getWorkoutForDateWithOverride(
+						today,
+						userPlan,
+						user.uid
+					);
+
+					console.log('Overridden workout:', overriddenWorkout);
+					setWorkout(overriddenWorkout);
+
+					// Check if today was marked as rest
+					const override = await getScheduleOverride(user.uid, todayKey);
+					console.log('Schedule override:', override);
+
+					if (override && override.workoutId === 'rest') {
+						console.log('Setting markedAsRest to TRUE');
+						setMarkedAsRest(true);
+					} else {
+						console.log('Setting markedAsRest to FALSE');
+						setMarkedAsRest(false);
+					}
+
+					// Reload plan
 					const plan = await getUserWorkoutPlan(user.uid);
 					setUserPlan(plan);
 
+					// Reload cardio session
 					const session = await getCardioForDate(user.uid, todayKey);
 					setCardioSession(session);
 				} catch (error) {
-					console.error(
-						'Failed to reload workout plan or cardio session:',
-						error
-					);
+					console.error('Failed to reload data:', error);
 				}
 			})();
-		}, [user?.uid])
+		}, [user?.uid, userPlan, today, todayKey])
 	);
-
-	// Get today's workout from the user's plan
-	const workout = useMemo(() => {
-		if (!userPlan) return null;
-		return getWorkoutForDateFromPlan(today, userPlan);
-	}, [today, userPlan]);
 
 	const isRestDay = workout?.id === 'rest';
 
@@ -235,6 +288,63 @@ export default function WorkoutTab() {
 		}
 	}
 
+	async function handleMarkRestDay() {
+		if (!user?.uid || !userPlan || !workout) return;
+
+		console.log('=== BEFORE MARK AS REST ===');
+		console.log('Current workout:', workout);
+		console.log('Today key:', todayKey);
+
+		Alert.alert(
+			'Mark as Rest Day',
+			`This will move today's workout (${workout.title}) to tomorrow. Your streak will be maintained.\n\nContinue?`,
+			[
+				{ text: 'Cancel', style: 'cancel' },
+				{
+					text: 'Mark as Rest',
+					style: 'default',
+					onPress: async () => {
+						try {
+							console.log('=== MARKING AS REST ===');
+
+							// Pass the current workout object so it knows exactly what to move
+							const result = await markAsRestDayAndReschedule(
+								user.uid,
+								userPlan,
+								todayKey,
+								workout // ← Pass the actual workout object
+							);
+
+							console.log('Reschedule result:', result);
+
+							// Set workout to rest day directly
+							setWorkout({
+								id: 'rest',
+								title: 'Rest Day',
+								tag: 'Rest',
+								exercises: []
+							});
+							setMarkedAsRest(true);
+
+							console.log('States set - workout: rest, markedAsRest: true');
+
+							Alert.alert(
+								'Success',
+								`${result.movedWorkout} has been moved to tomorrow!`
+							);
+						} catch (error) {
+							console.error('Failed to reschedule:', error);
+							Alert.alert(
+								'Error',
+								error.message || 'Failed to reschedule workout'
+							);
+						}
+					}
+				}
+			]
+		);
+	}
+
 	// Loading state
 	if (loadingPlan || !workout) {
 		return (
@@ -247,6 +357,12 @@ export default function WorkoutTab() {
 		);
 	}
 
+	// Add this right before the return statement
+	console.log('=== RENDER ===');
+	console.log('workout:', workout);
+	console.log('isRestDay:', isRestDay);
+	console.log('markedAsRest:', markedAsRest);
+	console.log('completedSession:', completedSession);
 	return (
 		<SafeAreaView style={styles.safe}>
 			<View style={styles.container}>
@@ -264,12 +380,28 @@ export default function WorkoutTab() {
 
 				{/* Workout Title */}
 				<View style={styles.workoutTitleRow}>
-					<View
-						style={[styles.tagPill, { backgroundColor: tagColor(workout.tag) }]}
-					>
-						<Text style={styles.tagText}>{workout.tag}</Text>
+					<View style={styles.workoutTitleLeft}>
+						<View
+							style={[
+								styles.tagPill,
+								{ backgroundColor: tagColor(workout.tag) }
+							]}
+						>
+							<Text style={styles.tagText}>{workout.tag}</Text>
+						</View>
+						<Text style={styles.workoutTitle}>{workout.title}</Text>
 					</View>
-					<Text style={styles.workoutTitle}>{workout.title}</Text>
+
+					{/* Mark as Rest Day Button */}
+					{!isRestDay && !completedSession && !inProgressSession && (
+						<TouchableOpacity
+							style={styles.restDayButton}
+							onPress={handleMarkRestDay}
+							activeOpacity={0.9}
+						>
+							<Ionicons name='moon-outline' size={16} color='#999999' />
+						</TouchableOpacity>
+					)}
 				</View>
 
 				{/* Optional Cardio Card */}
@@ -314,6 +446,7 @@ export default function WorkoutTab() {
 				</View>
 
 				{/* Post-workout Summary */}
+				{/* Post-workout Summary or Rest Day Summary */}
 				{completedSession && stats ? (
 					<View style={styles.summaryCard}>
 						<View style={styles.summaryHeader}>
@@ -386,6 +519,43 @@ export default function WorkoutTab() {
 							>
 								<Text style={styles.secondaryButtonText}>Share</Text>
 							</TouchableOpacity>
+						</View>
+					</View>
+				) : markedAsRest ? (
+					<View style={styles.summaryCard}>
+						<View style={styles.summaryHeader}>
+							<Text style={styles.summaryTitle}>Rest Day</Text>
+							<Text
+								style={[styles.summarySubtitle, styles.summarySubtitleRest]}
+							>
+								Rescheduled
+							</Text>
+						</View>
+
+						<View style={styles.restDaySummary}>
+							<View style={styles.restDayIcon}>
+								<Ionicons name='moon' size={32} color='#AFFF2B' />
+							</View>
+							<Text style={styles.restDayTitle}>Workout Rescheduled</Text>
+							<Text style={styles.restDayDescription}>
+								Your scheduled workout has been moved to tomorrow. Your streak
+								continues!
+							</Text>
+						</View>
+
+						<View style={styles.restDayInfo}>
+							<View style={styles.restDayInfoRow}>
+								<Ionicons name='calendar-outline' size={16} color='#AFFF2B' />
+								<Text style={styles.restDayInfoText}>
+									Tomorrow: Check back for your rescheduled workout
+								</Text>
+							</View>
+							<View style={styles.restDayInfoRow}>
+								<Ionicons name='flame-outline' size={16} color='#AFFF2B' />
+								<Text style={styles.restDayInfoText}>
+									Streak maintained with rest day
+								</Text>
+							</View>
 						</View>
 					</View>
 				) : null}
@@ -476,8 +646,15 @@ const styles = StyleSheet.create({
 	workoutTitleRow: {
 		flexDirection: 'row',
 		alignItems: 'center',
+		justifyContent: 'space-between',
 		gap: 10,
 		marginBottom: 14
+	},
+	workoutTitleLeft: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 10,
+		flex: 1
 	},
 	tagPill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
 	tagText: {
@@ -489,6 +666,17 @@ const styles = StyleSheet.create({
 		fontSize: 22,
 		fontFamily: FontFamily.black,
 		color: '#FFFFFF'
+	},
+
+	restDayButton: {
+		width: 40,
+		height: 40,
+		borderRadius: 12,
+		backgroundColor: '#1A1A1A',
+		borderWidth: 1,
+		borderColor: '#333333',
+		alignItems: 'center',
+		justifyContent: 'center'
 	},
 
 	summaryCard: {
@@ -733,5 +921,52 @@ const styles = StyleSheet.create({
 		fontSize: 12,
 		fontWeight: '700',
 		color: '#999999'
+	},
+	summarySubtitleRest: {
+		color: '#FFD60A'
+	},
+	restDaySummary: {
+		alignItems: 'center',
+		paddingVertical: 24,
+		borderBottomWidth: 1,
+		borderBottomColor: '#2A2A2A'
+	},
+	restDayIcon: {
+		width: 64,
+		height: 64,
+		borderRadius: 32,
+		backgroundColor: 'rgba(175, 255, 43, 0.15)',
+		alignItems: 'center',
+		justifyContent: 'center',
+		marginBottom: 16
+	},
+	restDayTitle: {
+		fontSize: 18,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF',
+		marginBottom: 8
+	},
+	restDayDescription: {
+		fontSize: 13,
+		fontWeight: '700',
+		color: '#999999',
+		textAlign: 'center',
+		lineHeight: 20,
+		paddingHorizontal: 20
+	},
+	restDayInfo: {
+		gap: 12,
+		marginTop: 16
+	},
+	restDayInfoRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 10
+	},
+	restDayInfoText: {
+		fontSize: 13,
+		fontWeight: '700',
+		color: '#FFFFFF',
+		flex: 1
 	}
 });
