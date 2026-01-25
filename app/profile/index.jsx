@@ -234,7 +234,7 @@ export default function ProfileScreen() {
 
 				{/* Workout Section */}
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Workout</Text>
+					{/* <Text style={styles.sectionTitle}>Workout</Text> */}
 					<MenuItem
 						icon='barbell-outline'
 						label='Workout Plan'
