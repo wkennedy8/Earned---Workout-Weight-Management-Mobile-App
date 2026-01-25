@@ -1,8 +1,10 @@
 import EmailStep from '@/components/onboarding/EmailStep';
 import GoalStep from '@/components/onboarding/GoalStep';
+import MacrosStep from '@/components/onboarding/MacrosStep';
 import NameStep from '@/components/onboarding/NameStep';
 import PhotoStep from '@/components/onboarding/PhotoStep';
 import ProgramStep from '@/components/onboarding/ProgramStep';
+import WeightStep from '@/components/onboarding/WeightStep';
 import { useOnboarding } from '@/context/OnboardingContext';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -18,6 +20,8 @@ export default function OnboardingScreen() {
 		{ component: NameStep, name: 'name' },
 		{ component: EmailStep, name: 'email' },
 		{ component: GoalStep, name: 'goal' },
+		{ component: WeightStep, name: 'weight' },
+		{ component: MacrosStep, name: 'macros' },
 		{ component: ProgramStep, name: 'program' },
 		{ component: PhotoStep, name: 'photo' }
 	];

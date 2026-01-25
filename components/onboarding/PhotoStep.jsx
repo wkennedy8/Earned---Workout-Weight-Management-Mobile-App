@@ -88,9 +88,13 @@ export default function PhotoStep({
 					email: data.email,
 					phone: user.phoneNumber || ''
 				}),
-				// Save goal, profile photo, AND onboarding flag together
+				// Save goal, current weight, macros, profile photo, AND onboarding flag together
 				upsertProfile(user.uid, {
 					goal: data.goal,
+					currentWeight: data.currentWeight,
+					protein: data.protein, // Add this line
+					carbs: data.carbs, // Add this line
+					fats: data.fats, // Add this line
 					profilePhotoUri: profilePhotoUrl,
 					onboardingCompleted: true,
 					onboardingCompletedAt: new Date().toISOString()
