@@ -1,5 +1,3 @@
-// utils/workoutUtils.js
-
 /**
  * Parse sets string and return default count
  */
