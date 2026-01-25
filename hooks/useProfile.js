@@ -14,12 +14,15 @@ import { db } from '@/lib/firebase';
 
 export function useProfile() {
 	const [profile, setProfile] = useState({
-		protein: 0,
-		carbs: 0,
-		fats: 0,
-		profilePhotoUri: null,
+		name: '',
+		email: '',
 		goal: null,
-		name: ''
+		currentWeight: null,
+		protein: null,
+		carbs: null,
+		fats: null,
+		profilePhotoUri: null,
+		lastCarbReductionDate: null
 	});
 	const [progressPhotos, setProgressPhotos] = useState([]);
 
@@ -48,7 +51,8 @@ export function useProfile() {
 						fats: Number(data.fats) || 0,
 						profilePhotoUri: data.profilePhotoUri || null,
 						goal: data.goal || null,
-						name: data.name || ''
+						name: data.name || '',
+						lastCarbReductionDate: data.lastCarbReductionDate || null // ADD THIS LINE
 					});
 				},
 				(err) => console.warn('profile subscription error:', err)
@@ -89,13 +93,14 @@ export function useProfile() {
 		return p * 4 + c * 4 + f * 9;
 	}, [profile]);
 
-	const reduceCarbs = useCallback(async (grams) => {
+	const reduceCarbs = useCallback(async (grams, saveDate = false) => {
 		const user = getCurrentUser();
 		if (!user) {
 			console.warn('reduceCarbs: No authenticated user');
 			return;
 		}
-		await reduceCarbsRepo(user.uid, grams);
+		// Pass saveDate parameter to the repository function
+		await reduceCarbsRepo(user.uid, grams, saveDate);
 	}, []);
 
 	return { profile, calories, progressPhotos, reduceCarbs };

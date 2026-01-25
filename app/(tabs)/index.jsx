@@ -38,10 +38,29 @@ function getLatestEntry(entries) {
 	return entries[0]; // First item = newest
 }
 
-function shouldSuggestMacroCut(entries) {
+function shouldSuggestMacroCut(entries, lastCarbReductionDate) {
 	// Need at least 14 days of data
 	if (!Array.isArray(entries) || entries.length < 14) {
-		return { eligible: false, stalled: false };
+		return { eligible: false, stalled: false, reason: 'insufficient_data' };
+	}
+
+	// Check if carbs were recently reduced (within last 7 days)
+	if (lastCarbReductionDate) {
+		const today = new Date();
+		const lastReduction = new Date(lastCarbReductionDate);
+		const daysSinceReduction = Math.floor(
+			(today - lastReduction) / (1000 * 60 * 60 * 24)
+		);
+
+		if (daysSinceReduction < 7) {
+			return {
+				eligible: false,
+				stalled: false,
+				reason: 'recent_reduction',
+				daysSinceReduction,
+				daysRemaining: 7 - daysSinceReduction
+			};
+		}
 	}
 
 	// Get last 14 entries (sorted newest-first)
@@ -66,7 +85,8 @@ function shouldSuggestMacroCut(entries) {
 		stalled,
 		last7Avg,
 		prev7Avg,
-		weeklyLoss
+		weeklyLoss,
+		reason: stalled ? 'stalled' : 'progressing'
 	};
 }
 
@@ -109,11 +129,20 @@ export default function HomeScreen() {
 			const nextEntries = await upsertEntry({ dateKey: todayKey, weight });
 			Alert.alert('Saved', "Today's weight has been saved.");
 
-			// Stall rule check after save
-			const check = shouldSuggestMacroCut(nextEntries);
+			// Stall rule check after save - pass lastCarbReductionDate from profile
+			const check = shouldSuggestMacroCut(
+				nextEntries,
+				profile.lastCarbReductionDate
+			);
+
 			if (check.eligible && check.stalled) {
 				setMacroModalData(check);
 				setMacroModalVisible(true);
+			} else if (check.reason === 'recent_reduction') {
+				// Optional: inform user they recently reduced carbs
+				console.log(
+					`Carb reduction cooldown: ${check.daysRemaining} days remaining`
+				);
 			}
 		} catch (e) {
 			Alert.alert('Error', 'Could not save your weight. Please try again.');
@@ -123,10 +152,11 @@ export default function HomeScreen() {
 	// Apply carb reduction from modal
 	async function applyCarbReduction() {
 		try {
-			await reduceCarbs(15);
+			// Save both the carb reduction AND the date it happened
+			await reduceCarbs(15, true); // Pass flag to save date
 			setMacroModalVisible(false);
 			setMacroModalData(null);
-			Alert.alert('Updated', 'Carbs lowered by 15g.');
+			Alert.alert('Updated', 'Carbs lowered by 15g. Check again in 7 days.');
 		} catch (e) {
 			console.warn('Failed to apply carb reduction:', e);
 			Alert.alert('Error', 'Could not update macros. Please try again.');
