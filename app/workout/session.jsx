@@ -1,5 +1,6 @@
 import { useAuth } from '@/context/AuthContext';
 import {
+	getSmartDefaultWeight,
 	loadExerciseDefaults,
 	saveExerciseDefaults
 } from '@/controllers/exerciseDefaultsController';
@@ -69,12 +70,18 @@ function SwipeableSetRow({
 	updateSetField,
 	saveSet,
 	removeSet,
+	editSet,
 	normalizeNumberText
 }) {
 	const swipeableRef = useRef(null);
 
+	// Different swipe actions for saved vs unsaved sets
 	const renderRightActions = (progress, dragX) => {
-		return (
+		// Saved sets: can't swipe to delete
+		if (set.saved) return null;
+
+		// Unsaved sets: can swipe to delete if more than 1 set
+		return canRemove ? (
 			<TouchableOpacity
 				style={styles.deleteAction}
 				onPress={() => {
@@ -85,13 +92,13 @@ function SwipeableSetRow({
 			>
 				<Text style={styles.deleteActionText}>Delete</Text>
 			</TouchableOpacity>
-		);
+		) : null;
 	};
 
 	return (
 		<Swipeable
 			ref={swipeableRef}
-			renderRightActions={canRemove ? renderRightActions : null}
+			renderRightActions={renderRightActions}
 			rightThreshold={40}
 			friction={2}
 			overshootRight={false}
@@ -139,9 +146,13 @@ function SwipeableSetRow({
 
 				<View style={{ width: 84 }}>
 					{set.saved ? (
-						<View style={styles.savedPill}>
-							<Text style={styles.savedPillText}>Saved</Text>
-						</View>
+						<TouchableOpacity
+							style={styles.editSetBtn}
+							onPress={() => editSet(exerciseIndex, set.setIndex)}
+							activeOpacity={0.9}
+						>
+							<Text style={styles.editSetBtnText}>Edit</Text>
+						</TouchableOpacity>
 					) : (
 						<TouchableOpacity
 							style={styles.saveSetBtn}
@@ -221,8 +232,6 @@ export default function WorkoutSessionScreen() {
 		(async () => {
 			try {
 				setLoading(true);
-				const defaults = await loadExerciseDefaults(user.uid);
-				setExerciseDefaults(defaults);
 
 				const mode = String(params.mode || 'start');
 				const sessionId = params.sessionId ? String(params.sessionId) : null;
@@ -240,29 +249,15 @@ export default function WorkoutSessionScreen() {
 
 					const normalized = {
 						...found,
-						exercises: found.exercises.map((ex, idx) => {
-							const exKey = normalizeExerciseKey(ex.name);
-							const defaultWeight =
-								defaults?.[exKey]?.defaultWeight != null
-									? String(defaults[exKey].defaultWeight)
-									: '';
-
-							return {
-								expanded: idx === 0,
-								...ex,
-								sets: (ex.sets || []).map((s) => ({
-									saved: s.saved ?? false,
-									savedAt: s.savedAt ?? null,
-									...s,
-									weight:
-										!s?.saved &&
-										!String(s?.weight || '').trim() &&
-										defaultWeight
-											? defaultWeight
-											: s.weight
-								}))
-							};
-						})
+						exercises: found.exercises.map((ex, idx) => ({
+							expanded: idx === 0,
+							...ex,
+							sets: (ex.sets || []).map((s) => ({
+								saved: s.saved ?? false,
+								savedAt: s.savedAt ?? null,
+								...s
+							}))
+						}))
 					};
 
 					setSession(normalized);
@@ -318,10 +313,32 @@ export default function WorkoutSessionScreen() {
 					return;
 				}
 
-				// ---------- CREATE NEW ----------
+				// ---------- CREATE NEW SESSION WITH SMART DEFAULTS ----------
+				// Get smart defaults for all exercises in this workout
+				const smartDefaults = {};
+
+				for (const exercise of template.exercises) {
+					const smartWeight = await getSmartDefaultWeight(
+						user.uid,
+						exercise.name,
+						template.id
+					);
+
+					if (smartWeight !== null) {
+						const exerciseKey = normalizeExerciseKey(exercise.name);
+						smartDefaults[exerciseKey] = {
+							defaultWeight: smartWeight
+						};
+					}
+				}
+
+				// Store smart defaults for later use
+				setExerciseDefaults(smartDefaults);
+
+				// Create new session with smart defaults
 				const created = buildEmptySession({
 					template,
-					defaultsMap: defaults
+					defaultsMap: smartDefaults
 				});
 				created.exercises[0].expanded = true;
 
@@ -535,6 +552,43 @@ export default function WorkoutSessionScreen() {
 		});
 	}
 
+	// editSet function with confirmation alert
+	function editSet(exerciseIndex, setIndex) {
+		Alert.alert('Edit Set', 'Unlock this set to make changes?', [
+			{
+				text: 'Cancel',
+				style: 'cancel'
+			},
+			{
+				text: 'Unlock',
+				onPress: () => {
+					setSession((prev) => {
+						if (!prev) return prev;
+						const next = {
+							...prev,
+							exercises: prev.exercises.map((ex, i) =>
+								i === exerciseIndex
+									? {
+											...ex,
+											sets: ex.sets.map((s) =>
+												s.setIndex === setIndex
+													? { ...s, saved: false, savedAt: null }
+													: s
+											)
+										}
+									: ex
+							)
+						};
+
+						// Save to Firebase
+						if (user?.uid) firestoreUpsertSession(user.uid, next);
+						return next;
+					});
+				}
+			}
+		]);
+	}
+
 	// Set validation and save logic
 	function validateSetBeforeSave(exercise, set) {
 		const isTime = String(exercise.targetReps).toLowerCase() === 'time';
@@ -719,17 +773,6 @@ export default function WorkoutSessionScreen() {
 					behavior={Platform.OS === 'ios' ? 'padding' : undefined}
 					style={styles.container}
 				>
-					{/* Custom top bar */}
-					{/* <View style={styles.topBar}>
-						<TouchableOpacity
-							onPress={() => router.back()}
-							hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-						>
-							<Text style={styles.backChevron}>‹</Text>
-						</TouchableOpacity>
-						
-					</View> */}
-
 					{/* Header */}
 					<View style={styles.header}>
 						<View style={styles.headerRow}>
@@ -928,6 +971,7 @@ export default function WorkoutSessionScreen() {
 													updateSetField={updateSetField}
 													saveSet={saveSet}
 													removeSet={removeSet}
+													editSet={editSet}
 													normalizeNumberText={normalizeNumberText}
 												/>
 											))}
@@ -1271,6 +1315,20 @@ const styles = StyleSheet.create({
 	finishButtonText: {
 		color: '#000000',
 		fontSize: 18,
+		fontFamily: FontFamily.black
+	},
+	editSetBtn: {
+		height: 44,
+		borderRadius: 12,
+		backgroundColor: '#2A2A2A',
+		borderWidth: 1,
+		borderColor: '#AFFF2B',
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+	editSetBtnText: {
+		color: '#AFFF2B',
+		fontSize: 13,
 		fontFamily: FontFamily.black
 	}
 });
