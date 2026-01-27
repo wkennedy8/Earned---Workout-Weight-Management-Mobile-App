@@ -1,9 +1,10 @@
 // components/WeeklyStreakCard.jsx
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
 	ActivityIndicator,
 	StyleSheet,
@@ -66,11 +67,12 @@ export default function WeeklyStreakCard() {
 	const [sessions, setSessions] = useState({});
 	const [restDays, setRestDays] = useState({});
 
-	useEffect(() => {
-		if (!user?.uid) return;
-
-		loadWeekData();
-	}, [user?.uid]);
+	useFocusEffect(
+		useCallback(() => {
+			if (!user?.uid) return;
+			loadWeekData();
+		}, [user?.uid])
+	);
 
 	async function loadWeekData() {
 		try {
