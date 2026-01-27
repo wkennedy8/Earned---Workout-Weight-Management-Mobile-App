@@ -1,3 +1,7 @@
+import SettingsBottomSheet from '@/components/SettingsBottomSheet';
+import WeeklyStreakCard from '@/components/WeeklyStreakCard';
+import { useProfile } from '@/hooks/useProfile';
+import { useWeightEntries } from '@/hooks/useWeightEntries';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -15,10 +19,6 @@ import {
 	View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-import SettingsBottomSheet from '@/components/SettingsBottomSheet';
-import { useProfile } from '@/hooks/useProfile';
-import { useWeightEntries } from '@/hooks/useWeightEntries';
 import { FontFamily } from '../../constants/fonts'; // Import font utilities
 import { formatDisplayDate } from '../../utils/dateUtils';
 import {
@@ -281,6 +281,9 @@ export default function HomeScreen() {
 							)}
 						</TouchableOpacity>
 					</View>
+
+					{/* Weekly Streak Card */}
+					<WeeklyStreakCard />
 
 					{/* Calories & Macros */}
 					<View style={styles.macrosCard}>
