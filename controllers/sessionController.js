@@ -1,5 +1,3 @@
-// controllers/sessionController.js
-
 import {
 	collection,
 	doc,
@@ -16,6 +14,7 @@ import {
 import { Alert, Share } from 'react-native';
 import { db } from '../lib/firebase';
 import { formatLocalDateKey } from '../utils/dateUtils';
+import { PLAN } from '../utils/workoutPlan';
 import { normalizeExerciseKey } from '../utils/workoutUtils';
 
 function sessionsCol(uid) {
@@ -238,7 +237,7 @@ export function buildEmptySession({ template, defaultsMap = {} }) {
 		title: workoutTemplate.title || 'Workout',
 		tag: workoutTemplate.tag || 'Workout',
 		date: formatLocalDateKey(new Date()),
-		status: 'in-progress',
+		status: 'in_progress',
 		startedAt: new Date().toISOString(),
 		completedAt: null,
 		exercises
