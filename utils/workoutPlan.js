@@ -12,13 +12,78 @@ export const PLAN = {
 				days: ['Monday', 'Thursday'],
 				tag: 'Push',
 				exercises: [
-					{ name: 'Incline DB Bench Press', sets: '3-4', reps: '12' },
-					{ name: 'Bench Press', sets: '3-4', reps: '12' },
-					{ name: 'Seated DB Military Press', sets: '3-4', reps: '12' },
-					{ name: 'Lateral Raises', sets: '3-4', reps: '15' },
-					{ name: 'Cable Chest Fly', sets: '3-4', reps: '15' },
-					{ name: 'Skull Crushers', sets: '3-4', reps: '12' },
-					{ name: 'Rope Pulldowns', sets: '3-4', reps: '15' }
+					{
+						name: 'Incline DB Bench Press',
+						sets: '3-4',
+						reps: '12',
+						alternatives: [
+							{ name: 'Incline Barbell Bench Press', difficulty: 'same' },
+							{ name: 'Incline Machine Press', difficulty: 'easier' },
+							{ name: 'Low Incline DB Press', difficulty: 'same' }
+						]
+					},
+					{
+						name: 'Bench Press',
+						sets: '3-4',
+						reps: '12',
+						alternatives: [
+							{ name: 'Dumbbell Bench Press', difficulty: 'same' },
+							{ name: 'Machine Chest Press', difficulty: 'easier' },
+							{ name: 'Push-ups', difficulty: 'easier' },
+							{ name: 'Close Grip Bench Press', difficulty: 'harder' }
+						]
+					},
+					{
+						name: 'Seated DB Military Press',
+						sets: '3-4',
+						reps: '12',
+						alternatives: [
+							{ name: 'Standing Military Press', difficulty: 'harder' },
+							{ name: 'Machine Shoulder Press', difficulty: 'easier' },
+							{ name: 'Arnold Press', difficulty: 'same' },
+							{ name: 'Barbell Military Press', difficulty: 'same' }
+						]
+					},
+					{
+						name: 'Lateral Raises',
+						sets: '3-4',
+						reps: '15',
+						alternatives: [
+							{ name: 'Cable Lateral Raises', difficulty: 'same' },
+							{ name: 'Machine Lateral Raises', difficulty: 'easier' },
+							{ name: 'Upright Rows', difficulty: 'same' }
+						]
+					},
+					{
+						name: 'Cable Chest Fly',
+						sets: '3-4',
+						reps: '15',
+						alternatives: [
+							{ name: 'Dumbbell Chest Fly', difficulty: 'same' },
+							{ name: 'Pec Deck Machine', difficulty: 'easier' },
+							{ name: 'Resistance Band Fly', difficulty: 'easier' }
+						]
+					},
+					{
+						name: 'Skull Crushers',
+						sets: '3-4',
+						reps: '12',
+						alternatives: [
+							{ name: 'Overhead Triceps Extension', difficulty: 'same' },
+							{ name: 'Close Grip Bench Press', difficulty: 'harder' },
+							{ name: 'Triceps Dips', difficulty: 'harder' }
+						]
+					},
+					{
+						name: 'Rope Pulldowns',
+						sets: '3-4',
+						reps: '15',
+						alternatives: [
+							{ name: 'Overhead Cable Extension', difficulty: 'same' },
+							{ name: 'Single Arm Cable Pushdown', difficulty: 'same' },
+							{ name: 'Diamond Push-ups', difficulty: 'harder' }
+						]
+					}
 				]
 			},
 			pull: {
@@ -27,13 +92,77 @@ export const PLAN = {
 				days: ['Tuesday', 'Friday'],
 				tag: 'Pull',
 				exercises: [
-					{ name: 'Pullups', sets: '3-4', reps: 'AMRAP' },
-					{ name: 'High Row', sets: '3-4', reps: '12' },
-					{ name: 'Lat Pulldown', sets: '3-4', reps: '12' },
-					{ name: 'Seated Cable Row', sets: '3-4', reps: '12' },
-					{ name: 'Rear Delt Cable Fly', sets: '3-4', reps: '15' },
-					{ name: 'Hammer Curls', sets: '3-4', reps: '12' },
-					{ name: 'Preacher Curls', sets: '3-4', reps: '12' }
+					{
+						name: 'Pullups',
+						sets: '3-4',
+						reps: 'AMRAP',
+						alternatives: [
+							{ name: 'Assisted Pullups', difficulty: 'easier' },
+							{ name: 'Chin-ups', difficulty: 'same' },
+							{ name: 'Weighted Pullups', difficulty: 'harder' }
+						]
+					},
+					{
+						name: 'High Row',
+						sets: '3-4',
+						reps: '12',
+						alternatives: [
+							{ name: 'Cable High Row', difficulty: 'same' },
+							{ name: 'Chest Supported Row', difficulty: 'easier' },
+							{ name: 'T-Bar Row', difficulty: 'same' }
+						]
+					},
+					{
+						name: 'Lat Pulldown',
+						sets: '3-4',
+						reps: '12',
+						alternatives: [
+							{ name: 'Wide Grip Pulldown', difficulty: 'same' },
+							{ name: 'Close Grip Pulldown', difficulty: 'same' },
+							{ name: 'Single Arm Pulldown', difficulty: 'harder' }
+						]
+					},
+					{
+						name: 'Seated Cable Row',
+						sets: '3-4',
+						reps: '12',
+						alternatives: [
+							{ name: 'Barbell Row', difficulty: 'harder' },
+							{ name: 'Dumbbell Row', difficulty: 'same' },
+							{ name: 'Machine Row', difficulty: 'easier' },
+							{ name: 'Inverted Rows', difficulty: 'same' }
+						]
+					},
+					{
+						name: 'Rear Delt Cable Fly',
+						sets: '3-4',
+						reps: '15',
+						alternatives: [
+							{ name: 'Reverse Pec Deck', difficulty: 'easier' },
+							{ name: 'Face Pulls', difficulty: 'same' },
+							{ name: 'Bent Over Rear Delt Raise', difficulty: 'same' }
+						]
+					},
+					{
+						name: 'Hammer Curls',
+						sets: '3-4',
+						reps: '12',
+						alternatives: [
+							{ name: 'Dumbbell Curls', difficulty: 'same' },
+							{ name: 'Cable Curls', difficulty: 'same' },
+							{ name: 'Concentration Curls', difficulty: 'same' }
+						]
+					},
+					{
+						name: 'Preacher Curls',
+						sets: '3-4',
+						reps: '12',
+						alternatives: [
+							{ name: 'Machine Preacher Curls', difficulty: 'easier' },
+							{ name: 'Cable Preacher Curls', difficulty: 'same' },
+							{ name: 'Spider Curls', difficulty: 'same' }
+						]
+					}
 				]
 			},
 			legs_abs: {
@@ -42,12 +171,67 @@ export const PLAN = {
 				days: ['Wednesday', 'Saturday'],
 				tag: 'Legs',
 				exercises: [
-					{ name: 'Squat', sets: '3-4', reps: '12' },
-					{ name: 'Leg Extensions', sets: '3-4', reps: '12' },
-					{ name: 'Seated Leg Curl', sets: '3-4', reps: '12' },
-					{ name: 'Standing Calf Raises', sets: '3-4', reps: '15' },
-					{ name: 'Cable Crunch', sets: '3-4', reps: '15' },
-					{ name: 'Plank', sets: '3', reps: 'time', note: '+5 sec each week' }
+					{
+						name: 'Squat',
+						sets: '3-4',
+						reps: '12',
+						alternatives: [
+							{ name: 'Front Squat', difficulty: 'harder' },
+							{ name: 'Leg Press', difficulty: 'easier' },
+							{ name: 'Goblet Squat', difficulty: 'easier' },
+							{ name: 'Bulgarian Split Squat', difficulty: 'harder' }
+						]
+					},
+					{
+						name: 'Leg Extensions',
+						sets: '3-4',
+						reps: '12',
+						alternatives: [
+							{ name: 'Sissy Squat', difficulty: 'harder' },
+							{ name: 'Walking Lunges', difficulty: 'same' }
+						]
+					},
+					{
+						name: 'Seated Leg Curl',
+						sets: '3-4',
+						reps: '12',
+						alternatives: [
+							{ name: 'Lying Leg Curl', difficulty: 'same' },
+							{ name: 'Standing Leg Curl', difficulty: 'same' },
+							{ name: 'Romanian Deadlift', difficulty: 'harder' }
+						]
+					},
+					{
+						name: 'Standing Calf Raises',
+						sets: '3-4',
+						reps: '15',
+						alternatives: [
+							{ name: 'Seated Calf Raises', difficulty: 'easier' },
+							{ name: 'Calf Press on Leg Press', difficulty: 'same' },
+							{ name: 'Single Leg Calf Raises', difficulty: 'harder' }
+						]
+					},
+					{
+						name: 'Cable Crunch',
+						sets: '3-4',
+						reps: '15',
+						alternatives: [
+							{ name: 'Weighted Crunch', difficulty: 'same' },
+							{ name: 'Ab Wheel Rollout', difficulty: 'harder' },
+							{ name: 'Hanging Leg Raises', difficulty: 'harder' }
+						]
+					},
+					{
+						name: 'Plank',
+						sets: '3',
+						reps: 'time',
+						note: '+5 sec each week',
+						alternatives: [
+							{ name: 'Side Plank', difficulty: 'same' },
+							{ name: 'RKC Plank', difficulty: 'harder' },
+							{ name: 'Plank with Shoulder Taps', difficulty: 'harder' }
+						]
+					}
 				]
 			}
 		}

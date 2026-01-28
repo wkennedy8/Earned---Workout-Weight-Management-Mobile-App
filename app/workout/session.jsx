@@ -1,3 +1,4 @@
+import SwapExerciseModal from '@/components/SwapExerciseModal';
 import { useAuth } from '@/context/AuthContext';
 import {
 	getSmartDefaultWeight,
@@ -18,6 +19,7 @@ import {
 	normalizeNumberText,
 	tagColor
 } from '@/utils/workoutUtils';
+import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -215,6 +217,8 @@ export default function WorkoutSessionScreen() {
 	const [session, setSession] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [exerciseDefaults, setExerciseDefaults] = useState({});
+	const [swapModalVisible, setSwapModalVisible] = useState(false);
+	const [swapExerciseIndex, setSwapExerciseIndex] = useState(null);
 
 	// Rest modal state
 	const [restVisible, setRestVisible] = useState(false);
@@ -356,6 +360,43 @@ export default function WorkoutSessionScreen() {
 			if (restIntervalRef.current) clearInterval(restIntervalRef.current);
 		};
 	}, [user?.uid, templateId, params.mode, params.sessionId]);
+
+	function openSwapModal(exerciseIndex) {
+		setSwapExerciseIndex(exerciseIndex);
+		setSwapModalVisible(true);
+	}
+
+	function handleSwapExercise(alternative) {
+		if (swapExerciseIndex === null) return;
+
+		setSession((prev) => {
+			if (!prev) return prev;
+
+			const next = {
+				...prev,
+				exercises: prev.exercises.map((ex, i) => {
+					if (i !== swapExerciseIndex) return ex;
+
+					// Store the original exercise name for reference
+					const originalName = ex.originalName || ex.name;
+
+					return {
+						...ex,
+						name: alternative.name,
+						originalName: originalName, // Track what it was swapped from
+						isSwapped: true
+					};
+				})
+			};
+
+			// Save to Firebase
+			if (user?.uid) firestoreUpsertSession(user.uid, next);
+			return next;
+		});
+
+		setSwapModalVisible(false);
+		setSwapExerciseIndex(null);
+	}
 
 	// Rest timer functions
 	function startRestTimer({ seconds, context }) {
@@ -917,6 +958,12 @@ export default function WorkoutSessionScreen() {
 											</View>
 											<View style={{ flex: 1 }}>
 												<Text style={styles.exerciseName}>{item.name}</Text>
+												{/* Show if swapped */}
+												{item.isSwapped && (
+													<Text style={styles.swappedBadge}>
+														Swapped from {item.originalName}
+													</Text>
+												)}
 												<Text style={styles.exerciseMeta}>
 													{item.targetSets} sets, {item.targetReps}{' '}
 													{String(item.targetReps).toLowerCase() === 'time'
@@ -936,9 +983,27 @@ export default function WorkoutSessionScreen() {
 											</View>
 										</View>
 
-										<Text style={styles.chevron}>
-											{item.expanded ? '˅' : '›'}
-										</Text>
+										<View style={styles.exerciseHeaderRight}>
+											{/* ADD THIS: Swap Button */}
+											<TouchableOpacity
+												style={styles.swapButton}
+												onPress={(e) => {
+													e.stopPropagation(); // Prevent accordion toggle
+													openSwapModal(index);
+												}}
+												activeOpacity={0.7}
+											>
+												<Ionicons
+													name='swap-horizontal'
+													size={18}
+													color='#AFFF2B'
+												/>
+											</TouchableOpacity>
+
+											<Text style={styles.chevron}>
+												{item.expanded ? '˅' : '›'}
+											</Text>
+										</View>
 									</TouchableOpacity>
 
 									{item.expanded ? (
@@ -989,6 +1054,21 @@ export default function WorkoutSessionScreen() {
 								</View>
 							);
 						}}
+					/>
+					{/* Exercise Swap Modal */}
+					<SwapExerciseModal
+						visible={swapModalVisible}
+						onClose={() => {
+							setSwapModalVisible(false);
+							setSwapExerciseIndex(null);
+						}}
+						exercise={
+							swapExerciseIndex !== null
+								? session.exercises[swapExerciseIndex]
+								: null
+						}
+						templateId={template.id}
+						onSwap={handleSwapExercise}
 					/>
 
 					{/* Bottom CTA */}
@@ -1330,5 +1410,27 @@ const styles = StyleSheet.create({
 		color: '#AFFF2B',
 		fontSize: 13,
 		fontFamily: FontFamily.black
+	},
+	exerciseHeaderRight: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 12
+	},
+	swapButton: {
+		width: 36,
+		height: 36,
+		borderRadius: 10,
+		backgroundColor: 'rgba(175, 255, 43, 0.1)',
+		borderWidth: 1,
+		borderColor: '#AFFF2B',
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+	swappedBadge: {
+		fontSize: 11,
+		fontFamily: FontFamily.bold,
+		color: '#FBBF24',
+		marginTop: 2,
+		marginBottom: 2
 	}
 });
