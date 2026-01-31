@@ -314,7 +314,7 @@ users/{uid}
 totalCalories = weight × 14.5
 
 // Goal adjustment
-if (goal === 'lose') totalCalories -= 250
+if (goal === 'lose') totalCalories -= 500
 if (goal === 'gain') totalCalories += 250
 
 // Macros

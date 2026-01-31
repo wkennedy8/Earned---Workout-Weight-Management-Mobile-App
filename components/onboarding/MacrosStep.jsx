@@ -21,7 +21,7 @@ function calculateMacros(weight, goal) {
 
 	// Adjust for goal
 	if (goal === 'lose') {
-		totalCalories -= 250;
+		totalCalories -= 500;
 	} else if (goal === 'gain') {
 		totalCalories += 250;
 	}
