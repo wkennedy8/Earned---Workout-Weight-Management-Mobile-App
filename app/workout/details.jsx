@@ -145,6 +145,15 @@ export default function WorkoutDetailsScreen() {
 							<Text style={styles.tagText}>{session.tag || 'Workout'}</Text>
 						</View>
 						<Text style={styles.headerTitle}>{session.title || 'Workout'}</Text>
+
+						{/* Program Week Badge - only show if session has programWeek */}
+						{session.programWeek && (
+							<View style={styles.weekBadge}>
+								<Text style={styles.weekBadgeText}>
+									Week {session.programWeek}
+								</Text>
+							</View>
+						)}
 					</View>
 
 					<Text style={styles.dateText}>{formatDisplayDate(session.date)}</Text>
@@ -309,10 +318,33 @@ const styles = StyleSheet.create({
 		padding: 14,
 		marginBottom: 12
 	},
-	headerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+	headerRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 10,
+		flexWrap: 'wrap'
+	},
 	tagPill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
 	tagText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
-	headerTitle: { fontSize: 20, fontFamily: FontFamily.black, color: '#FFFFFF' },
+	headerTitle: {
+		fontSize: 20,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF',
+		flex: 1
+	},
+	weekBadge: {
+		paddingHorizontal: 8,
+		paddingVertical: 4,
+		borderRadius: 8,
+		backgroundColor: 'rgba(175, 255, 43, 0.15)',
+		borderWidth: 1,
+		borderColor: '#AFFF2B'
+	},
+	weekBadgeText: {
+		fontSize: 11,
+		fontFamily: FontFamily.black,
+		color: '#AFFF2B'
+	},
 	dateText: { marginTop: 8, fontSize: 13, fontWeight: '700', color: '#999999' },
 
 	metaRow: { flexDirection: 'row', gap: 10, marginTop: 12 },

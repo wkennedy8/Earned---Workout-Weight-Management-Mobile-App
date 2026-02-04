@@ -1,5 +1,7 @@
 import { useAuth } from '@/context/AuthContext';
 import { CARDIO_TYPES, getAllCardio } from '@/controllers/cardioController';
+import { getUserWorkoutPlan } from '@/controllers/plansController';
+import { getProgramWeek } from '@/controllers/programProgressController';
 import { computeSessionStats } from '@/controllers/sessionController';
 import { getRecentWeights } from '@/controllers/weightController';
 import { db } from '@/lib/firebase';
@@ -120,6 +122,45 @@ function calculateCardioStreak(sessions) {
 	return streak;
 }
 
+// Helper to group sessions by program week
+function groupSessionsByWeek(sessions) {
+	const weekMap = {};
+
+	sessions.forEach((session) => {
+		const week = session.programWeek || null;
+		if (week) {
+			if (!weekMap[week]) {
+				weekMap[week] = [];
+			}
+			weekMap[week].push(session);
+		}
+	});
+
+	return weekMap;
+}
+
+// Helper to calculate stats for a specific week
+function calculateWeekStats(sessions) {
+	let volumeSum = 0;
+	let setsSum = 0;
+	let repsSum = 0;
+
+	sessions.forEach((session) => {
+		const stats = computeSessionStats(session);
+		volumeSum += stats.totalVolume;
+		setsSum += stats.totalSets;
+		repsSum += stats.totalReps;
+	});
+
+	return {
+		workouts: sessions.length,
+		volume: volumeSum,
+		sets: setsSum,
+		reps: repsSum,
+		avgVolume: sessions.length > 0 ? volumeSum / sessions.length : 0
+	};
+}
+
 export default function AnalyticsScreen() {
 	const { user } = useAuth();
 	const [loading, setLoading] = useState(true);
@@ -134,6 +175,10 @@ export default function AnalyticsScreen() {
 	const [totalSets, setTotalSets] = useState(0);
 	const [totalReps, setTotalReps] = useState(0);
 	const [streak, setStreak] = useState(0);
+
+	// Weekly breakdown
+	const [currentWeek, setCurrentWeek] = useState(1);
+	const [weeklyStats, setWeeklyStats] = useState({});
 
 	// Personal records
 	const [bestVolumeSession, setBestVolumeSession] = useState(null);
@@ -153,6 +198,14 @@ export default function AnalyticsScreen() {
 			try {
 				setLoading(true);
 
+				// Load user's workout plan
+				const plan = await getUserWorkoutPlan(user.uid);
+				const planId = plan?.id || 'ppl';
+
+				// Get current program week
+				const week = await getProgramWeek(user.uid, planId);
+				setCurrentWeek(week);
+
 				// Load weights
 				const weightData = await getRecentWeights(user.uid, { take: 365 });
 				setWeights(weightData);
@@ -171,6 +224,16 @@ export default function AnalyticsScreen() {
 					});
 
 				setCompletedSessions(sessions);
+
+				// Group sessions by week
+				const weekMap = groupSessionsByWeek(sessions);
+				const weekStats = {};
+
+				Object.keys(weekMap).forEach((week) => {
+					weekStats[week] = calculateWeekStats(weekMap[week]);
+				});
+
+				setWeeklyStats(weekStats);
 
 				// Load cardio sessions
 				const cardioData = await getAllCardio(user.uid);
@@ -306,6 +369,12 @@ export default function AnalyticsScreen() {
 			? filteredWeights[0].weight -
 				filteredWeights[filteredWeights.length - 1].weight
 			: 0;
+
+	// Determine which weeks to show (only weeks that have been started or completed)
+	const weeksToShow = [];
+	for (let week = 1; week <= currentWeek; week++) {
+		weeksToShow.push(week);
+	}
 
 	if (loading) {
 		return (
@@ -446,9 +515,14 @@ export default function AnalyticsScreen() {
 					)}
 				</View>
 
-				{/* Workout Stats Overview */}
+				{/* Workout Stats - Overall */}
 				<View style={styles.card}>
-					<Text style={styles.sectionTitle}>Workout Stats</Text>
+					<View style={styles.cardHeader}>
+						<Text style={styles.sectionTitle}>Overall Stats</Text>
+						<View style={styles.weekBadge}>
+							<Text style={styles.weekBadgeText}>Week {currentWeek}/8</Text>
+						</View>
+					</View>
 
 					<View style={styles.statsGrid}>
 						<View style={styles.statBox}>
@@ -510,6 +584,85 @@ export default function AnalyticsScreen() {
 						</View>
 					</View>
 				</View>
+
+				{/* Weekly Breakdown */}
+				{weeksToShow.length > 0 && (
+					<View style={styles.card}>
+						<Text style={styles.sectionTitle}>Weekly Progress</Text>
+
+						{weeksToShow.map((week) => {
+							const stats = weeklyStats[week];
+							const hasData = stats && stats.workouts > 0;
+							const isCurrentWeek = week === currentWeek;
+
+							return (
+								<View
+									key={week}
+									style={[
+										styles.weekCard,
+										isCurrentWeek && styles.weekCardCurrent
+									]}
+								>
+									<View style={styles.weekHeader}>
+										<View style={styles.weekTitleRow}>
+											<Text style={styles.weekTitle}>Week {week}</Text>
+											{isCurrentWeek && (
+												<View style={styles.currentBadge}>
+													<Text style={styles.currentBadgeText}>Current</Text>
+												</View>
+											)}
+										</View>
+										{hasData ? (
+											<Text style={styles.weekWorkouts}>
+												{stats.workouts} workout
+												{stats.workouts !== 1 ? 's' : ''}
+											</Text>
+										) : (
+											<Text style={styles.weekWorkouts}>No workouts yet</Text>
+										)}
+									</View>
+
+									{hasData ? (
+										<View style={styles.weekStatsGrid}>
+											<View style={styles.weekStatItem}>
+												<Text style={styles.weekStatValue}>
+													{Math.round(stats.volume).toLocaleString()}
+												</Text>
+												<Text style={styles.weekStatLabel}>Volume (lbs)</Text>
+											</View>
+
+											<View style={styles.weekStatItem}>
+												<Text style={styles.weekStatValue}>{stats.sets}</Text>
+												<Text style={styles.weekStatLabel}>Sets</Text>
+											</View>
+
+											<View style={styles.weekStatItem}>
+												<Text style={styles.weekStatValue}>{stats.reps}</Text>
+												<Text style={styles.weekStatLabel}>Reps</Text>
+											</View>
+
+											<View style={styles.weekStatItem}>
+												<Text style={styles.weekStatValue}>
+													{Math.round(stats.avgVolume)}
+												</Text>
+												<Text style={styles.weekStatLabel}>Avg Volume</Text>
+											</View>
+										</View>
+									) : (
+										<View style={styles.weekEmptyState}>
+											<Ionicons name='time-outline' size={24} color='#333333' />
+											<Text style={styles.weekEmptyText}>
+												{isCurrentWeek
+													? 'Start your first workout this week'
+													: 'Week not started'}
+											</Text>
+										</View>
+									)}
+								</View>
+							);
+						})}
+					</View>
+				)}
 
 				{/* Cardio Stats */}
 				<View style={styles.card}>
@@ -778,6 +931,19 @@ const styles = StyleSheet.create({
 		fontFamily: FontFamily.black,
 		color: '#FFFFFF'
 	},
+	weekBadge: {
+		paddingHorizontal: 8,
+		paddingVertical: 4,
+		borderRadius: 8,
+		backgroundColor: 'rgba(175, 255, 43, 0.15)',
+		borderWidth: 1,
+		borderColor: '#AFFF2B'
+	},
+	weekBadgeText: {
+		fontSize: 11,
+		fontFamily: FontFamily.black,
+		color: '#AFFF2B'
+	},
 	changeText: {
 		fontSize: 13,
 		fontWeight: '900',
@@ -879,6 +1045,83 @@ const styles = StyleSheet.create({
 		fontWeight: '700',
 		color: '#999999',
 		marginTop: 4,
+		textAlign: 'center'
+	},
+
+	// Weekly breakdown styles
+	weekCard: {
+		marginTop: 12,
+		padding: 14,
+		borderRadius: 12,
+		backgroundColor: '#0D0D0D',
+		borderWidth: 1,
+		borderColor: '#2A2A2A'
+	},
+	weekCardCurrent: {
+		borderColor: '#AFFF2B',
+		backgroundColor: 'rgba(175, 255, 43, 0.05)'
+	},
+	weekHeader: {
+		marginBottom: 12
+	},
+	weekTitleRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 8,
+		marginBottom: 4
+	},
+	weekTitle: {
+		fontSize: 15,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
+	},
+	currentBadge: {
+		paddingHorizontal: 6,
+		paddingVertical: 2,
+		borderRadius: 6,
+		backgroundColor: '#AFFF2B'
+	},
+	currentBadgeText: {
+		fontSize: 9,
+		fontFamily: FontFamily.black,
+		color: '#000000',
+		textTransform: 'uppercase',
+		letterSpacing: 0.5
+	},
+	weekWorkouts: {
+		fontSize: 11,
+		fontWeight: '700',
+		color: '#666666'
+	},
+	weekStatsGrid: {
+		flexDirection: 'row',
+		gap: 10
+	},
+	weekStatItem: {
+		flex: 1,
+		alignItems: 'center'
+	},
+	weekStatValue: {
+		fontSize: 16,
+		fontFamily: FontFamily.black,
+		color: '#AFFF2B'
+	},
+	weekStatLabel: {
+		fontSize: 9,
+		fontWeight: '700',
+		color: '#666666',
+		marginTop: 2,
+		textAlign: 'center'
+	},
+	weekEmptyState: {
+		alignItems: 'center',
+		paddingVertical: 20
+	},
+	weekEmptyText: {
+		fontSize: 11,
+		fontWeight: '700',
+		color: '#666666',
+		marginTop: 8,
 		textAlign: 'center'
 	},
 

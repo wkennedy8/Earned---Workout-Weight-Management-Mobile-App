@@ -4,7 +4,8 @@ export const PLAN = {
 	ppl: {
 		id: 'ppl',
 		title: 'Push/Pull/Legs',
-		description: '6-day split focusing on push, pull, and leg movements',
+		description:
+			'8-week progressive 6-day split focusing on push, pull, and leg movements',
 		workouts: {
 			push: {
 				id: 'push',
@@ -14,8 +15,15 @@ export const PLAN = {
 				exercises: [
 					{
 						name: 'Incline DB Bench Press',
-						sets: '3-4',
-						reps: '12',
+						// Week 1-2: 3x10, Week 3-4: 4x10, Week 5-6: 4x12, Week 7-8: 5x12
+						sets: '3-5',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 4, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 5, reps: 12 }
+						],
 						alternatives: [
 							{ name: 'Incline Barbell Bench Press', difficulty: 'same' },
 							{ name: 'Incline Machine Press', difficulty: 'easier' },
@@ -24,8 +32,14 @@ export const PLAN = {
 					},
 					{
 						name: 'Bench Press',
-						sets: '3-4',
-						reps: '12',
+						sets: '3-5',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 4, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 5, reps: 12 }
+						],
 						alternatives: [
 							{ name: 'Dumbbell Bench Press', difficulty: 'same' },
 							{ name: 'Machine Chest Press', difficulty: 'easier' },
@@ -36,7 +50,13 @@ export const PLAN = {
 					{
 						name: 'Seated DB Military Press',
 						sets: '3-4',
-						reps: '12',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 3, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						],
 						alternatives: [
 							{ name: 'Standing Military Press', difficulty: 'harder' },
 							{ name: 'Machine Shoulder Press', difficulty: 'easier' },
@@ -46,8 +66,14 @@ export const PLAN = {
 					},
 					{
 						name: 'Lateral Raises',
-						sets: '3-4',
-						reps: '15',
+						sets: '3-5',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 4, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 15 },
+							{ weeks: [7, 8], sets: 5, reps: 15 }
+						],
 						alternatives: [
 							{ name: 'Cable Lateral Raises', difficulty: 'same' },
 							{ name: 'Machine Lateral Raises', difficulty: 'easier' },
@@ -57,7 +83,13 @@ export const PLAN = {
 					{
 						name: 'Cable Chest Fly',
 						sets: '3-4',
-						reps: '15',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						],
 						alternatives: [
 							{ name: 'Dumbbell Chest Fly', difficulty: 'same' },
 							{ name: 'Pec Deck Machine', difficulty: 'easier' },
@@ -67,7 +99,13 @@ export const PLAN = {
 					{
 						name: 'Skull Crushers',
 						sets: '3-4',
-						reps: '12',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 3, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						],
 						alternatives: [
 							{ name: 'Overhead Triceps Extension', difficulty: 'same' },
 							{ name: 'Close Grip Bench Press', difficulty: 'harder' },
@@ -76,8 +114,14 @@ export const PLAN = {
 					},
 					{
 						name: 'Rope Pulldowns',
-						sets: '3-4',
-						reps: '15',
+						sets: '3-5',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 4, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 15 },
+							{ weeks: [7, 8], sets: 5, reps: 15 }
+						],
 						alternatives: [
 							{ name: 'Overhead Cable Extension', difficulty: 'same' },
 							{ name: 'Single Arm Cable Pushdown', difficulty: 'same' },
@@ -94,8 +138,14 @@ export const PLAN = {
 				exercises: [
 					{
 						name: 'Pullups',
-						sets: '3-4',
+						sets: '3-5',
 						reps: 'AMRAP',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 'AMRAP' },
+							{ weeks: [3, 4], sets: 4, reps: 'AMRAP' },
+							{ weeks: [5, 6], sets: 4, reps: 'AMRAP' },
+							{ weeks: [7, 8], sets: 5, reps: 'AMRAP' }
+						],
 						alternatives: [
 							{ name: 'Assisted Pullups', difficulty: 'easier' },
 							{ name: 'Chin-ups', difficulty: 'same' },
@@ -104,8 +154,14 @@ export const PLAN = {
 					},
 					{
 						name: 'High Row',
-						sets: '3-4',
-						reps: '12',
+						sets: '3-5',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 4, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 5, reps: 12 }
+						],
 						alternatives: [
 							{ name: 'Cable High Row', difficulty: 'same' },
 							{ name: 'Chest Supported Row', difficulty: 'easier' },
@@ -114,8 +170,14 @@ export const PLAN = {
 					},
 					{
 						name: 'Lat Pulldown',
-						sets: '3-4',
-						reps: '12',
+						sets: '3-5',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 4, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 5, reps: 12 }
+						],
 						alternatives: [
 							{ name: 'Wide Grip Pulldown', difficulty: 'same' },
 							{ name: 'Close Grip Pulldown', difficulty: 'same' },
@@ -125,7 +187,13 @@ export const PLAN = {
 					{
 						name: 'Seated Cable Row',
 						sets: '3-4',
-						reps: '12',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 3, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						],
 						alternatives: [
 							{ name: 'Barbell Row', difficulty: 'harder' },
 							{ name: 'Dumbbell Row', difficulty: 'same' },
@@ -135,8 +203,14 @@ export const PLAN = {
 					},
 					{
 						name: 'Rear Delt Cable Fly',
-						sets: '3-4',
-						reps: '15',
+						sets: '3-5',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 4, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 15 },
+							{ weeks: [7, 8], sets: 5, reps: 15 }
+						],
 						alternatives: [
 							{ name: 'Reverse Pec Deck', difficulty: 'easier' },
 							{ name: 'Face Pulls', difficulty: 'same' },
@@ -146,7 +220,13 @@ export const PLAN = {
 					{
 						name: 'Hammer Curls',
 						sets: '3-4',
-						reps: '12',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 3, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						],
 						alternatives: [
 							{ name: 'Dumbbell Curls', difficulty: 'same' },
 							{ name: 'Cable Curls', difficulty: 'same' },
@@ -156,7 +236,13 @@ export const PLAN = {
 					{
 						name: 'Preacher Curls',
 						sets: '3-4',
-						reps: '12',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 3, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						],
 						alternatives: [
 							{ name: 'Machine Preacher Curls', difficulty: 'easier' },
 							{ name: 'Cable Preacher Curls', difficulty: 'same' },
@@ -173,8 +259,14 @@ export const PLAN = {
 				exercises: [
 					{
 						name: 'Squat',
-						sets: '3-4',
-						reps: '12',
+						sets: '3-5',
+						reps: '8-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 8 },
+							{ weeks: [3, 4], sets: 4, reps: 8 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 5, reps: 10 }
+						],
 						alternatives: [
 							{ name: 'Front Squat', difficulty: 'harder' },
 							{ name: 'Leg Press', difficulty: 'easier' },
@@ -184,8 +276,14 @@ export const PLAN = {
 					},
 					{
 						name: 'Leg Extensions',
-						sets: '3-4',
-						reps: '12',
+						sets: '3-5',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 4, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 5, reps: 12 }
+						],
 						alternatives: [
 							{ name: 'Sissy Squat', difficulty: 'harder' },
 							{ name: 'Walking Lunges', difficulty: 'same' }
@@ -193,8 +291,14 @@ export const PLAN = {
 					},
 					{
 						name: 'Seated Leg Curl',
-						sets: '3-4',
-						reps: '12',
+						sets: '3-5',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 4, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 5, reps: 12 }
+						],
 						alternatives: [
 							{ name: 'Lying Leg Curl', difficulty: 'same' },
 							{ name: 'Standing Leg Curl', difficulty: 'same' },
@@ -203,8 +307,14 @@ export const PLAN = {
 					},
 					{
 						name: 'Standing Calf Raises',
-						sets: '3-4',
-						reps: '15',
+						sets: '3-5',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 4, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 15 },
+							{ weeks: [7, 8], sets: 5, reps: 15 }
+						],
 						alternatives: [
 							{ name: 'Seated Calf Raises', difficulty: 'easier' },
 							{ name: 'Calf Press on Leg Press', difficulty: 'same' },
@@ -214,7 +324,13 @@ export const PLAN = {
 					{
 						name: 'Cable Crunch',
 						sets: '3-4',
-						reps: '15',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						],
 						alternatives: [
 							{ name: 'Weighted Crunch', difficulty: 'same' },
 							{ name: 'Ab Wheel Rollout', difficulty: 'harder' },
@@ -223,9 +339,15 @@ export const PLAN = {
 					},
 					{
 						name: 'Plank',
-						sets: '3',
+						sets: '3-4',
 						reps: 'time',
-						note: '+5 sec each week',
+						note: 'Week 1-2: 30 sec, Week 3-4: 40 sec, Week 5-6: 50 sec, Week 7-8: 60 sec',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: '30 sec' },
+							{ weeks: [3, 4], sets: 3, reps: '40 sec' },
+							{ weeks: [5, 6], sets: 4, reps: '50 sec' },
+							{ weeks: [7, 8], sets: 4, reps: '60 sec' }
+						],
 						alternatives: [
 							{ name: 'Side Plank', difficulty: 'same' },
 							{ name: 'RKC Plank', difficulty: 'harder' },

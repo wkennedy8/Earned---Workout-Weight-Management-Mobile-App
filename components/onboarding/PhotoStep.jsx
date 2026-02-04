@@ -74,12 +74,8 @@ export default function PhotoStep({
 
 			// Upload photo if selected
 			if (photoUri) {
-				console.log('Uploading profile photo...');
 				profilePhotoUrl = await uploadProfilePhoto(user.uid, photoUri);
 			}
-
-			console.log('Saving onboarding data...');
-
 			// Save all onboarding data to Firebase
 			await Promise.all([
 				// Save profile info (name, email, phone)
@@ -105,8 +101,6 @@ export default function PhotoStep({
 				})
 			]);
 
-			console.log('✅ Onboarding completed successfully');
-
 			// Clear onboarding data
 			resetData();
 
@@ -114,7 +108,6 @@ export default function PhotoStep({
 			await new Promise((resolve) => setTimeout(resolve, 500));
 
 			// Navigate to main app
-			console.log('Navigating to app...');
 			onComplete();
 		} catch (error) {
 			console.error('❌ Failed to complete onboarding:', error);

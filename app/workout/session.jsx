@@ -6,6 +6,10 @@ import {
 	saveExerciseDefaults
 } from '@/controllers/exerciseDefaultsController';
 import {
+	applyWeeklyProgression,
+	getProgramWeek
+} from '@/controllers/programProgressController';
+import {
 	buildEmptySession,
 	upsertSession as firestoreUpsertSession,
 	getInProgressSessionForDay,
@@ -37,10 +41,7 @@ import {
 	TouchableOpacity,
 	View
 } from 'react-native';
-import {
-	GestureHandlerRootView,
-	Swipeable
-} from 'react-native-gesture-handler';
+import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import { FontFamily } from '../../constants/fonts';
@@ -201,16 +202,17 @@ export default function WorkoutSessionScreen() {
 	const params = useLocalSearchParams();
 	const templateId = String(params.templateId || 'push');
 
-	const template = useMemo(() => {
-		// Look through all plans to find the workout with this templateId
-		for (const plan of Object.values(PLAN)) {
+	// Find which plan this workout belongs to
+	const { template: rawTemplate, planId } = useMemo(() => {
+		for (const [pId, plan] of Object.entries(PLAN)) {
 			if (plan.workouts && plan.workouts[templateId]) {
-				return plan.workouts[templateId];
+				return { template: plan.workouts[templateId], planId: pId };
 			}
 		}
 		// Fallback to push workout if not found
-		return PLAN.ppl?.workouts?.push || null;
+		return { template: PLAN.ppl?.workouts?.push || null, planId: 'ppl' };
 	}, [templateId]);
+
 	const today = useMemo(() => new Date(), []);
 	const dateKey = useMemo(() => formatLocalDateKey(today), [today]);
 
@@ -219,6 +221,8 @@ export default function WorkoutSessionScreen() {
 	const [exerciseDefaults, setExerciseDefaults] = useState({});
 	const [swapModalVisible, setSwapModalVisible] = useState(false);
 	const [swapExerciseIndex, setSwapExerciseIndex] = useState(null);
+	const [currentWeek, setCurrentWeek] = useState(1);
+	const [template, setTemplate] = useState(null);
 
 	// Rest modal state
 	const [restVisible, setRestVisible] = useState(false);
@@ -229,9 +233,30 @@ export default function WorkoutSessionScreen() {
 	const [restContext, setRestContext] = useState(null);
 	const progress = useSharedValue(0);
 
+	// ---- Load program week and apply progression ----
+	useEffect(() => {
+		if (!user?.uid || !rawTemplate || !planId) return;
+
+		(async () => {
+			try {
+				// Get current program week
+				const week = await getProgramWeek(user.uid, planId);
+				setCurrentWeek(week);
+
+				// Apply weekly progression to template
+				const progressedTemplate = applyWeeklyProgression(rawTemplate, week);
+				setTemplate(progressedTemplate);
+			} catch (error) {
+				console.error('Error loading program week:', error);
+				// Fallback to raw template
+				setTemplate(rawTemplate);
+			}
+		})();
+	}, [user?.uid, rawTemplate, planId]);
+
 	// ---- Init session (resume or create) with Firebase ----
 	useEffect(() => {
-		if (!user?.uid) return;
+		if (!user?.uid || !template) return;
 
 		(async () => {
 			try {
@@ -345,6 +370,8 @@ export default function WorkoutSessionScreen() {
 					defaultsMap: smartDefaults
 				});
 				created.exercises[0].expanded = true;
+				// Store the current week in the session for reference
+				created.programWeek = currentWeek;
 
 				setSession(created);
 				await firestoreUpsertSession(user.uid, created);
@@ -359,7 +386,7 @@ export default function WorkoutSessionScreen() {
 		return () => {
 			if (restIntervalRef.current) clearInterval(restIntervalRef.current);
 		};
-	}, [user?.uid, templateId, params.mode, params.sessionId]);
+	}, [user?.uid, template, params.mode, params.sessionId, currentWeek]);
 
 	function openSwapModal(exerciseIndex) {
 		setSwapExerciseIndex(exerciseIndex);
@@ -808,282 +835,281 @@ export default function WorkoutSessionScreen() {
 	}
 
 	return (
-		<GestureHandlerRootView style={{ flex: 1 }}>
-			<SafeAreaView style={styles.safe}>
-				<KeyboardAvoidingView
-					behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-					style={styles.container}
-				>
-					{/* Header */}
-					<View style={styles.header}>
-						<View style={styles.headerRow}>
-							<View
-								style={[
-									styles.tagPill,
-									{ backgroundColor: tagColor(session.tag) }
-								]}
-							>
-								<Text style={styles.tagText}>{session.tag}</Text>
-							</View>
-							<Text style={styles.headerTitle}>{session.title}</Text>
+		<SafeAreaView style={styles.safe}>
+			<KeyboardAvoidingView
+				behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+				style={styles.container}
+			>
+				{/* Header */}
+				<View style={styles.header}>
+					<View style={styles.headerRow}>
+						<View
+							style={[
+								styles.tagPill,
+								{ backgroundColor: tagColor(session.tag) }
+							]}
+						>
+							<Text style={styles.tagText}>{session.tag}</Text>
 						</View>
-						<Text style={styles.dateText}>{formatLongDate(today)}</Text>
+						<Text style={styles.headerTitle}>{session.title}</Text>
 					</View>
+					<View style={styles.weekBadgeRow}>
+						<Text style={styles.dateText}>{formatLongDate(today)}</Text>
+						<View style={styles.weekBadge}>
+							<Text style={styles.weekBadgeText}>Week {currentWeek}</Text>
+						</View>
+					</View>
+				</View>
 
-					{/* Rest Timer Modal */}
-					<Modal
-						visible={restVisible}
-						transparent
-						animationType='fade'
-						onRequestClose={skipRest}
-					>
-						<View style={styles.modalBackdrop}>
-							<View style={styles.modalCard}>
-								{/* <Text style={styles.modalTitle}>Rest</Text> */}
-
-								{/* Circular Progress */}
-								<View style={styles.circleContainer}>
-									<Svg width={200} height={200} viewBox='0 0 200 200'>
-										{/* Background circle */}
-										<Circle
-											cx='100'
-											cy='100'
-											r='90'
-											stroke='#2A2A2A'
-											strokeWidth='12'
-											fill='none'
-										/>
-										{/* Progress circle */}
-										<AnimatedCircle
-											cx='100'
-											cy='100'
-											r='90'
-											stroke='#AFFF2B'
-											strokeWidth='12'
-											fill='none'
-											strokeLinecap='round'
-											strokeDasharray={`${2 * Math.PI * 90}`}
-											strokeDashoffset={2 * Math.PI * 90 * (1 - progress.value)}
-											transform='rotate(-90 100 100)'
-										/>
-									</Svg>
-									<View style={styles.timerOverlay}>
-										<Text style={styles.modalTimer}>
-											{formatTimer(restSeconds)}
-										</Text>
-									</View>
+				{/* Rest Timer Modal */}
+				<Modal
+					visible={restVisible}
+					transparent
+					animationType='fade'
+					onRequestClose={skipRest}
+				>
+					<View style={styles.modalBackdrop}>
+						<View style={styles.modalCard}>
+							{/* Circular Progress */}
+							<View style={styles.circleContainer}>
+								<Svg width={200} height={200} viewBox='0 0 200 200'>
+									{/* Background circle */}
+									<Circle
+										cx='100'
+										cy='100'
+										r='90'
+										stroke='#2A2A2A'
+										strokeWidth='12'
+										fill='none'
+									/>
+									{/* Progress circle */}
+									<AnimatedCircle
+										cx='100'
+										cy='100'
+										r='90'
+										stroke='#AFFF2B'
+										strokeWidth='12'
+										fill='none'
+										strokeLinecap='round'
+										strokeDasharray={`${2 * Math.PI * 90}`}
+										strokeDashoffset={2 * Math.PI * 90 * (1 - progress.value)}
+										transform='rotate(-90 100 100)'
+									/>
+								</Svg>
+								<View style={styles.timerOverlay}>
+									<Text style={styles.modalTimer}>
+										{formatTimer(restSeconds)}
+									</Text>
 								</View>
+							</View>
 
-								<Text style={styles.modalContext}>
-									{restContext?.type === 'exercise'
-										? `Exercise completed: ${restContext.exerciseName}`
-										: restContext?.type === 'set'
-											? `Set saved: ${restContext.exerciseName} (Set ${restContext.setIndex})`
-											: ''}
-								</Text>
+							<Text style={styles.modalContext}>
+								{restContext?.type === 'exercise'
+									? `Exercise completed: ${restContext.exerciseName}`
+									: restContext?.type === 'set'
+										? `Set saved: ${restContext.exerciseName} (Set ${restContext.setIndex})`
+										: ''}
+							</Text>
 
-								{/* Time adjustment buttons */}
-								<View style={styles.modalActionsRow}>
-									<TouchableOpacity
-										style={styles.modalSecondaryBtn}
-										onPress={() => subtractRest(30)}
-										activeOpacity={0.9}
-										disabled={restSeconds <= 30}
-									>
-										<Text
-											style={[
-												styles.modalSecondaryText,
-												restSeconds <= 30 && styles.modalSecondaryTextDisabled
-											]}
-										>
-											-30s
-										</Text>
-									</TouchableOpacity>
-
-									<TouchableOpacity
+							{/* Time adjustment buttons */}
+							<View style={styles.modalActionsRow}>
+								<TouchableOpacity
+									style={styles.modalSecondaryBtn}
+									onPress={() => subtractRest(30)}
+									activeOpacity={0.9}
+									disabled={restSeconds <= 30}
+								>
+									<Text
 										style={[
-											styles.modalPauseBtn,
-											restPaused && styles.modalPauseBtnActive
+											styles.modalSecondaryText,
+											restSeconds <= 30 && styles.modalSecondaryTextDisabled
 										]}
-										onPress={togglePause}
-										activeOpacity={0.9}
 									>
-										<Text
-											style={[
-												styles.modalPauseText,
-												restPaused && styles.modalPauseTextActive
-											]}
-										>
-											{restPaused ? 'Resume' : 'Pause'}
-										</Text>
-									</TouchableOpacity>
-
-									<TouchableOpacity
-										style={styles.modalSecondaryBtn}
-										onPress={() => addRest(30)}
-										activeOpacity={0.9}
-									>
-										<Text style={styles.modalSecondaryText}>+30s</Text>
-									</TouchableOpacity>
-								</View>
+										-30s
+									</Text>
+								</TouchableOpacity>
 
 								<TouchableOpacity
-									style={styles.modalPrimaryBtn}
-									onPress={skipRest}
+									style={[
+										styles.modalPauseBtn,
+										restPaused && styles.modalPauseBtnActive
+									]}
+									onPress={togglePause}
 									activeOpacity={0.9}
 								>
-									<Text style={styles.modalPrimaryText}>Skip Rest</Text>
+									<Text
+										style={[
+											styles.modalPauseText,
+											restPaused && styles.modalPauseTextActive
+										]}
+									>
+										{restPaused ? 'Resume' : 'Pause'}
+									</Text>
+								</TouchableOpacity>
+
+								<TouchableOpacity
+									style={styles.modalSecondaryBtn}
+									onPress={() => addRest(30)}
+									activeOpacity={0.9}
+								>
+									<Text style={styles.modalSecondaryText}>+30s</Text>
 								</TouchableOpacity>
 							</View>
+
+							<TouchableOpacity
+								style={styles.modalPrimaryBtn}
+								onPress={skipRest}
+								activeOpacity={0.9}
+							>
+								<Text style={styles.modalPrimaryText}>Skip Rest</Text>
+							</TouchableOpacity>
 						</View>
-					</Modal>
+					</View>
+				</Modal>
 
-					{/* Exercise List */}
-					<FlatList
-						data={session.exercises}
-						keyExtractor={(item, idx) => `${item.name}-${idx}`}
-						contentContainerStyle={{ paddingBottom: 98 }}
-						renderItem={({ item, index }) => {
-							const completed = isExerciseCompleted(item);
-							return (
-								<View style={styles.exerciseCard}>
-									<TouchableOpacity
-										activeOpacity={0.85}
-										onPress={() => toggleExpanded(index)}
-										style={styles.accordionHeader}
-									>
-										<View style={styles.exerciseHeaderLeft}>
-											<View style={styles.exerciseIcon}>
-												<Text style={styles.exerciseIconText}>🏋️</Text>
-											</View>
-											<View style={{ flex: 1 }}>
-												<Text style={styles.exerciseName}>{item.name}</Text>
-												{/* Show if swapped */}
-												{item.isSwapped && (
-													<Text style={styles.swappedBadge}>
-														Swapped from {item.originalName}
-													</Text>
-												)}
-												<Text style={styles.exerciseMeta}>
-													{item.targetSets} sets, {item.targetReps}{' '}
-													{String(item.targetReps).toLowerCase() === 'time'
-														? ''
-														: 'reps'}
-													{item.note ? ` • ${item.note}` : ''}
-												</Text>
-
-												<Text
-													style={[
-														styles.exerciseStatus,
-														completed && styles.exerciseStatusDone
-													]}
-												>
-													{completed ? 'Completed' : 'In progress'}
-												</Text>
-											</View>
+				{/* Exercise List */}
+				<FlatList
+					data={session.exercises}
+					keyExtractor={(item, idx) => `${item.name}-${idx}`}
+					contentContainerStyle={{ paddingBottom: 98 }}
+					renderItem={({ item, index }) => {
+						const completed = isExerciseCompleted(item);
+						return (
+							<View style={styles.exerciseCard}>
+								<TouchableOpacity
+									activeOpacity={0.85}
+									onPress={() => toggleExpanded(index)}
+									style={styles.accordionHeader}
+								>
+									<View style={styles.exerciseHeaderLeft}>
+										<View style={styles.exerciseIcon}>
+											<Text style={styles.exerciseIconText}>🏋️</Text>
 										</View>
+										<View style={{ flex: 1 }}>
+											<Text style={styles.exerciseName}>{item.name}</Text>
+											{/* Show if swapped */}
+											{item.isSwapped && (
+												<Text style={styles.swappedBadge}>
+													Swapped from {item.originalName}
+												</Text>
+											)}
+											<Text style={styles.exerciseMeta}>
+												{item.targetSets} sets, {item.targetReps}{' '}
+												{String(item.targetReps).toLowerCase() === 'time'
+													? ''
+													: 'reps'}
+												{item.note ? ` • ${item.note}` : ''}
+											</Text>
 
-										<View style={styles.exerciseHeaderRight}>
-											{/* ADD THIS: Swap Button */}
-											<TouchableOpacity
-												style={styles.swapButton}
-												onPress={(e) => {
-													e.stopPropagation(); // Prevent accordion toggle
-													openSwapModal(index);
-												}}
-												activeOpacity={0.7}
+											<Text
+												style={[
+													styles.exerciseStatus,
+													completed && styles.exerciseStatusDone
+												]}
 											>
-												<Ionicons
-													name='swap-horizontal'
-													size={18}
-													color='#AFFF2B'
-												/>
-											</TouchableOpacity>
-
-											<Text style={styles.chevron}>
-												{item.expanded ? '˅' : '›'}
+												{completed ? 'Completed' : 'In progress'}
 											</Text>
 										</View>
-									</TouchableOpacity>
+									</View>
 
-									{item.expanded ? (
-										<View style={{ marginTop: 10 }}>
-											<View style={styles.tableHeader}>
-												<Text style={[styles.th, { width: 44 }]}>Set</Text>
-												<Text style={[styles.th, { flex: 1 }]}>
-													Weight (lbs)
-												</Text>
-												<Text style={[styles.th, { width: 110 }]}>
-													{String(item.targetReps).toLowerCase() === 'time'
-														? 'Time (sec)'
-														: 'Reps'}
-												</Text>
-												<Text
-													style={[styles.th, { width: 84, textAlign: 'right' }]}
-												>
-													Action
-												</Text>
-											</View>
+									<View style={styles.exerciseHeaderRight}>
+										{/* Swap Button */}
+										<TouchableOpacity
+											style={styles.swapButton}
+											onPress={(e) => {
+												e.stopPropagation();
+												openSwapModal(index);
+											}}
+											activeOpacity={0.7}
+										>
+											<Ionicons
+												name='swap-horizontal'
+												size={18}
+												color='#AFFF2B'
+											/>
+										</TouchableOpacity>
 
-											{item.sets.map((s) => (
-												<SwipeableSetRow
-													key={`${item.name}-${s.setIndex}`}
-													item={item}
-													set={s}
-													exerciseIndex={index}
-													setIndex={s.setIndex}
-													canRemove={!s.saved && item.sets.length > 1}
-													updateSetField={updateSetField}
-													saveSet={saveSet}
-													removeSet={removeSet}
-													editSet={editSet}
-													normalizeNumberText={normalizeNumberText}
-												/>
-											))}
+										<Text style={styles.chevron}>
+											{item.expanded ? '˅' : '›'}
+										</Text>
+									</View>
+								</TouchableOpacity>
 
-											{/* Add Set Button */}
-											<TouchableOpacity
-												style={styles.addSetButton}
-												onPress={() => addSet(index)}
-												activeOpacity={0.9}
+								{item.expanded ? (
+									<View style={{ marginTop: 10 }}>
+										<View style={styles.tableHeader}>
+											<Text style={[styles.th, { width: 44 }]}>Set</Text>
+											<Text style={[styles.th, { flex: 1 }]}>Weight (lbs)</Text>
+											<Text style={[styles.th, { width: 110 }]}>
+												{String(item.targetReps).toLowerCase() === 'time'
+													? 'Time (sec)'
+													: 'Reps'}
+											</Text>
+											<Text
+												style={[styles.th, { width: 84, textAlign: 'right' }]}
 											>
-												<Text style={styles.addSetButtonText}>+ Add Set</Text>
-											</TouchableOpacity>
+												Action
+											</Text>
 										</View>
-									) : null}
-								</View>
-							);
-						}}
-					/>
-					{/* Exercise Swap Modal */}
-					<SwapExerciseModal
-						visible={swapModalVisible}
-						onClose={() => {
-							setSwapModalVisible(false);
-							setSwapExerciseIndex(null);
-						}}
-						exercise={
-							swapExerciseIndex !== null
-								? session.exercises[swapExerciseIndex]
-								: null
-						}
-						templateId={template.id}
-						onSwap={handleSwapExercise}
-					/>
 
-					{/* Bottom CTA */}
-					<View style={styles.bottomCta}>
-						<TouchableOpacity
-							style={styles.finishButton}
-							onPress={finishWorkout}
-							activeOpacity={0.9}
-						>
-							<Text style={styles.finishButtonText}>Finish Workout</Text>
-						</TouchableOpacity>
-					</View>
-				</KeyboardAvoidingView>
-			</SafeAreaView>
-		</GestureHandlerRootView>
+										{item.sets.map((s) => (
+											<SwipeableSetRow
+												key={`${item.name}-${s.setIndex}`}
+												item={item}
+												set={s}
+												exerciseIndex={index}
+												setIndex={s.setIndex}
+												canRemove={!s.saved && item.sets.length > 1}
+												updateSetField={updateSetField}
+												saveSet={saveSet}
+												removeSet={removeSet}
+												editSet={editSet}
+												normalizeNumberText={normalizeNumberText}
+											/>
+										))}
+
+										{/* Add Set Button */}
+										<TouchableOpacity
+											style={styles.addSetButton}
+											onPress={() => addSet(index)}
+											activeOpacity={0.9}
+										>
+											<Text style={styles.addSetButtonText}>+ Add Set</Text>
+										</TouchableOpacity>
+									</View>
+								) : null}
+							</View>
+						);
+					}}
+				/>
+				{/* Exercise Swap Modal */}
+				<SwapExerciseModal
+					visible={swapModalVisible}
+					onClose={() => {
+						setSwapModalVisible(false);
+						setSwapExerciseIndex(null);
+					}}
+					exercise={
+						swapExerciseIndex !== null
+							? session.exercises[swapExerciseIndex]
+							: null
+					}
+					templateId={template.id}
+					onSwap={handleSwapExercise}
+				/>
+
+				{/* Bottom CTA */}
+				<View style={styles.bottomCta}>
+					<TouchableOpacity
+						style={styles.finishButton}
+						onPress={finishWorkout}
+						activeOpacity={0.9}
+					>
+						<Text style={styles.finishButtonText}>Finish Workout</Text>
+					</TouchableOpacity>
+				</View>
+			</KeyboardAvoidingView>
+		</SafeAreaView>
 	);
 }
 
@@ -1114,11 +1140,29 @@ const styles = StyleSheet.create({
 	tagPill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
 	tagText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
 	headerTitle: { fontSize: 22, fontFamily: FontFamily.black, color: '#FFFFFF' },
+	weekBadgeRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		marginTop: 6
+	},
 	dateText: {
-		marginTop: 6,
 		fontSize: 13,
 		fontFamily: FontFamily.black,
 		color: '#999999'
+	},
+	weekBadge: {
+		paddingHorizontal: 8,
+		paddingVertical: 4,
+		borderRadius: 8,
+		backgroundColor: 'rgba(175, 255, 43, 0.15)',
+		borderWidth: 1,
+		borderColor: '#AFFF2B'
+	},
+	weekBadgeText: {
+		fontSize: 11,
+		fontFamily: FontFamily.black,
+		color: '#AFFF2B'
 	},
 
 	modalBackdrop: {

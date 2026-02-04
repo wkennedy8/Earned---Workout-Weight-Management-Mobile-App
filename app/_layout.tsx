@@ -52,6 +52,7 @@ export default function RootLayout() {
 
 	return (
 		<ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+			<StatusBar style='light' animated />
 			<AuthProvider>
 				<OnboardingProvider>
 					<Stack screenOptions={{ headerShown: false }}>
@@ -63,7 +64,6 @@ export default function RootLayout() {
 					</Stack>
 				</OnboardingProvider>
 			</AuthProvider>
-			<StatusBar style='auto' />
 		</ThemeProvider>
 	);
 }

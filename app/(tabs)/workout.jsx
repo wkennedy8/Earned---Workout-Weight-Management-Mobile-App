@@ -6,6 +6,10 @@ import {
 } from '@/controllers/cardioController';
 import { getUserWorkoutPlan } from '@/controllers/plansController';
 import {
+	getProgramWeek,
+	resolveExerciseProgression
+} from '@/controllers/programProgressController';
+import {
 	getScheduleOverride,
 	markAsRestDayAndReschedule
 } from '@/controllers/rescheduleController';
@@ -86,6 +90,8 @@ export default function WorkoutTab() {
 	const [userPlan, setUserPlan] = useState(null);
 	const [loadingPlan, setLoadingPlan] = useState(true);
 	const [workout, setWorkout] = useState(null);
+	const [currentWeek, setCurrentWeek] = useState(1);
+	const [planId, setPlanId] = useState(null);
 
 	const [cardioModalVisible, setCardioModalVisible] = useState(false);
 	const [cardioSession, setCardioSession] = useState(null);
@@ -95,8 +101,7 @@ export default function WorkoutTab() {
 	const today = useMemo(() => new Date(), []);
 	const todayKey = useMemo(() => formatLocalDateKey(today), [today]);
 
-	// Load user's selected plan
-	// Load user's selected plan
+	// Load user's selected plan and program week
 	useEffect(() => {
 		if (!user?.uid) return;
 
@@ -105,6 +110,11 @@ export default function WorkoutTab() {
 				setLoadingPlan(true);
 				const plan = await getUserWorkoutPlan(user.uid);
 				setUserPlan(plan);
+				setPlanId(plan?.id || 'ppl');
+
+				// Get current program week
+				const week = await getProgramWeek(user.uid, plan?.id || 'ppl');
+				setCurrentWeek(week);
 
 				// Load today's workout with override support
 				const todayWorkout = await getWorkoutForDateWithOverride(
@@ -112,7 +122,17 @@ export default function WorkoutTab() {
 					plan,
 					user.uid
 				);
-				setWorkout(todayWorkout);
+
+				// Apply weekly progression to workout if it has exercises
+				if (todayWorkout && todayWorkout.exercises) {
+					const progressedWorkout = applyProgressionToWorkout(
+						todayWorkout,
+						week
+					);
+					setWorkout(progressedWorkout);
+				} else {
+					setWorkout(todayWorkout);
+				}
 
 				// Check if today was marked as rest
 				const override = await getScheduleOverride(user.uid, todayKey);
@@ -125,31 +145,40 @@ export default function WorkoutTab() {
 				setLoadingPlan(false);
 			}
 		})();
-	}, [user?.uid]);
+	}, [user?.uid, todayKey]);
 
-	// Initial workout (will be updated by useFocusEffect)
-	// const initialWorkout = useMemo(() => {
-	// 	if (!userPlan) return null;
-	// 	return getWorkoutForDateFromPlan(today, userPlan);
-	// }, [today, userPlan]);
+	// Helper function to apply weekly progression to a workout
+	function applyProgressionToWorkout(workout, week) {
+		if (!workout || !workout.exercises) return workout;
 
-	// Set initial workout
-	// useEffect(() => {
-	// 	if (initialWorkout && !workout) {
-	// 		setWorkout(initialWorkout);
-	// 	}
-	// }, [initialWorkout, workout]);
+		return {
+			...workout,
+			exercises: workout.exercises.map((exercise) => {
+				// If exercise has weeklyProgression, resolve sets/reps for current week
+				if (exercise.weeklyProgression) {
+					const resolved = resolveExerciseProgression(exercise, week);
+					return {
+						...exercise,
+						sets: String(resolved.sets),
+						reps: String(resolved.reps)
+					};
+				}
+				// Otherwise, keep as is
+				return exercise;
+			})
+		};
+	}
 
-	/// Check for schedule overrides and reload data
+	// Check for schedule overrides and reload data
 	useFocusEffect(
 		useCallback(() => {
 			if (!user?.uid || !userPlan) return;
-
-			console.log('=== USE FOCUS EFFECT ===');
-			console.log('Today key:', todayKey);
-
 			(async () => {
 				try {
+					// Reload program week (in case it was advanced elsewhere)
+					const week = await getProgramWeek(user.uid, planId || 'ppl');
+					setCurrentWeek(week);
+
 					// Check for schedule override
 					const overriddenWorkout = await getWorkoutForDateWithOverride(
 						today,
@@ -157,8 +186,14 @@ export default function WorkoutTab() {
 						user.uid
 					);
 
-					console.log('Overridden workout:', overriddenWorkout);
-					setWorkout(overriddenWorkout);
+					// Apply progression
+					const progressedWorkout = applyProgressionToWorkout(
+						overriddenWorkout,
+						week
+					);
+
+					('Progressed workout:', progressedWorkout);
+					setWorkout(progressedWorkout);
 
 					// Check if today was marked as rest
 					const override = await getScheduleOverride(user.uid, todayKey);
@@ -183,7 +218,7 @@ export default function WorkoutTab() {
 					console.error('Failed to reload data:', error);
 				}
 			})();
-		}, [user?.uid, userPlan, today, todayKey])
+		}, [user?.uid, userPlan, today, todayKey, planId])
 	);
 
 	const isRestDay = workout?.id === 'rest';
@@ -363,6 +398,8 @@ export default function WorkoutTab() {
 	console.log('isRestDay:', isRestDay);
 	console.log('markedAsRest:', markedAsRest);
 	console.log('completedSession:', completedSession);
+	console.log('currentWeek:', currentWeek);
+
 	return (
 		<SafeAreaView style={styles.safe}>
 			<ScrollView
@@ -380,6 +417,12 @@ export default function WorkoutTab() {
 							<Text style={styles.title}>{formatLongDate(today)}</Text>
 						</View>
 					</View>
+					{/* Week Badge */}
+					{!isRestDay && (
+						<View style={styles.weekBadge}>
+							<Text style={styles.weekBadgeText}>Week {currentWeek}</Text>
+						</View>
+					)}
 				</View>
 
 				{/* Workout Title */}
@@ -634,18 +677,6 @@ export default function WorkoutTab() {
 				<View style={{ height: 80 }} />
 			</ScrollView>
 
-			{/* Bottom CTA - Fixed at bottom */}
-			{/* <View style={styles.bottomCtaWrap}>
-				<TouchableOpacity
-					style={[styles.startButton, isRestDay && styles.startButtonDisabled]}
-					onPress={onStartWorkout}
-					activeOpacity={0.9}
-					disabled={isRestDay}
-				>
-					<Text style={styles.startButtonText}>{startButtonLabel}</Text>
-				</TouchableOpacity>
-			</View> */}
-
 			{/* Cardio Modal */}
 			<CardioModal
 				visible={cardioModalVisible}
@@ -657,13 +688,6 @@ export default function WorkoutTab() {
 }
 
 const styles = StyleSheet.create({
-	// safe: { flex: 1, backgroundColor: '#000000' },
-	// scrollView: { flex: 1 },
-	// scrollContent: {
-	// 	paddingHorizontal: 18,
-	// 	paddingTop: 10,
-	// 	paddingBottom: 20
-	// },
 	safe: { flex: 1, backgroundColor: '#000000' },
 	scrollView: { flex: 1 },
 	scrollContent: {
@@ -703,6 +727,19 @@ const styles = StyleSheet.create({
 		fontSize: 18,
 		fontFamily: FontFamily.black,
 		color: '#FFFFFF'
+	},
+	weekBadge: {
+		paddingHorizontal: 10,
+		paddingVertical: 6,
+		borderRadius: 8,
+		backgroundColor: 'rgba(175, 255, 43, 0.15)',
+		borderWidth: 1,
+		borderColor: '#AFFF2B'
+	},
+	weekBadgeText: {
+		fontSize: 12,
+		fontFamily: FontFamily.black,
+		color: '#AFFF2B'
 	},
 	settingsIcon: { fontSize: 20, color: '#999999' },
 

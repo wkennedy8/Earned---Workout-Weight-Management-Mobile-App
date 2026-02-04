@@ -74,17 +74,8 @@ export async function markAsRestDayAndReschedule(
 			throw new Error('Today is already a rest day');
 		}
 
-		console.log('=== RESCHEDULE CONTROLLER ===');
-		console.log('Today key:', todayKey);
-		console.log(
-			'Current workout to move:',
-			currentWorkout.title,
-			currentWorkout.id
-		);
-
 		// Mark today as rest
 		await saveScheduleOverride(uid, todayKey, 'rest');
-		console.log('Saved today as rest');
 
 		// Parse today's date
 		const [year, month, day] = todayKey.split('-').map(Number);
@@ -103,21 +94,11 @@ export async function markAsRestDayAndReschedule(
 			const nextDay = String(nextDate.getDate()).padStart(2, '0');
 			const nextKey = `${nextYear}-${nextMonth}-${nextDay}`;
 
-			console.log(`\n=== Day +${i}: ${nextKey} ===`);
-			console.log('Workout to place:', workoutToMove.title, workoutToMove.id);
-
 			// Check if there's already an override for this day
 			const existingOverride = await getScheduleOverride(uid, nextKey);
 
 			// Get what was originally scheduled for this day
 			const originalWorkout = getWorkoutForDateFromPlan(nextDate, plan);
-
-			console.log('Existing override:', existingOverride?.workoutId || 'none');
-			console.log(
-				'Original schedule:',
-				originalWorkout.title,
-				originalWorkout.id
-			);
 
 			// Determine what workout is currently scheduled for this day
 			let currentlyScheduled;
@@ -151,25 +132,16 @@ export async function markAsRestDayAndReschedule(
 				currentlyScheduled = originalWorkout;
 			}
 
-			console.log(
-				'Currently scheduled here:',
-				currentlyScheduled.title,
-				currentlyScheduled.id
-			);
-
 			// Place the workout we're moving
 			await saveScheduleOverride(uid, nextKey, workoutToMove.id);
-			console.log(`✓ Placed ${workoutToMove.title} on ${nextKey}`);
 
 			// If what was here was a rest day, we're done cascading
 			if (currentlyScheduled.id === 'rest') {
-				console.log('✓ Hit a rest day, cascade complete!');
 				break;
 			}
 
 			// Otherwise, this workout needs to be moved forward
 			workoutToMove = currentlyScheduled;
-			console.log(`→ ${workoutToMove.title} needs to move to next day`);
 		}
 
 		// Calculate tomorrow's date for the return message
