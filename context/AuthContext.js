@@ -24,8 +24,6 @@ export function AuthProvider({ children }) {
 	// Subscribe to auth state changes
 	useEffect(() => {
 		const unsubscribe = subscribeToAuth(async (firebaseUser) => {
-			// console.log('Auth state changed:', firebaseUser?.uid);
-
 			if (firebaseUser) {
 				// Check if user is admin
 				const adminStatus = await isAdmin(firebaseUser.uid);
@@ -65,19 +63,8 @@ export function AuthProvider({ children }) {
 		const inAuthGroup = segments[0] === 'login';
 		const inOnboarding = segments[0] === 'onboarding';
 
-		// console.log('Navigation check:', {
-		// 	user: !!user,
-		// 	onboardingCompleted,
-		// 	userIsAdmin,
-		// 	inAuthGroup,
-		// 	inOnboarding,
-		// 	segments,
-		// 	user
-		// });
-
 		if (!user && !inAuthGroup) {
 			// No user, redirect to login
-			console.log('Redirecting to login');
 			router.replace('/login');
 			return;
 		}
@@ -88,15 +75,12 @@ export function AuthProvider({ children }) {
 		if (inAuthGroup) {
 			// User is authenticated but on login screen - redirect to appropriate place
 			if (onboardingCompleted || userIsAdmin) {
-				console.log('Redirecting to app from login');
 				router.replace('/(tabs)');
 			} else {
-				console.log('Redirecting to onboarding from login');
 				router.replace('/onboarding');
 			}
 		} else if (inOnboarding && (onboardingCompleted || userIsAdmin)) {
 			// User completed onboarding but still on onboarding screens
-			console.log('Redirecting to app from onboarding');
 			router.replace('/(tabs)');
 		}
 		// If user is in app screens, don't redirect anywhere
