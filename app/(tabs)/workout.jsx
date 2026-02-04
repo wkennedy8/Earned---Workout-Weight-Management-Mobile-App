@@ -191,19 +191,14 @@ export default function WorkoutTab() {
 						overriddenWorkout,
 						week
 					);
-
-					('Progressed workout:', progressedWorkout);
 					setWorkout(progressedWorkout);
 
 					// Check if today was marked as rest
 					const override = await getScheduleOverride(user.uid, todayKey);
-					console.log('Schedule override:', override);
 
 					if (override && override.workoutId === 'rest') {
-						console.log('Setting markedAsRest to TRUE');
 						setMarkedAsRest(true);
 					} else {
-						console.log('Setting markedAsRest to FALSE');
 						setMarkedAsRest(false);
 					}
 
@@ -326,10 +321,6 @@ export default function WorkoutTab() {
 	async function handleMarkRestDay() {
 		if (!user?.uid || !userPlan || !workout) return;
 
-		console.log('=== BEFORE MARK AS REST ===');
-		console.log('Current workout:', workout);
-		console.log('Today key:', todayKey);
-
 		Alert.alert(
 			'Mark as Rest Day',
 			`This will move today's workout (${workout.title}) to tomorrow. Your streak will be maintained.\n\nContinue?`,
@@ -340,8 +331,6 @@ export default function WorkoutTab() {
 					style: 'default',
 					onPress: async () => {
 						try {
-							console.log('=== MARKING AS REST ===');
-
 							// Pass the current workout object so it knows exactly what to move
 							const result = await markAsRestDayAndReschedule(
 								user.uid,
@@ -349,8 +338,6 @@ export default function WorkoutTab() {
 								todayKey,
 								workout // ← Pass the actual workout object
 							);
-
-							console.log('Reschedule result:', result);
 
 							// Set workout to rest day directly
 							setWorkout({
@@ -360,8 +347,6 @@ export default function WorkoutTab() {
 								exercises: []
 							});
 							setMarkedAsRest(true);
-
-							console.log('States set - workout: rest, markedAsRest: true');
 
 							Alert.alert(
 								'Success',
@@ -391,14 +376,6 @@ export default function WorkoutTab() {
 			</SafeAreaView>
 		);
 	}
-
-	// Add this right before the return statement
-	console.log('=== RENDER ===');
-	console.log('workout:', workout);
-	console.log('isRestDay:', isRestDay);
-	console.log('markedAsRest:', markedAsRest);
-	console.log('completedSession:', completedSession);
-	console.log('currentWeek:', currentWeek);
 
 	return (
 		<SafeAreaView style={styles.safe}>
