@@ -8,7 +8,6 @@ import {
 	query,
 	serverTimestamp,
 	setDoc,
-	updateDoc,
 	where
 } from 'firebase/firestore';
 import { Alert, Share } from 'react-native';
@@ -16,6 +15,7 @@ import { db } from '../lib/firebase';
 import { formatLocalDateKey } from '../utils/dateUtils';
 import { PLAN } from '../utils/workoutPlan';
 import { normalizeExerciseKey } from '../utils/workoutUtils';
+import { checkAndAdvanceWeek } from './weekCompletionController';
 
 function sessionsCol(uid) {
 	return collection(db, 'users', uid, 'sessions');
@@ -49,12 +49,48 @@ export async function upsertSession(uid, session) {
 }
 
 export async function markSessionCompleted(uid, sessionId) {
-	const ref = doc(db, 'users', uid, 'sessions', sessionId);
-	await updateDoc(ref, {
-		status: 'completed',
-		completedAt: new Date().toISOString(),
-		updatedAt: serverTimestamp()
-	});
+	try {
+		const sessionRef = doc(db, 'users', uid, 'sessions', sessionId);
+
+		// Get the session before updating it
+		const sessionSnap = await getDoc(sessionRef);
+		if (!sessionSnap.exists()) {
+			throw new Error('Session not found');
+		}
+
+		const session = { id: sessionSnap.id, ...sessionSnap.data() };
+
+		// Mark as completed
+		await setDoc(
+			sessionRef,
+			{
+				status: 'completed',
+				completedAt: new Date().toISOString()
+			},
+			{ merge: true }
+		);
+
+		// CHECK FOR WEEK COMPLETION - NEW CODE
+		if (session.programWeek) {
+			// Get user's plan
+			const plan = await getUserWorkoutPlan(uid);
+			const planId = plan?.id || 'ppl';
+
+			// Check if week should advance
+			const result = await checkAndAdvanceWeek(uid, planId, session);
+
+			// Return result so UI can show congratulations message
+			return {
+				success: true,
+				weekAdvancement: result
+			};
+		}
+
+		return { success: true };
+	} catch (error) {
+		console.error('Error marking session completed:', error);
+		throw error;
+	}
 }
 
 export async function getInProgressSessionForDay(uid, { templateId, dateKey }) {

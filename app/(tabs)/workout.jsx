@@ -387,9 +387,9 @@ export default function WorkoutTab() {
 				{/* Header */}
 				<View style={styles.headerRow}>
 					<View style={styles.headerLeft}>
-						<View style={styles.iconBadge}>
+						{/* <View style={styles.iconBadge}>
 							<Ionicons name='barbell-outline' size={20} color='#AFFF2B' />
-						</View>
+						</View> */}
 						<View>
 							<Text style={styles.title}>{formatLongDate(today)}</Text>
 						</View>

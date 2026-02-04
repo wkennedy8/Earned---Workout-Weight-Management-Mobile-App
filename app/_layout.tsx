@@ -18,6 +18,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { AuthProvider } from '../context/AuthContext';
 
@@ -53,17 +54,22 @@ export default function RootLayout() {
 	return (
 		<ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
 			<StatusBar style='light' animated />
-			<AuthProvider>
-				<OnboardingProvider>
-					<Stack screenOptions={{ headerShown: false }}>
-						<Stack.Screen name='login' options={{ headerShown: false }} />
-						<Stack.Screen name='onboarding' options={{ headerShown: false }} />
-						<Stack.Screen name='(tabs)' options={{ headerShown: false }} />
-						<Stack.Screen name='workout' options={{ headerShown: false }} />
-						<Stack.Screen name='profile' options={{ headerShown: false }} />
-					</Stack>
-				</OnboardingProvider>
-			</AuthProvider>
+			<GestureHandlerRootView style={{ flex: 1 }}>
+				<AuthProvider>
+					<OnboardingProvider>
+						<Stack screenOptions={{ headerShown: false }}>
+							<Stack.Screen name='login' options={{ headerShown: false }} />
+							<Stack.Screen
+								name='onboarding'
+								options={{ headerShown: false }}
+							/>
+							<Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+							<Stack.Screen name='workout' options={{ headerShown: false }} />
+							<Stack.Screen name='profile' options={{ headerShown: false }} />
+						</Stack>
+					</OnboardingProvider>
+				</AuthProvider>
+			</GestureHandlerRootView>
 		</ThemeProvider>
 	);
 }

@@ -15,7 +15,6 @@ export const PLAN = {
 				exercises: [
 					{
 						name: 'Incline DB Bench Press',
-						// Week 1-2: 3x10, Week 3-4: 4x10, Week 5-6: 4x12, Week 7-8: 5x12
 						sets: '3-5',
 						reps: '10-12',
 						weeklyProgression: [
@@ -362,7 +361,7 @@ export const PLAN = {
 		id: 'fullbody_3day',
 		title: 'Full Body (3-Day Split)',
 		description:
-			'3-day split focusing on full-body training with evenly distributed sessions',
+			'8-week progressive 3-day split focusing on full-body training with evenly distributed sessions',
 		workouts: {
 			fullbody_a: {
 				id: 'fullbody_a',
@@ -370,14 +369,95 @@ export const PLAN = {
 				days: ['Monday'],
 				tag: 'Full Body',
 				exercises: [
-					{ name: 'Back Squat', sets: '3-4', reps: '8-12' },
-					{ name: 'Bench Press', sets: '3-4', reps: '8-12' },
-					{ name: 'Barbell Row', sets: '3-4', reps: '10-12' },
-					{ name: 'Romanian Deadlift', sets: '3-4', reps: '8-12' },
-					{ name: 'Lateral Raises', sets: '3-4', reps: '12-15' },
-					{ name: 'Rope Triceps Pushdowns', sets: '3-4', reps: '12-15' },
-					{ name: 'Hammer Curls', sets: '3-4', reps: '10-12' },
-					{ name: 'Plank', sets: '3', reps: 'time', note: '+5 sec each week' }
+					{
+						name: 'Back Squat',
+						sets: '3-5',
+						reps: '8-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 8 },
+							{ weeks: [3, 4], sets: 4, reps: 8 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 5, reps: 10 }
+						]
+					},
+					{
+						name: 'Bench Press',
+						sets: '3-5',
+						reps: '8-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 8 },
+							{ weeks: [3, 4], sets: 4, reps: 8 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 5, reps: 10 }
+						]
+					},
+					{
+						name: 'Barbell Row',
+						sets: '3-5',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 4, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 5, reps: 12 }
+						]
+					},
+					{
+						name: 'Romanian Deadlift',
+						sets: '3-4',
+						reps: '8-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 8 },
+							{ weeks: [3, 4], sets: 3, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						]
+					},
+					{
+						name: 'Lateral Raises',
+						sets: '3-4',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
+					},
+					{
+						name: 'Rope Triceps Pushdowns',
+						sets: '3-4',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
+					},
+					{
+						name: 'Hammer Curls',
+						sets: '3-4',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 3, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						]
+					},
+					{
+						name: 'Plank',
+						sets: '3-4',
+						reps: 'time',
+						note: 'Week 1-2: 30 sec, Week 3-4: 40 sec, Week 5-6: 50 sec, Week 7-8: 60 sec',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: '30 sec' },
+							{ weeks: [3, 4], sets: 3, reps: '40 sec' },
+							{ weeks: [5, 6], sets: 4, reps: '50 sec' },
+							{ weeks: [7, 8], sets: 4, reps: '60 sec' }
+						]
+					}
 				]
 			},
 			fullbody_b: {
@@ -388,16 +468,92 @@ export const PLAN = {
 				exercises: [
 					{
 						name: 'Deadlift (Conventional or Trap Bar)',
-						sets: '3-4',
-						reps: '5-8'
+						sets: '3-5',
+						reps: '5-8',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 5 },
+							{ weeks: [3, 4], sets: 4, reps: 5 },
+							{ weeks: [5, 6], sets: 4, reps: 6 },
+							{ weeks: [7, 8], sets: 5, reps: 6 }
+						]
 					},
-					{ name: 'Incline DB Bench Press', sets: '3-4', reps: '8-12' },
-					{ name: 'Lat Pulldown', sets: '3-4', reps: '10-12' },
-					{ name: 'Walking Lunges', sets: '3-4', reps: '10-12' },
-					{ name: 'Seated DB Shoulder Press', sets: '3-4', reps: '8-12' },
-					{ name: 'Rear Delt Cable Fly', sets: '3-4', reps: '12-15' },
-					{ name: 'Skull Crushers', sets: '3-4', reps: '10-12' },
-					{ name: 'Cable Crunch', sets: '3-4', reps: '12-15' }
+					{
+						name: 'Incline DB Bench Press',
+						sets: '3-5',
+						reps: '8-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 8 },
+							{ weeks: [3, 4], sets: 4, reps: 8 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 5, reps: 10 }
+						]
+					},
+					{
+						name: 'Lat Pulldown',
+						sets: '3-5',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 4, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 5, reps: 12 }
+						]
+					},
+					{
+						name: 'Walking Lunges',
+						sets: '3-4',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 3, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						]
+					},
+					{
+						name: 'Seated DB Shoulder Press',
+						sets: '3-4',
+						reps: '8-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 8 },
+							{ weeks: [3, 4], sets: 3, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						]
+					},
+					{
+						name: 'Rear Delt Cable Fly',
+						sets: '3-4',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
+					},
+					{
+						name: 'Skull Crushers',
+						sets: '3-4',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 3, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						]
+					},
+					{
+						name: 'Cable Crunch',
+						sets: '3-4',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
+					}
 				]
 			},
 			fullbody_c: {
@@ -406,17 +562,93 @@ export const PLAN = {
 				days: ['Friday'],
 				tag: 'Full Body',
 				exercises: [
-					{ name: 'Leg Press', sets: '3-4', reps: '10-12' },
-					{ name: 'Pullups', sets: '3-4', reps: 'AMRAP' },
-					{ name: 'DB Bench Press', sets: '3-4', reps: '8-12' },
-					{ name: 'Seated Cable Row', sets: '3-4', reps: '10-12' },
-					{ name: 'Seated Leg Curl', sets: '3-4', reps: '10-12' },
-					{ name: 'Standing Calf Raises', sets: '3-4', reps: '12-15' },
-					{ name: 'Preacher Curls', sets: '3-4', reps: '10-12' },
+					{
+						name: 'Leg Press',
+						sets: '3-5',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 4, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 5, reps: 12 }
+						]
+					},
+					{
+						name: 'Pullups',
+						sets: '3-5',
+						reps: 'AMRAP',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 'AMRAP' },
+							{ weeks: [3, 4], sets: 4, reps: 'AMRAP' },
+							{ weeks: [5, 6], sets: 4, reps: 'AMRAP' },
+							{ weeks: [7, 8], sets: 5, reps: 'AMRAP' }
+						]
+					},
+					{
+						name: 'DB Bench Press',
+						sets: '3-5',
+						reps: '8-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 8 },
+							{ weeks: [3, 4], sets: 4, reps: 8 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 5, reps: 10 }
+						]
+					},
+					{
+						name: 'Seated Cable Row',
+						sets: '3-5',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 4, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 5, reps: 12 }
+						]
+					},
+					{
+						name: 'Seated Leg Curl',
+						sets: '3-5',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 4, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 5, reps: 12 }
+						]
+					},
+					{
+						name: 'Standing Calf Raises',
+						sets: '3-5',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 4, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 15 },
+							{ weeks: [7, 8], sets: 5, reps: 15 }
+						]
+					},
+					{
+						name: 'Preacher Curls',
+						sets: '3-4',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 3, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						]
+					},
 					{
 						name: 'Overhead Cable Triceps Extension',
 						sets: '3-4',
-						reps: '12-15'
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
 					}
 				]
 			}
@@ -425,7 +657,8 @@ export const PLAN = {
 	bro_split: {
 		id: 'bro_split',
 		title: 'Bro Split (5-Day Split)',
-		description: '5-day split targeting one major muscle group per session',
+		description:
+			'8-week progressive 5-day split targeting one major muscle group per session',
 		workouts: {
 			chest: {
 				id: 'chest',
@@ -433,13 +666,84 @@ export const PLAN = {
 				days: ['Monday'],
 				tag: 'Chest',
 				exercises: [
-					{ name: 'Barbell Bench Press', sets: '4', reps: '8-10' },
-					{ name: 'Incline DB Bench Press', sets: '4', reps: '10-12' },
-					{ name: 'Decline Barbell Bench Press', sets: '3', reps: '10-12' },
-					{ name: 'Cable Chest Fly', sets: '3', reps: '12-15' },
-					{ name: 'Incline DB Fly', sets: '3', reps: '12-15' },
-					{ name: 'Chest Dips', sets: '3', reps: 'AMRAP' },
-					{ name: 'Push-ups', sets: '3', reps: 'AMRAP', note: 'Burnout set' }
+					{
+						name: 'Barbell Bench Press',
+						sets: '3-5',
+						reps: '8-10',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 8 },
+							{ weeks: [3, 4], sets: 4, reps: 8 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 5, reps: 10 }
+						]
+					},
+					{
+						name: 'Incline DB Bench Press',
+						sets: '3-5',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 4, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 5, reps: 12 }
+						]
+					},
+					{
+						name: 'Decline Barbell Bench Press',
+						sets: '3-4',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 3, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						]
+					},
+					{
+						name: 'Cable Chest Fly',
+						sets: '3-4',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
+					},
+					{
+						name: 'Incline DB Fly',
+						sets: '3-4',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
+					},
+					{
+						name: 'Chest Dips',
+						sets: '3-4',
+						reps: 'AMRAP',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 'AMRAP' },
+							{ weeks: [3, 4], sets: 3, reps: 'AMRAP' },
+							{ weeks: [5, 6], sets: 4, reps: 'AMRAP' },
+							{ weeks: [7, 8], sets: 4, reps: 'AMRAP' }
+						]
+					},
+					{
+						name: 'Push-ups',
+						sets: '3',
+						reps: 'AMRAP',
+						note: 'Burnout set',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 'AMRAP' },
+							{ weeks: [3, 4], sets: 3, reps: 'AMRAP' },
+							{ weeks: [5, 6], sets: 3, reps: 'AMRAP' },
+							{ weeks: [7, 8], sets: 3, reps: 'AMRAP' }
+						]
+					}
 				]
 			},
 			back: {
@@ -448,13 +752,83 @@ export const PLAN = {
 				days: ['Tuesday'],
 				tag: 'Back',
 				exercises: [
-					{ name: 'Deadlift', sets: '4', reps: '6-8' },
-					{ name: 'Barbell Row', sets: '4', reps: '8-10' },
-					{ name: 'Pullups', sets: '4', reps: 'AMRAP' },
-					{ name: 'Lat Pulldown', sets: '3', reps: '10-12' },
-					{ name: 'Seated Cable Row', sets: '3', reps: '10-12' },
-					{ name: 'Single Arm DB Row', sets: '3', reps: '12-15' },
-					{ name: 'Face Pulls', sets: '3', reps: '15-20' }
+					{
+						name: 'Deadlift',
+						sets: '3-5',
+						reps: '6-8',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 6 },
+							{ weeks: [3, 4], sets: 4, reps: 6 },
+							{ weeks: [5, 6], sets: 4, reps: 8 },
+							{ weeks: [7, 8], sets: 5, reps: 8 }
+						]
+					},
+					{
+						name: 'Barbell Row',
+						sets: '3-5',
+						reps: '8-10',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 8 },
+							{ weeks: [3, 4], sets: 4, reps: 8 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 5, reps: 10 }
+						]
+					},
+					{
+						name: 'Pullups',
+						sets: '3-5',
+						reps: 'AMRAP',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 'AMRAP' },
+							{ weeks: [3, 4], sets: 4, reps: 'AMRAP' },
+							{ weeks: [5, 6], sets: 4, reps: 'AMRAP' },
+							{ weeks: [7, 8], sets: 5, reps: 'AMRAP' }
+						]
+					},
+					{
+						name: 'Lat Pulldown',
+						sets: '3-4',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 3, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						]
+					},
+					{
+						name: 'Seated Cable Row',
+						sets: '3-4',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 3, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						]
+					},
+					{
+						name: 'Single Arm DB Row',
+						sets: '3-4',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
+					},
+					{
+						name: 'Face Pulls',
+						sets: '3-4',
+						reps: '15-20',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 15 },
+							{ weeks: [3, 4], sets: 3, reps: 20 },
+							{ weeks: [5, 6], sets: 4, reps: 15 },
+							{ weeks: [7, 8], sets: 4, reps: 20 }
+						]
+					}
 				]
 			},
 			shoulders: {
@@ -463,13 +837,83 @@ export const PLAN = {
 				days: ['Wednesday'],
 				tag: 'Shoulders',
 				exercises: [
-					{ name: 'Seated Barbell Military Press', sets: '4', reps: '8-10' },
-					{ name: 'Seated DB Shoulder Press', sets: '4', reps: '10-12' },
-					{ name: 'Lateral Raises', sets: '4', reps: '12-15' },
-					{ name: 'Front Raises', sets: '3', reps: '12-15' },
-					{ name: 'Rear Delt Cable Fly', sets: '4', reps: '12-15' },
-					{ name: 'Upright Rows', sets: '3', reps: '10-12' },
-					{ name: 'DB Shrugs', sets: '3', reps: '12-15' }
+					{
+						name: 'Seated Barbell Military Press',
+						sets: '3-5',
+						reps: '8-10',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 8 },
+							{ weeks: [3, 4], sets: 4, reps: 8 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 5, reps: 10 }
+						]
+					},
+					{
+						name: 'Seated DB Shoulder Press',
+						sets: '3-5',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 4, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 5, reps: 12 }
+						]
+					},
+					{
+						name: 'Lateral Raises',
+						sets: '3-5',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 4, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 15 },
+							{ weeks: [7, 8], sets: 5, reps: 15 }
+						]
+					},
+					{
+						name: 'Front Raises',
+						sets: '3-4',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
+					},
+					{
+						name: 'Rear Delt Cable Fly',
+						sets: '3-5',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 4, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 15 },
+							{ weeks: [7, 8], sets: 5, reps: 15 }
+						]
+					},
+					{
+						name: 'Upright Rows',
+						sets: '3-4',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 3, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						]
+					},
+					{
+						name: 'DB Shrugs',
+						sets: '3-4',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
+					}
 				]
 			},
 			legs: {
@@ -478,14 +922,94 @@ export const PLAN = {
 				days: ['Thursday'],
 				tag: 'Legs',
 				exercises: [
-					{ name: 'Back Squat', sets: '4', reps: '8-10' },
-					{ name: 'Leg Press', sets: '4', reps: '10-12' },
-					{ name: 'Romanian Deadlift', sets: '3', reps: '10-12' },
-					{ name: 'Leg Extensions', sets: '3', reps: '12-15' },
-					{ name: 'Seated Leg Curl', sets: '3', reps: '12-15' },
-					{ name: 'Walking Lunges', sets: '3', reps: '12-15' },
-					{ name: 'Standing Calf Raises', sets: '4', reps: '15-20' },
-					{ name: 'Seated Calf Raises', sets: '3', reps: '15-20' }
+					{
+						name: 'Back Squat',
+						sets: '3-5',
+						reps: '8-10',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 8 },
+							{ weeks: [3, 4], sets: 4, reps: 8 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 5, reps: 10 }
+						]
+					},
+					{
+						name: 'Leg Press',
+						sets: '3-5',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 4, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 5, reps: 12 }
+						]
+					},
+					{
+						name: 'Romanian Deadlift',
+						sets: '3-4',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 3, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						]
+					},
+					{
+						name: 'Leg Extensions',
+						sets: '3-4',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
+					},
+					{
+						name: 'Seated Leg Curl',
+						sets: '3-4',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
+					},
+					{
+						name: 'Walking Lunges',
+						sets: '3-4',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
+					},
+					{
+						name: 'Standing Calf Raises',
+						sets: '3-5',
+						reps: '15-20',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 15 },
+							{ weeks: [3, 4], sets: 4, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 20 },
+							{ weeks: [7, 8], sets: 5, reps: 20 }
+						]
+					},
+					{
+						name: 'Seated Calf Raises',
+						sets: '3-4',
+						reps: '15-20',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 15 },
+							{ weeks: [3, 4], sets: 3, reps: 20 },
+							{ weeks: [5, 6], sets: 4, reps: 15 },
+							{ weeks: [7, 8], sets: 4, reps: 20 }
+						]
+					}
 				]
 			},
 			arms_abs: {
@@ -494,21 +1018,128 @@ export const PLAN = {
 				days: ['Friday'],
 				tag: 'Arms',
 				exercises: [
-					{ name: 'Barbell Curls', sets: '4', reps: '10-12' },
-					{ name: 'Close Grip Bench Press', sets: '4', reps: '10-12' },
-					{ name: 'Hammer Curls', sets: '3', reps: '10-12' },
-					{ name: 'Skull Crushers', sets: '3', reps: '10-12' },
-					{ name: 'Preacher Curls', sets: '3', reps: '12-15' },
-					{ name: 'Rope Triceps Pushdowns', sets: '3', reps: '12-15' },
-					{ name: 'Cable Curls', sets: '3', reps: '12-15' },
+					{
+						name: 'Barbell Curls',
+						sets: '3-5',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 4, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 5, reps: 12 }
+						]
+					},
+					{
+						name: 'Close Grip Bench Press',
+						sets: '3-5',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 4, reps: 10 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 5, reps: 12 }
+						]
+					},
+					{
+						name: 'Hammer Curls',
+						sets: '3-4',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 3, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						]
+					},
+					{
+						name: 'Skull Crushers',
+						sets: '3-4',
+						reps: '10-12',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 10 },
+							{ weeks: [3, 4], sets: 3, reps: 12 },
+							{ weeks: [5, 6], sets: 4, reps: 10 },
+							{ weeks: [7, 8], sets: 4, reps: 12 }
+						]
+					},
+					{
+						name: 'Preacher Curls',
+						sets: '3-4',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
+					},
+					{
+						name: 'Rope Triceps Pushdowns',
+						sets: '3-4',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
+					},
+					{
+						name: 'Cable Curls',
+						sets: '3-4',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
+					},
 					{
 						name: 'Overhead Cable Triceps Extension',
-						sets: '3',
-						reps: '12-15'
+						sets: '3-4',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
 					},
-					{ name: 'Cable Crunch', sets: '4', reps: '15-20' },
-					{ name: 'Hanging Leg Raises', sets: '3', reps: '12-15' },
-					{ name: 'Plank', sets: '3', reps: 'time', note: '+5 sec each week' }
+					{
+						name: 'Cable Crunch',
+						sets: '3-5',
+						reps: '15-20',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 15 },
+							{ weeks: [3, 4], sets: 4, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 20 },
+							{ weeks: [7, 8], sets: 5, reps: 20 }
+						]
+					},
+					{
+						name: 'Hanging Leg Raises',
+						sets: '3-4',
+						reps: '12-15',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: 12 },
+							{ weeks: [3, 4], sets: 3, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 12 },
+							{ weeks: [7, 8], sets: 4, reps: 15 }
+						]
+					},
+					{
+						name: 'Plank',
+						sets: '3-4',
+						reps: 'time',
+						note: 'Week 1-2: 30 sec, Week 3-4: 40 sec, Week 5-6: 50 sec, Week 7-8: 60 sec',
+						weeklyProgression: [
+							{ weeks: [1, 2], sets: 3, reps: '30 sec' },
+							{ weeks: [3, 4], sets: 3, reps: '40 sec' },
+							{ weeks: [5, 6], sets: 4, reps: '50 sec' },
+							{ weeks: [7, 8], sets: 4, reps: '60 sec' }
+						]
+					}
 				]
 			}
 		}
@@ -556,6 +1187,11 @@ export function tagColor(tag) {
 	if (tag === 'Push') return '#F97316';
 	if (tag === 'Pull') return '#10B981';
 	if (tag === 'Legs') return '#8B5CF6';
+	if (tag === 'Chest') return '#EF4444';
+	if (tag === 'Back') return '#3B82F6';
+	if (tag === 'Shoulders') return '#F59E0B';
+	if (tag === 'Arms') return '#EC4899';
+	if (tag === 'Full Body') return '#06B6D4';
 	return '#6B7280';
 }
 
