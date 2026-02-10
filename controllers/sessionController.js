@@ -1,3 +1,4 @@
+import { getUserWorkoutPlan } from '@/controllers/plansController';
 import {
 	collection,
 	doc,

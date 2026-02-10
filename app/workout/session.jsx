@@ -30,6 +30,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
 	Alert,
+	AppState,
 	FlatList,
 	KeyboardAvoidingView,
 	Modal,
@@ -224,14 +225,17 @@ export default function WorkoutSessionScreen() {
 	const [currentWeek, setCurrentWeek] = useState(1);
 	const [template, setTemplate] = useState(null);
 
-	// Rest modal state
+	// Rest timer state - UPDATED TO USE TIMESTAMPS
 	const [restVisible, setRestVisible] = useState(false);
-	const [restSeconds, setRestSeconds] = useState(0);
+	const [restTimerEndTime, setRestTimerEndTime] = useState(null); // Timestamp when timer ends
+	const [restSeconds, setRestSeconds] = useState(0); // Current remaining seconds (for display)
 	const [restPaused, setRestPaused] = useState(false);
+	const [pausedAtSeconds, setPausedAtSeconds] = useState(0); // How many seconds were left when paused
 	const [initialRestSeconds, setInitialRestSeconds] = useState(0);
 	const restIntervalRef = useRef(null);
 	const [restContext, setRestContext] = useState(null);
 	const progress = useSharedValue(0);
+	const appState = useRef(AppState.currentState);
 
 	// ---- Load program week and apply progression ----
 	useEffect(() => {
@@ -253,6 +257,71 @@ export default function WorkoutSessionScreen() {
 			}
 		})();
 	}, [user?.uid, rawTemplate, planId]);
+
+	// ---- Handle app state changes (background/foreground) ----
+	useEffect(() => {
+		const subscription = AppState.addEventListener('change', (nextAppState) => {
+			if (
+				appState.current.match(/inactive|background/) &&
+				nextAppState === 'active'
+			) {
+				// App came to foreground - recalculate timer if running
+				if (restTimerEndTime && !restPaused) {
+					const now = Date.now();
+					const remaining = Math.max(
+						0,
+						Math.ceil((restTimerEndTime - now) / 1000)
+					);
+					setRestSeconds(remaining);
+
+					if (remaining === 0) {
+						// Timer finished while app was in background
+						stopRestTimer();
+						// Play chime since user just returned
+						playChime();
+						Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+					}
+				}
+			}
+			appState.current = nextAppState;
+		});
+
+		return () => {
+			subscription.remove();
+		};
+	}, [restTimerEndTime, restPaused]);
+
+	// ---- Update timer display every second ----
+	useEffect(() => {
+		if (restTimerEndTime && !restPaused) {
+			// Clear any existing interval
+			if (restIntervalRef.current) {
+				clearInterval(restIntervalRef.current);
+			}
+
+			// Update every second
+			restIntervalRef.current = setInterval(() => {
+				const now = Date.now();
+				const remaining = Math.max(
+					0,
+					Math.ceil((restTimerEndTime - now) / 1000)
+				);
+				setRestSeconds(remaining);
+
+				if (remaining === 0) {
+					stopRestTimer();
+					playChime();
+					Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+				}
+			}, 1000);
+
+			return () => {
+				if (restIntervalRef.current) {
+					clearInterval(restIntervalRef.current);
+				}
+			};
+		}
+	}, [restTimerEndTime, restPaused]);
 
 	// ---- Init session (resume or create) with Firebase ----
 	useEffect(() => {
@@ -425,74 +494,92 @@ export default function WorkoutSessionScreen() {
 		setSwapExerciseIndex(null);
 	}
 
-	// Rest timer functions
+	// Rest timer functions - UPDATED FOR TIMESTAMP-BASED APPROACH
 	function startRestTimer({ seconds, context }) {
 		if (restIntervalRef.current) clearInterval(restIntervalRef.current);
 
+		const endTime = Date.now() + seconds * 1000;
+
 		setRestContext(context);
+		setRestTimerEndTime(endTime);
 		setRestSeconds(seconds);
 		setInitialRestSeconds(seconds);
 		setRestVisible(true);
 		setRestPaused(false);
+		setPausedAtSeconds(0);
 		progress.value = 1; // Start at full circle
-
-		restIntervalRef.current = setInterval(() => {
-			setRestSeconds((prev) => {
-				if (prev <= 1) {
-					// Play chime and vibrate
-					playChime();
-					Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-					if (restIntervalRef.current) clearInterval(restIntervalRef.current);
-					restIntervalRef.current = null;
-					setTimeout(() => setRestVisible(false), 500); // Increased delay to let chime play
-					return 0;
-				}
-				return prev - 1;
-			});
-		}, 1000);
 	}
 
-	function skipRest() {
+	function stopRestTimer() {
 		if (restIntervalRef.current) clearInterval(restIntervalRef.current);
 		restIntervalRef.current = null;
+		setRestTimerEndTime(null);
 		setRestSeconds(0);
 		setRestVisible(false);
 		setRestPaused(false);
+		setPausedAtSeconds(0);
+	}
+
+	function skipRest() {
+		stopRestTimer();
 	}
 
 	function addRest(secondsToAdd) {
-		setRestSeconds((prev) => prev + secondsToAdd);
+		if (!restTimerEndTime) return;
+
+		if (restPaused) {
+			// If paused, just add to the paused seconds
+			const newPausedSeconds = pausedAtSeconds + secondsToAdd;
+			setPausedAtSeconds(newPausedSeconds);
+			setRestSeconds(newPausedSeconds);
+		} else {
+			// If running, extend the end time
+			const newEndTime = restTimerEndTime + secondsToAdd * 1000;
+			setRestTimerEndTime(newEndTime);
+			const remaining = Math.max(
+				0,
+				Math.ceil((newEndTime - Date.now()) / 1000)
+			);
+			setRestSeconds(remaining);
+		}
 	}
 
 	function subtractRest(secondsToSubtract) {
-		setRestSeconds((prev) => Math.max(0, prev - secondsToSubtract));
+		if (!restTimerEndTime) return;
+
+		if (restPaused) {
+			// If paused, subtract from paused seconds
+			const newPausedSeconds = Math.max(0, pausedAtSeconds - secondsToSubtract);
+			setPausedAtSeconds(newPausedSeconds);
+			setRestSeconds(newPausedSeconds);
+		} else {
+			// If running, reduce the end time
+			const newEndTime = restTimerEndTime - secondsToSubtract * 1000;
+			const now = Date.now();
+
+			if (newEndTime <= now) {
+				// Timer would be done
+				stopRestTimer();
+			} else {
+				setRestTimerEndTime(newEndTime);
+				const remaining = Math.max(0, Math.ceil((newEndTime - now) / 1000));
+				setRestSeconds(remaining);
+			}
+		}
 	}
 
 	function togglePause() {
 		if (restPaused) {
-			// Resume
+			// Resume - calculate new end time based on paused seconds
+			const newEndTime = Date.now() + pausedAtSeconds * 1000;
+			setRestTimerEndTime(newEndTime);
 			setRestPaused(false);
-			restIntervalRef.current = setInterval(() => {
-				setRestSeconds((prev) => {
-					if (prev <= 1) {
-						// Play chime and vibrate
-						playChime();
-						Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-						if (restIntervalRef.current) clearInterval(restIntervalRef.current);
-						restIntervalRef.current = null;
-						setTimeout(() => setRestVisible(false), 500);
-						return 0;
-					}
-					return prev - 1;
-				});
-			}, 1000);
 		} else {
-			// Pause
-			setRestPaused(true);
+			// Pause - store current remaining time
 			if (restIntervalRef.current) clearInterval(restIntervalRef.current);
 			restIntervalRef.current = null;
+			setPausedAtSeconds(restSeconds);
+			setRestPaused(true);
 		}
 	}
 
@@ -815,9 +902,23 @@ export default function WorkoutSessionScreen() {
 		}
 
 		try {
-			await markSessionCompleted(user.uid, session.id);
-			Alert.alert('Workout saved', 'Session marked as completed.');
-			router.back();
+			const result = await markSessionCompleted(user.uid, session.id);
+
+			// Stop rest timer if running
+			stopRestTimer();
+
+			// Check if week was completed
+			if (result?.weekAdvancement?.shouldAdvance) {
+				Alert.alert('🎉 Week Complete!', result.weekAdvancement.message, [
+					{
+						text: 'Awesome!',
+						onPress: () => router.back()
+					}
+				]);
+			} else {
+				Alert.alert('Workout saved', 'Session marked as completed.');
+				router.back();
+			}
 		} catch (e) {
 			console.warn(e);
 			Alert.alert('Error', 'Could not finish the workout.');
