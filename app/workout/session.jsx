@@ -1,4 +1,8 @@
 import SwapExerciseModal from '@/components/SwapExerciseModal';
+import ExerciseCard from '@/components/workout/session/ExerciseCard';
+import FinishWorkoutButton from '@/components/workout/session/FinishWorkoutButton';
+import RestTimerModal from '@/components/workout/session/RestTimerModal';
+import SessionHeader from '@/components/workout/session/SessionHeader';
 import { useAuth } from '@/context/AuthContext';
 import {
 	getSmartDefaultWeight,
@@ -17,15 +21,18 @@ import {
 	getSessionById,
 	markSessionCompleted
 } from '@/controllers/sessionController';
-import { formatLocalDateKey, formatLongDate } from '@/utils/dateUtils';
+import { formatLocalDateKey } from '@/utils/dateUtils';
+import {
+	isExerciseCompleted,
+	isNumericTargetReps,
+	validateSetBeforeSave
+} from '@/utils/sessionUtils';
+import { playChime } from '@/utils/timerUtils';
 import { PLAN } from '@/utils/workoutPlan';
 import {
 	normalizeExerciseKey,
-	normalizeNumberText,
-	tagColor
+	normalizeNumberText
 } from '@/utils/workoutUtils';
-import { Ionicons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -34,176 +41,14 @@ import {
 	AppState,
 	FlatList,
 	KeyboardAvoidingView,
-	Modal,
 	Platform,
-	SafeAreaView,
 	StyleSheet,
 	Text,
-	TextInput,
-	TouchableOpacity,
 	View
 } from 'react-native';
-import { Swipeable } from 'react-native-gesture-handler';
-import Animated, { useSharedValue, withTiming } from 'react-native-reanimated';
-import Svg, { Circle } from 'react-native-svg';
+import { useSharedValue, withTiming } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontFamily } from '../../constants/fonts';
-
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-/**
- * Format seconds as M:SS timer display
- */
-function formatTimer(seconds) {
-	const m = Math.floor(seconds / 60);
-	const s = seconds % 60;
-	return `${m}:${String(s).padStart(2, '0')}`;
-}
-
-// ============================================================================
-// SWIPEABLE SET ROW COMPONENT
-// ============================================================================
-
-function SwipeableSetRow({
-	item,
-	set,
-	exerciseIndex,
-	setIndex,
-	canRemove,
-	updateSetField,
-	saveSet,
-	removeSet,
-	editSet,
-	normalizeNumberText,
-	previousSet
-}) {
-	const swipeableRef = useRef(null);
-
-	// Different swipe actions for saved vs unsaved sets
-	const renderRightActions = (progress, dragX) => {
-		// Saved sets: can't swipe to delete
-		if (set.saved) return null;
-
-		// Unsaved sets: can swipe to delete if more than 1 set
-		return canRemove ? (
-			<TouchableOpacity
-				style={styles.deleteAction}
-				onPress={() => {
-					swipeableRef.current?.close();
-					removeSet(exerciseIndex, set.setIndex);
-				}}
-				activeOpacity={0.9}
-			>
-				<Text style={styles.deleteActionText}>Delete</Text>
-			</TouchableOpacity>
-		) : null;
-	};
-
-	return (
-		<Swipeable
-			ref={swipeableRef}
-			renderRightActions={renderRightActions}
-			rightThreshold={40}
-			friction={2}
-			overshootRight={false}
-		>
-			<View style={styles.tableRow}>
-				{/* Set Number */}
-				<Text style={[styles.tdSet, { width: 50 }]}>{set.setIndex}</Text>
-
-				{/* PREV COLUMN - shows previous session data */}
-				<Text style={[styles.prevText, { flex: 1 }]}>
-					{previousSet ? `${previousSet.weight}lb x ${previousSet.reps}` : '—'}
-				</Text>
-
-				{/* Weight Input */}
-				<TextInput
-					value={String(set.weight)}
-					onChangeText={(t) =>
-						updateSetField(exerciseIndex, set.setIndex, {
-							weight: normalizeNumberText(t, { decimals: 1 })
-						})
-					}
-					editable={!set.saved}
-					placeholder='0'
-					placeholderTextColor='#9CA3AF'
-					keyboardType={Platform.OS === 'ios' ? 'decimal-pad' : 'numeric'}
-					style={[
-						styles.inputCell,
-						{ width: 80 }, // ✅ CHANGED from flex: 1
-						set.saved && styles.inputCellSaved
-					]}
-				/>
-
-				{/* Reps Input */}
-				<TextInput
-					value={String(set.reps)}
-					onChangeText={(t) =>
-						updateSetField(exerciseIndex, set.setIndex, {
-							reps: normalizeNumberText(t, { decimals: 0 })
-						})
-					}
-					editable={!set.saved}
-					placeholder='0'
-					placeholderTextColor='#9CA3AF'
-					keyboardType='numeric'
-					style={[
-						styles.inputCell,
-						{ width: 80 }, // ✅ CHANGED from width: 110
-						set.saved && styles.inputCellSaved
-					]}
-				/>
-
-				{/* Checkmark / Save Button */}
-				<View style={{ width: 40 }}>
-					{/* ✅ CHANGED from width: 84 */}
-					{set.saved ? (
-						<TouchableOpacity
-							onPress={() => editSet(exerciseIndex, set.setIndex)}
-							style={styles.checkmarkContainer}
-						>
-							<Ionicons name='checkmark' size={18} color='#AFFF2B' />
-						</TouchableOpacity>
-					) : (
-						<TouchableOpacity
-							style={styles.checkmarkButton}
-							onPress={() => saveSet(exerciseIndex, set.setIndex)}
-						>
-							<View style={styles.checkmarkEmpty} />
-						</TouchableOpacity>
-					)}
-				</View>
-			</View>
-		</Swipeable>
-	);
-}
-
-// Play notification chime
-async function playChime() {
-	try {
-		// Try to use a simple web-hosted beep sound
-		const { sound } = await Audio.Sound.createAsync(
-			{
-				uri: 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'
-			},
-			{ shouldPlay: true }
-		);
-
-		// Unload after playing
-		setTimeout(() => {
-			sound.unloadAsync();
-		}, 1000);
-	} catch (error) {
-		console.log('Sound playback failed, using haptics only');
-		// Fallback: just use haptics
-	}
-}
-
-// ============================================================================
-// COMPONENT
-// ============================================================================
 
 export default function WorkoutSessionScreen() {
 	const router = useRouter();
@@ -218,13 +63,13 @@ export default function WorkoutSessionScreen() {
 				return { template: plan.workouts[templateId], planId: pId };
 			}
 		}
-		// Fallback to push workout if not found
 		return { template: PLAN.ppl?.workouts?.push || null, planId: 'ppl' };
 	}, [templateId]);
 
 	const today = useMemo(() => new Date(), []);
 	const dateKey = useMemo(() => formatLocalDateKey(today), [today]);
 
+	// State
 	const [session, setSession] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [exerciseDefaults, setExerciseDefaults] = useState({});
@@ -234,47 +79,46 @@ export default function WorkoutSessionScreen() {
 	const [template, setTemplate] = useState(null);
 	const [previousSessionData, setPreviousSessionData] = useState({});
 
-	// Rest timer state - UPDATED TO USE TIMESTAMPS
+	// Rest timer state
 	const [restVisible, setRestVisible] = useState(false);
-	const [restTimerEndTime, setRestTimerEndTime] = useState(null); // Timestamp when timer ends
-	const [restSeconds, setRestSeconds] = useState(0); // Current remaining seconds (for display)
+	const [restTimerEndTime, setRestTimerEndTime] = useState(null);
+	const [restSeconds, setRestSeconds] = useState(0);
 	const [restPaused, setRestPaused] = useState(false);
-	const [pausedAtSeconds, setPausedAtSeconds] = useState(0); // How many seconds were left when paused
+	const [pausedAtSeconds, setPausedAtSeconds] = useState(0);
 	const [initialRestSeconds, setInitialRestSeconds] = useState(0);
-	const restIntervalRef = useRef(null);
 	const [restContext, setRestContext] = useState(null);
+	const restIntervalRef = useRef(null);
 	const progress = useSharedValue(0);
 	const appState = useRef(AppState.currentState);
 
-	// ---- Load program week and apply progression ----
+	// ============================================================================
+	// EFFECTS
+	// ============================================================================
+
+	// Load program week and apply progression
 	useEffect(() => {
 		if (!user?.uid || !rawTemplate || !planId) return;
 
 		(async () => {
 			try {
-				// Get current program week
 				const week = await getProgramWeek(user.uid, planId);
 				setCurrentWeek(week);
-
-				// Apply weekly progression to template
 				const progressedTemplate = applyWeeklyProgression(rawTemplate, week);
 				setTemplate(progressedTemplate);
 			} catch (error) {
 				console.error('Error loading program week:', error);
-				// Fallback to raw template
 				setTemplate(rawTemplate);
 			}
 		})();
 	}, [user?.uid, rawTemplate, planId]);
 
-	// ---- Handle app state changes (background/foreground) ----
+	// Handle app state changes (background/foreground)
 	useEffect(() => {
 		const subscription = AppState.addEventListener('change', (nextAppState) => {
 			if (
 				appState.current.match(/inactive|background/) &&
 				nextAppState === 'active'
 			) {
-				// App came to foreground - recalculate timer if running
 				if (restTimerEndTime && !restPaused) {
 					const now = Date.now();
 					const remaining = Math.max(
@@ -284,9 +128,7 @@ export default function WorkoutSessionScreen() {
 					setRestSeconds(remaining);
 
 					if (remaining === 0) {
-						// Timer finished while app was in background
 						stopRestTimer();
-						// Play chime since user just returned
 						playChime();
 						Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 					}
@@ -300,15 +142,13 @@ export default function WorkoutSessionScreen() {
 		};
 	}, [restTimerEndTime, restPaused]);
 
-	// ---- Update timer display every second ----
+	// Update timer display every second
 	useEffect(() => {
 		if (restTimerEndTime && !restPaused) {
-			// Clear any existing interval
 			if (restIntervalRef.current) {
 				clearInterval(restIntervalRef.current);
 			}
 
-			// Update every second
 			restIntervalRef.current = setInterval(() => {
 				const now = Date.now();
 				const remaining = Math.max(
@@ -332,7 +172,7 @@ export default function WorkoutSessionScreen() {
 		}
 	}, [restTimerEndTime, restPaused]);
 
-	// ---- Init session (resume or create) with Firebase ----
+	// Init session (resume or create)
 	useEffect(() => {
 		if (!user?.uid || !template) return;
 
@@ -343,7 +183,7 @@ export default function WorkoutSessionScreen() {
 				const mode = String(params.mode || 'start');
 				const sessionId = params.sessionId ? String(params.sessionId) : null;
 
-				// ---------- EDIT MODE ----------
+				// EDIT MODE
 				if (mode === 'edit') {
 					if (!sessionId) {
 						throw new Error('Missing sessionId for edit mode');
@@ -372,7 +212,7 @@ export default function WorkoutSessionScreen() {
 					return;
 				}
 
-				// ---------- RESUME MODE ----------
+				// RESUME MODE
 				if (mode === 'resume' && sessionId) {
 					const found = await getSessionById(user.uid, sessionId);
 					if (found) {
@@ -395,7 +235,7 @@ export default function WorkoutSessionScreen() {
 					}
 				}
 
-				// ---------- START / FALLBACK ----------
+				// START / FALLBACK
 				const existing = await getInProgressSessionForDay(user.uid, {
 					templateId: template.id,
 					dateKey
@@ -420,8 +260,7 @@ export default function WorkoutSessionScreen() {
 					return;
 				}
 
-				// ---------- CREATE NEW SESSION WITH SMART DEFAULTS ----------
-				// Get smart defaults for all exercises in this workout
+				// CREATE NEW SESSION WITH SMART DEFAULTS
 				const smartDefaults = {};
 
 				for (const exercise of template.exercises) {
@@ -439,16 +278,13 @@ export default function WorkoutSessionScreen() {
 					}
 				}
 
-				// Store smart defaults for later use
 				setExerciseDefaults(smartDefaults);
 
-				// Create new session with smart defaults
 				const created = buildEmptySession({
 					template,
 					defaultsMap: smartDefaults
 				});
 				created.exercises[0].expanded = true;
-				// Store the current week in the session for reference
 				created.programWeek = currentWeek;
 
 				setSession(created);
@@ -474,7 +310,6 @@ export default function WorkoutSessionScreen() {
 			try {
 				const prevData = {};
 
-				// Fetch previous data for each exercise in the template
 				for (const exercise of template.exercises) {
 					const data = await getPreviousExerciseData(
 						user.uid,
@@ -494,46 +329,18 @@ export default function WorkoutSessionScreen() {
 		})();
 	}, [user?.uid, template?.id, session?.id]);
 
-	function openSwapModal(exerciseIndex) {
-		setSwapExerciseIndex(exerciseIndex);
-		setSwapModalVisible(true);
-	}
+	// Update progress animation
+	useEffect(() => {
+		if (initialRestSeconds > 0) {
+			const newProgress = restSeconds / initialRestSeconds;
+			progress.value = withTiming(newProgress, { duration: 300 });
+		}
+	}, [restSeconds, initialRestSeconds]);
 
-	//console.log(previousSessionData);
+	// ============================================================================
+	// REST TIMER FUNCTIONS
+	// ============================================================================
 
-	function handleSwapExercise(alternative) {
-		if (swapExerciseIndex === null) return;
-
-		setSession((prev) => {
-			if (!prev) return prev;
-
-			const next = {
-				...prev,
-				exercises: prev.exercises.map((ex, i) => {
-					if (i !== swapExerciseIndex) return ex;
-
-					// Store the original exercise name for reference
-					const originalName = ex.originalName || ex.name;
-
-					return {
-						...ex,
-						name: alternative.name,
-						originalName: originalName, // Track what it was swapped from
-						isSwapped: true
-					};
-				})
-			};
-
-			// Save to Firebase
-			if (user?.uid) firestoreUpsertSession(user.uid, next);
-			return next;
-		});
-
-		setSwapModalVisible(false);
-		setSwapExerciseIndex(null);
-	}
-
-	// Rest timer functions - UPDATED FOR TIMESTAMP-BASED APPROACH
 	function startRestTimer({ seconds, context }) {
 		if (restIntervalRef.current) clearInterval(restIntervalRef.current);
 
@@ -546,7 +353,7 @@ export default function WorkoutSessionScreen() {
 		setRestVisible(true);
 		setRestPaused(false);
 		setPausedAtSeconds(0);
-		progress.value = 1; // Start at full circle
+		progress.value = 1;
 	}
 
 	function stopRestTimer() {
@@ -567,12 +374,10 @@ export default function WorkoutSessionScreen() {
 		if (!restTimerEndTime) return;
 
 		if (restPaused) {
-			// If paused, just add to the paused seconds
 			const newPausedSeconds = pausedAtSeconds + secondsToAdd;
 			setPausedAtSeconds(newPausedSeconds);
 			setRestSeconds(newPausedSeconds);
 		} else {
-			// If running, extend the end time
 			const newEndTime = restTimerEndTime + secondsToAdd * 1000;
 			setRestTimerEndTime(newEndTime);
 			const remaining = Math.max(
@@ -587,17 +392,14 @@ export default function WorkoutSessionScreen() {
 		if (!restTimerEndTime) return;
 
 		if (restPaused) {
-			// If paused, subtract from paused seconds
 			const newPausedSeconds = Math.max(0, pausedAtSeconds - secondsToSubtract);
 			setPausedAtSeconds(newPausedSeconds);
 			setRestSeconds(newPausedSeconds);
 		} else {
-			// If running, reduce the end time
 			const newEndTime = restTimerEndTime - secondsToSubtract * 1000;
 			const now = Date.now();
 
 			if (newEndTime <= now) {
-				// Timer would be done
 				stopRestTimer();
 			} else {
 				setRestTimerEndTime(newEndTime);
@@ -609,12 +411,10 @@ export default function WorkoutSessionScreen() {
 
 	function togglePause() {
 		if (restPaused) {
-			// Resume - calculate new end time based on paused seconds
 			const newEndTime = Date.now() + pausedAtSeconds * 1000;
 			setRestTimerEndTime(newEndTime);
 			setRestPaused(false);
 		} else {
-			// Pause - store current remaining time
 			if (restIntervalRef.current) clearInterval(restIntervalRef.current);
 			restIntervalRef.current = null;
 			setPausedAtSeconds(restSeconds);
@@ -622,15 +422,45 @@ export default function WorkoutSessionScreen() {
 		}
 	}
 
-	// Update progress animation
-	useEffect(() => {
-		if (initialRestSeconds > 0) {
-			const newProgress = restSeconds / initialRestSeconds;
-			progress.value = withTiming(newProgress, { duration: 300 });
-		}
-	}, [restSeconds, initialRestSeconds]);
+	// ============================================================================
+	// SESSION MANAGEMENT FUNCTIONS
+	// ============================================================================
 
-	// Exercise accordion and set management
+	function openSwapModal(exerciseIndex) {
+		setSwapExerciseIndex(exerciseIndex);
+		setSwapModalVisible(true);
+	}
+
+	function handleSwapExercise(alternative) {
+		if (swapExerciseIndex === null) return;
+
+		setSession((prev) => {
+			if (!prev) return prev;
+
+			const next = {
+				...prev,
+				exercises: prev.exercises.map((ex, i) => {
+					if (i !== swapExerciseIndex) return ex;
+
+					const originalName = ex.originalName || ex.name;
+
+					return {
+						...ex,
+						name: alternative.name,
+						originalName: originalName,
+						isSwapped: true
+					};
+				})
+			};
+
+			if (user?.uid) firestoreUpsertSession(user.uid, next);
+			return next;
+		});
+
+		setSwapModalVisible(false);
+		setSwapExerciseIndex(null);
+	}
+
 	function toggleExpanded(exerciseIndex) {
 		setSession((prev) => {
 			if (!prev) return prev;
@@ -640,7 +470,6 @@ export default function WorkoutSessionScreen() {
 					i === exerciseIndex ? { ...ex, expanded: !ex.expanded } : ex
 				)
 			};
-			// Save to Firebase
 			if (user?.uid) firestoreUpsertSession(user.uid, next);
 			return next;
 		});
@@ -657,24 +486,17 @@ export default function WorkoutSessionScreen() {
 				);
 				return { ...ex, sets };
 			});
-			// Save to Firebase
 			if (user?.uid) firestoreUpsertSession(user.uid, next);
 			return next;
 		});
 	}
 
-	function isExerciseCompleted(ex) {
-		return ex.sets.length > 0 && ex.sets.every((s) => s.saved === true);
-	}
-
-	// Add/remove sets
 	function addSet(exerciseIndex) {
 		setSession((prev) => {
 			if (!prev) return prev;
 			const exercise = prev.exercises[exerciseIndex];
 			const newSetIndex = exercise.sets.length + 1;
 
-			// Get default weight for this exercise
 			const exKey = normalizeExerciseKey(exercise.name);
 			const defaultWeight =
 				exerciseDefaults?.[exKey]?.defaultWeight != null
@@ -702,7 +524,6 @@ export default function WorkoutSessionScreen() {
 				)
 			};
 
-			// Save to Firebase
 			if (user?.uid) firestoreUpsertSession(user.uid, next);
 			return next;
 		});
@@ -713,13 +534,11 @@ export default function WorkoutSessionScreen() {
 			if (!prev) return prev;
 			const exercise = prev.exercises[exerciseIndex];
 
-			// Don't allow removing if only 1 set left
 			if (exercise.sets.length <= 1) {
 				Alert.alert('Cannot remove', 'Exercise must have at least one set.');
 				return prev;
 			}
 
-			// Don't allow removing saved sets
 			const setToRemove = exercise.sets.find((s) => s.setIndex === setIndex);
 			if (setToRemove?.saved) {
 				Alert.alert('Cannot remove', 'Cannot remove a saved set.');
@@ -734,19 +553,17 @@ export default function WorkoutSessionScreen() {
 								...ex,
 								sets: ex.sets
 									.filter((s) => s.setIndex !== setIndex)
-									.map((s, idx) => ({ ...s, setIndex: idx + 1 })) // Re-index
+									.map((s, idx) => ({ ...s, setIndex: idx + 1 }))
 							}
 						: ex
 				)
 			};
 
-			// Save to Firebase
 			if (user?.uid) firestoreUpsertSession(user.uid, next);
 			return next;
 		});
 	}
 
-	// editSet function with confirmation alert
 	function editSet(exerciseIndex, setIndex) {
 		Alert.alert('Edit Set', 'Unlock this set to make changes?', [
 			{
@@ -774,7 +591,6 @@ export default function WorkoutSessionScreen() {
 							)
 						};
 
-						// Save to Firebase
 						if (user?.uid) firestoreUpsertSession(user.uid, next);
 						return next;
 					});
@@ -783,43 +599,14 @@ export default function WorkoutSessionScreen() {
 		]);
 	}
 
-	// Set validation and save logic
-	function validateSetBeforeSave(exercise, set) {
-		const isTime = String(exercise.targetReps).toLowerCase() === 'time';
-		const isAmrap = String(exercise.targetReps).toLowerCase() === 'amrap';
-
-		const requiresWeight = !(isTime || isAmrap);
-
-		if (requiresWeight && !String(set.weight).trim()) return 'Enter a weight.';
-		if (!String(set.reps).trim())
-			return isTime ? 'Enter seconds.' : 'Enter reps.';
-
-		if (requiresWeight && !Number.isFinite(Number(set.weight)))
-			return 'Weight must be a number.';
-		if (!Number.isFinite(Number(set.reps)))
-			return isTime ? 'Seconds must be a number.' : 'Reps must be a number.';
-
-		return null;
-	}
-
-	function isNumericTargetReps(targetReps) {
-		const t = String(targetReps || '')
-			.trim()
-			.toLowerCase();
-		if (t === 'amrap' || t === 'time') return false;
-		return Number.isFinite(Number(t));
-	}
-
 	async function maybeSuggestProgressiveOverload({ exercise, set }) {
 		if (!user?.uid) return;
 
 		try {
 			if (!exercise || !set) return;
 
-			// Skip non-numeric templates (AMRAP/time)
 			if (!isNumericTargetReps(exercise.targetReps)) return;
 
-			// Only evaluate LAST set
 			const totalSets = exercise.sets?.length || 0;
 			const isLastSet = totalSets > 0 && set.setIndex === totalSets;
 			if (!isLastSet) return;
@@ -835,7 +622,6 @@ export default function WorkoutSessionScreen() {
 			)
 				return;
 
-			// Check if hit target reps
 			const hitTarget = reps >= target;
 			if (!hitTarget) return;
 
@@ -864,7 +650,6 @@ export default function WorkoutSessionScreen() {
 		}
 	}
 
-	// Get previous session data for a specific set
 	function getPreviousSet(exerciseName, setIndex) {
 		const exerciseData = previousSessionData[exerciseName];
 		if (!exerciseData) return null;
@@ -904,10 +689,8 @@ export default function WorkoutSessionScreen() {
 				};
 			});
 
-			// Persist to Firebase
 			if (user?.uid) firestoreUpsertSession(user.uid, next);
 
-			// Progressive overload check (async, non-blocking)
 			const updatedExercise = next.exercises[exerciseIndex];
 			const updatedSet = updatedExercise.sets.find(
 				(s) => s.setIndex === setIndex
@@ -917,7 +700,6 @@ export default function WorkoutSessionScreen() {
 				set: updatedSet
 			});
 
-			// Decide which timer to show
 			const completed = isExerciseCompleted(updatedExercise);
 
 			if (completed) {
@@ -936,7 +718,6 @@ export default function WorkoutSessionScreen() {
 		});
 	}
 
-	// Finish workout
 	async function finishWorkout() {
 		if (!session || !user?.uid) return;
 
@@ -952,10 +733,8 @@ export default function WorkoutSessionScreen() {
 		try {
 			const result = await markSessionCompleted(user.uid, session.id);
 
-			// Stop rest timer if running
 			stopRestTimer();
 
-			// Check if week was completed
 			if (result?.weekAdvancement?.shouldAdvance) {
 				Alert.alert('🎉 Week Complete!', result.weekAdvancement.message, [
 					{
@@ -973,6 +752,10 @@ export default function WorkoutSessionScreen() {
 		}
 	}
 
+	// ============================================================================
+	// RENDER
+	// ============================================================================
+
 	if (loading || !session) {
 		return (
 			<SafeAreaView style={styles.safe}>
@@ -989,270 +772,46 @@ export default function WorkoutSessionScreen() {
 				behavior={Platform.OS === 'ios' ? 'padding' : undefined}
 				style={styles.container}
 			>
-				{/* Header */}
-				<View style={styles.header}>
-					<View style={styles.headerRow}>
-						<View
-							style={[
-								styles.tagPill,
-								{ backgroundColor: tagColor(session.tag) }
-							]}
-						>
-							<Text style={styles.tagText}>{session.tag}</Text>
-						</View>
-						<Text style={styles.headerTitle}>{session.title}</Text>
-					</View>
-					<View style={styles.weekBadgeRow}>
-						<Text style={styles.dateText}>{formatLongDate(today)}</Text>
-						<View style={styles.weekBadge}>
-							<Text style={styles.weekBadgeText}>Week {currentWeek}</Text>
-						</View>
-					</View>
-				</View>
+				<SessionHeader
+					session={session}
+					currentWeek={currentWeek}
+					today={today}
+				/>
 
-				{/* Rest Timer Modal */}
-				<Modal
+				<RestTimerModal
 					visible={restVisible}
-					transparent
-					animationType='fade'
-					onRequestClose={skipRest}
-				>
-					<View style={styles.modalBackdrop}>
-						<View style={styles.modalCard}>
-							{/* Circular Progress */}
-							<View style={styles.circleContainer}>
-								<Svg width={200} height={200} viewBox='0 0 200 200'>
-									{/* Background circle */}
-									<Circle
-										cx='100'
-										cy='100'
-										r='90'
-										stroke='#2A2A2A'
-										strokeWidth='12'
-										fill='none'
-									/>
-									{/* Progress circle */}
-									<AnimatedCircle
-										cx='100'
-										cy='100'
-										r='90'
-										stroke='#AFFF2B'
-										strokeWidth='12'
-										fill='none'
-										strokeLinecap='round'
-										strokeDasharray={`${2 * Math.PI * 90}`}
-										strokeDashoffset={2 * Math.PI * 90 * (1 - progress.value)}
-										transform='rotate(-90 100 100)'
-									/>
-								</Svg>
-								<View style={styles.timerOverlay}>
-									<Text style={styles.modalTimer}>
-										{formatTimer(restSeconds)}
-									</Text>
-								</View>
-							</View>
+					restSeconds={restSeconds}
+					restContext={restContext}
+					restPaused={restPaused}
+					progress={progress}
+					onSkip={skipRest}
+					onTogglePause={togglePause}
+					onAddTime={addRest}
+					onSubtractTime={subtractRest}
+				/>
 
-							<Text style={styles.modalContext}>
-								{restContext?.type === 'exercise'
-									? `Exercise completed: ${restContext.exerciseName}`
-									: restContext?.type === 'set'
-										? `Set saved: ${restContext.exerciseName} (Set ${restContext.setIndex})`
-										: ''}
-							</Text>
-
-							{/* Time adjustment buttons */}
-							<View style={styles.modalActionsRow}>
-								<TouchableOpacity
-									style={styles.modalSecondaryBtn}
-									onPress={() => subtractRest(30)}
-									activeOpacity={0.9}
-									disabled={restSeconds <= 30}
-								>
-									<Text
-										style={[
-											styles.modalSecondaryText,
-											restSeconds <= 30 && styles.modalSecondaryTextDisabled
-										]}
-									>
-										-30s
-									</Text>
-								</TouchableOpacity>
-
-								<TouchableOpacity
-									style={[
-										styles.modalPauseBtn,
-										restPaused && styles.modalPauseBtnActive
-									]}
-									onPress={togglePause}
-									activeOpacity={0.9}
-								>
-									<Text
-										style={[
-											styles.modalPauseText,
-											restPaused && styles.modalPauseTextActive
-										]}
-									>
-										{restPaused ? 'Resume' : 'Pause'}
-									</Text>
-								</TouchableOpacity>
-
-								<TouchableOpacity
-									style={styles.modalSecondaryBtn}
-									onPress={() => addRest(30)}
-									activeOpacity={0.9}
-								>
-									<Text style={styles.modalSecondaryText}>+30s</Text>
-								</TouchableOpacity>
-							</View>
-
-							<TouchableOpacity
-								style={styles.modalPrimaryBtn}
-								onPress={skipRest}
-								activeOpacity={0.9}
-							>
-								<Text style={styles.modalPrimaryText}>Skip Rest</Text>
-							</TouchableOpacity>
-						</View>
-					</View>
-				</Modal>
-
-				{/* Exercise List */}
 				<FlatList
 					data={session.exercises}
 					keyExtractor={(item, idx) => `${item.name}-${idx}`}
 					contentContainerStyle={{ paddingBottom: 98 }}
-					renderItem={({ item, index }) => {
-						const completed = isExerciseCompleted(item);
-						return (
-							<View style={styles.exerciseCard}>
-								<TouchableOpacity
-									activeOpacity={0.85}
-									onPress={() => toggleExpanded(index)}
-									style={styles.accordionHeader}
-								>
-									<View style={styles.exerciseHeaderLeft}>
-										<View style={styles.exerciseIcon}>
-											<Text style={styles.exerciseIconText}>🏋️</Text>
-										</View>
-										<View style={{ flex: 1 }}>
-											<Text style={styles.exerciseName}>{item.name}</Text>
-											{/* Show if swapped */}
-											{item.isSwapped && (
-												<Text style={styles.swappedBadge}>
-													Swapped from {item.originalName}
-												</Text>
-											)}
-											<Text style={styles.exerciseMeta}>
-												{item.targetSets} sets, {item.targetReps}{' '}
-												{String(item.targetReps).toLowerCase() === 'time'
-													? ''
-													: 'reps'}
-												{item.note ? ` • ${item.note}` : ''}
-											</Text>
-
-											<Text
-												style={[
-													styles.exerciseStatus,
-													completed && styles.exerciseStatusDone
-												]}
-											>
-												{completed ? 'Completed' : 'In progress'}
-											</Text>
-										</View>
-									</View>
-
-									<View style={styles.exerciseHeaderRight}>
-										{/* Swap Button */}
-										<TouchableOpacity
-											style={styles.swapButton}
-											onPress={(e) => {
-												e.stopPropagation();
-												openSwapModal(index);
-											}}
-											activeOpacity={0.7}
-										>
-											<Ionicons
-												name='swap-horizontal'
-												size={18}
-												color='#AFFF2B'
-											/>
-										</TouchableOpacity>
-
-										<Text style={styles.chevron}>
-											{item.expanded ? '˅' : '›'}
-										</Text>
-									</View>
-								</TouchableOpacity>
-
-								{item.expanded ? (
-									<View style={{ marginTop: 10 }}>
-										{/* <View style={styles.tableHeader}>
-											<Text style={[styles.th, { width: 44 }]}>Set</Text>
-											<Text style={[styles.th, { flex: 1 }]}>Weight (lbs)</Text>
-											<Text style={[styles.th, { width: 110 }]}>
-												{String(item.targetReps).toLowerCase() === 'time'
-													? 'Time (sec)'
-													: 'Reps'}
-											</Text>
-											<Text
-												style={[styles.th, { width: 84, textAlign: 'right' }]}
-											>
-												Action
-											</Text>
-										</View> */}
-										{/* Table Header */}
-										<View style={styles.tableHeader}>
-											<Text style={[styles.tableHeaderText, { width: 50 }]}>
-												Set
-											</Text>
-											<Text style={[styles.tableHeaderText, { flex: 1 }]}>
-												Prev
-											</Text>
-											<Text style={[styles.tableHeaderText, { width: 80 }]}>
-												LB
-											</Text>
-											<Text style={[styles.tableHeaderText, { width: 80 }]}>
-												Reps
-											</Text>
-											<View style={{ width: 40 }} />
-										</View>
-
-										{item.sets.map((s) => {
-											// ✅ GET PREVIOUS SET DATA FOR THIS SPECIFIC SET
-											const prevSet = getPreviousSet(item.name, s.setIndex);
-											return (
-												<SwipeableSetRow
-													key={`${item.name}-${s.setIndex}`}
-													item={item}
-													set={s}
-													exerciseIndex={index}
-													setIndex={s.setIndex}
-													canRemove={!s.saved && item.sets.length > 1}
-													updateSetField={updateSetField}
-													saveSet={saveSet}
-													removeSet={removeSet}
-													editSet={editSet}
-													normalizeNumberText={normalizeNumberText}
-													previousSet={prevSet}
-												/>
-											);
-										})}
-
-										{/* Add Set Button */}
-										<TouchableOpacity
-											style={styles.addSetButton}
-											onPress={() => addSet(index)}
-											activeOpacity={0.9}
-										>
-											<Text style={styles.addSetButtonText}>+ Add Set</Text>
-										</TouchableOpacity>
-									</View>
-								) : null}
-							</View>
-						);
-					}}
+					renderItem={({ item, index }) => (
+						<ExerciseCard
+							exercise={item}
+							exerciseIndex={index}
+							isCompleted={isExerciseCompleted(item)}
+							onToggleExpanded={toggleExpanded}
+							onOpenSwap={openSwapModal}
+							updateSetField={updateSetField}
+							saveSet={saveSet}
+							removeSet={removeSet}
+							editSet={editSet}
+							addSet={addSet}
+							normalizeNumberText={normalizeNumberText}
+							getPreviousSet={getPreviousSet}
+						/>
+					)}
 				/>
-				{/* Exercise Swap Modal */}
+
 				<SwapExerciseModal
 					visible={swapModalVisible}
 					onClose={() => {
@@ -1268,16 +827,7 @@ export default function WorkoutSessionScreen() {
 					onSwap={handleSwapExercise}
 				/>
 
-				{/* Bottom CTA */}
-				<View style={styles.bottomCta}>
-					<TouchableOpacity
-						style={styles.finishButton}
-						onPress={finishWorkout}
-						activeOpacity={0.9}
-					>
-						<Text style={styles.finishButtonText}>Finish Workout</Text>
-					</TouchableOpacity>
-				</View>
+				<FinishWorkoutButton onFinish={finishWorkout} />
 			</KeyboardAvoidingView>
 		</SafeAreaView>
 	);
@@ -1286,402 +836,6 @@ export default function WorkoutSessionScreen() {
 const styles = StyleSheet.create({
 	safe: { flex: 1, backgroundColor: '#000000' },
 	container: { flex: 1, paddingHorizontal: 18, paddingTop: 8 },
-
 	loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-	loadingText: { fontSize: 14, color: '#999999', fontFamily: FontFamily.black },
-
-	topBar: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-		marginBottom: 10
-	},
-	backChevron: {
-		fontSize: 32,
-		fontWeight: '900',
-		color: '#AFFF2B',
-		marginTop: -6
-	},
-	topTitle: { fontSize: 18, fontFamily: FontFamily.black, color: '#FFFFFF' },
-	settingsIcon: { fontSize: 20, color: '#999999' },
-
-	header: { marginBottom: 12 },
-	headerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-	tagPill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
-	tagText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
-	headerTitle: { fontSize: 22, fontFamily: FontFamily.black, color: '#FFFFFF' },
-	weekBadgeRow: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-		marginTop: 6
-	},
-	dateText: {
-		fontSize: 13,
-		fontFamily: FontFamily.black,
-		color: '#999999'
-	},
-	weekBadge: {
-		paddingHorizontal: 8,
-		paddingVertical: 4,
-		borderRadius: 8,
-		backgroundColor: 'rgba(175, 255, 43, 0.15)',
-		borderWidth: 1,
-		borderColor: '#AFFF2B'
-	},
-	weekBadgeText: {
-		fontSize: 11,
-		fontFamily: FontFamily.black,
-		color: '#AFFF2B'
-	},
-
-	modalBackdrop: {
-		flex: 1,
-		backgroundColor: 'rgba(0,0,0,0.85)',
-		alignItems: 'center',
-		justifyContent: 'center',
-		padding: 18
-	},
-	modalCard: {
-		width: '100%',
-		borderRadius: 18,
-		backgroundColor: '#1A1A1A',
-		padding: 18,
-		borderWidth: 1,
-		borderColor: '#333333'
-	},
-	modalTitle: {
-		fontSize: 18,
-		fontFamily: FontFamily.black,
-		color: '#AFFF2B',
-		textAlign: 'center'
-	},
-	circleContainer: {
-		marginTop: 20,
-		alignItems: 'center',
-		justifyContent: 'center',
-		position: 'relative'
-	},
-	timerOverlay: {
-		position: 'absolute',
-		top: 0,
-		left: 0,
-		right: 0,
-		bottom: 0,
-		alignItems: 'center',
-		justifyContent: 'center'
-	},
-	modalTimer: {
-		fontSize: 48,
-		fontWeight: '900',
-		color: '#fff',
-		textAlign: 'center'
-	},
-	modalContext: {
-		marginTop: 20,
-		fontSize: 13,
-		fontWeight: '700',
-		color: '#999999',
-		textAlign: 'center'
-	},
-	modalActionsRow: {
-		flexDirection: 'row',
-		gap: 10,
-		marginTop: 20
-	},
-	modalSecondaryBtn: {
-		flex: 1,
-		height: 48,
-		borderRadius: 14,
-		backgroundColor: '#2A2A2A',
-		alignItems: 'center',
-		justifyContent: 'center'
-	},
-	modalSecondaryText: {
-		fontSize: 14,
-		fontFamily: FontFamily.black,
-		color: '#FFFFFF'
-	},
-	modalSecondaryTextDisabled: {
-		color: '#666666'
-	},
-	modalPauseBtn: {
-		flex: 1,
-		height: 48,
-		borderRadius: 14,
-		backgroundColor: '#2A2A2A',
-		borderWidth: 2,
-		borderColor: '#AFFF2B',
-		alignItems: 'center',
-		justifyContent: 'center'
-	},
-	modalPauseBtnActive: {
-		backgroundColor: '#AFFF2B'
-	},
-	modalPauseText: {
-		fontSize: 14,
-		fontFamily: FontFamily.black,
-		color: '#AFFF2B'
-	},
-	modalPauseTextActive: {
-		color: '#000000'
-	},
-	modalPrimaryBtn: {
-		marginTop: 10,
-		height: 50,
-		borderRadius: 14,
-		backgroundColor: '#AFFF2B',
-		alignItems: 'center',
-		justifyContent: 'center'
-	},
-	modalPrimaryText: {
-		fontSize: 16,
-		fontFamily: FontFamily.black,
-		color: '#000000'
-	},
-
-	exerciseCard: {
-		borderWidth: 1,
-		borderColor: '#333333',
-		borderRadius: 16,
-		backgroundColor: '#1A1A1A',
-		padding: 14,
-		marginBottom: 12
-	},
-
-	accordionHeader: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between'
-	},
-	exerciseHeaderLeft: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 12,
-		flex: 1
-	},
-	exerciseIcon: {
-		width: 36,
-		height: 36,
-		borderRadius: 12,
-		backgroundColor: '#2A2A2A',
-		alignItems: 'center',
-		justifyContent: 'center'
-	},
-	exerciseIconText: { fontSize: 16 },
-	exerciseName: {
-		fontSize: 16,
-		fontFamily: FontFamily.black,
-		color: '#FFFFFF'
-	},
-	exerciseMeta: {
-		fontSize: 12,
-		color: '#999999',
-		marginTop: 2
-	},
-	exerciseStatus: {
-		marginTop: 6,
-		fontSize: 12,
-		fontWeight: '900',
-		color: '#FFD60A'
-	},
-	exerciseStatusDone: { color: '#AFFF2B' },
-	chevron: {
-		fontSize: 22,
-		fontWeight: '900',
-		color: '#666666',
-		marginLeft: 10
-	},
-
-	tableHeader: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		paddingVertical: 8,
-		paddingHorizontal: 4,
-		gap: 8, // Same gap as tableRow
-		marginBottom: 4 // Add small margin
-	},
-	tableHeaderText: {
-		fontSize: 12,
-		fontFamily: FontFamily.black,
-		color: '#9CA3AF',
-		textTransform: 'uppercase'
-	},
-	// th: { fontSize: 12, fontWeight: '900', color: '#999999' },
-
-	tableRow: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		paddingVertical: 8,
-		paddingHorizontal: 4,
-		gap: 8,
-		borderBottomWidth: 1,
-		borderBottomColor: '#374151'
-		// flexDirection: 'row',
-		// alignItems: 'center',
-		// gap: 10,
-		// marginBottom: 8,
-		// backgroundColor: '#1A1A1A'
-	},
-	tdSet: {
-		fontSize: 14,
-		fontWeight: '900',
-		color: '#FFFFFF',
-		textAlign: 'center'
-	},
-
-	inputCell: {
-		height: 44,
-		borderWidth: 1,
-		borderColor: '#333333',
-		borderRadius: 12,
-		paddingHorizontal: 12,
-		fontSize: 14,
-		fontFamily: FontFamily.black,
-		fontWeight: '800',
-		color: '#FFFFFF',
-		backgroundColor: '#0D0D0D'
-	},
-	inputCellSaved: { color: '#999999' },
-
-	saveSetBtn: {
-		height: 44,
-		borderRadius: 12,
-		backgroundColor: '#AFFF2B',
-		alignItems: 'center',
-		justifyContent: 'center'
-	},
-	saveSetBtnText: {
-		color: '#000000',
-		fontSize: 13,
-		fontFamily: FontFamily.black
-	},
-
-	savedPill: {
-		height: 44,
-		borderRadius: 12,
-		backgroundColor: '#1A3A1F',
-		alignItems: 'center',
-		justifyContent: 'center',
-		borderWidth: 1,
-		borderColor: '#2D5F34'
-	},
-	savedPillText: {
-		color: '#AFFF2B',
-		fontSize: 13,
-		fontFamily: FontFamily.black
-	},
-
-	deleteAction: {
-		backgroundColor: '#FF453A',
-		justifyContent: 'center',
-		alignItems: 'flex-end',
-		paddingHorizontal: 20,
-		marginBottom: 8,
-		borderTopRightRadius: 12,
-		borderBottomRightRadius: 12,
-		marginLeft: 10
-	},
-	deleteActionText: {
-		color: '#FFFFFF',
-		fontSize: 14,
-		fontFamily: FontFamily.black,
-		fontWeight: '900'
-	},
-
-	addSetButton: {
-		marginTop: 8,
-		height: 44,
-		borderRadius: 12,
-		backgroundColor: '#2A2A2A',
-		alignItems: 'center',
-		justifyContent: 'center',
-		borderWidth: 1,
-		borderColor: '#333333'
-	},
-	addSetButtonText: {
-		color: '#AFFF2B',
-		fontSize: 14,
-		fontFamily: FontFamily.black
-	},
-
-	bottomCta: { position: 'absolute', left: 18, right: 18, bottom: 12 },
-	finishButton: {
-		height: 56,
-		borderRadius: 14,
-		backgroundColor: '#AFFF2B',
-		alignItems: 'center',
-		justifyContent: 'center',
-		shadowColor: '#000',
-		shadowOpacity: 0.08,
-		shadowRadius: 10,
-		shadowOffset: { width: 0, height: 6 },
-		elevation: 2
-	},
-	finishButtonText: {
-		color: '#000000',
-		fontSize: 18,
-		fontFamily: FontFamily.black
-	},
-	editSetBtn: {
-		height: 44,
-		borderRadius: 12,
-		backgroundColor: '#2A2A2A',
-		borderWidth: 1,
-		borderColor: '#AFFF2B',
-		alignItems: 'center',
-		justifyContent: 'center'
-	},
-	editSetBtnText: {
-		color: '#AFFF2B',
-		fontSize: 13,
-		fontFamily: FontFamily.black
-	},
-	exerciseHeaderRight: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 12
-	},
-	swapButton: {
-		width: 36,
-		height: 36,
-		borderRadius: 10,
-		backgroundColor: 'rgba(175, 255, 43, 0.1)',
-		borderWidth: 1,
-		borderColor: '#AFFF2B',
-		alignItems: 'center',
-		justifyContent: 'center'
-	},
-	swappedBadge: {
-		fontSize: 11,
-		fontFamily: FontFamily.bold,
-		color: '#FBBF24',
-		marginTop: 2,
-		marginBottom: 2
-	},
-	checkmarkContainer: {
-		width: 40,
-		height: 40,
-		alignItems: 'center',
-		justifyContent: 'center'
-	},
-	checkmarkButton: {
-		width: 40,
-		height: 40,
-		alignItems: 'center',
-		justifyContent: 'center'
-	},
-	checkmarkEmpty: {
-		width: 24,
-		height: 24,
-		borderRadius: 12,
-		borderWidth: 2,
-		borderColor: '#6B7280',
-		backgroundColor: 'transparent'
-	},
-	prevText: {
-		fontSize: 13,
-		fontFamily: FontFamily.regular,
-		color: '#6B7280'
-	}
+	loadingText: { fontSize: 14, color: '#999999', fontFamily: FontFamily.black }
 });
