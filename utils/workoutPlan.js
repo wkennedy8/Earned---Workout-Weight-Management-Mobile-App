@@ -245,7 +245,8 @@ export const PLAN = {
 						alternatives: [
 							{ name: 'Machine Preacher Curls', difficulty: 'easier' },
 							{ name: 'Cable Preacher Curls', difficulty: 'same' },
-							{ name: 'Spider Curls', difficulty: 'same' }
+							{ name: 'Spider Curls', difficulty: 'same' },
+							{ name: 'EZ Bar Curls', difficulty: 'easier' }
 						]
 					}
 				]

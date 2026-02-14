@@ -183,6 +183,134 @@ export function computeSessionStats(session) {
 	};
 }
 
+/**
+ * Get the weight used in the previous session for a specific exercise
+ * @param {string} uid - User ID
+ * @param {string} templateId - Current workout template ID (e.g., 'push', 'pull', 'legs_abs')
+ * @param {string} exerciseName - Name of the exercise
+ * @param {number} setIndex - Which set number (1, 2, 3, etc.)
+ * @returns {Promise<{weight: number, reps: number} | null>} Previous set data or null
+ */
+export async function getPreviousSessionWeight(
+	uid,
+	templateId,
+	exerciseName,
+	setIndex
+) {
+	try {
+		const sessionsRef = collection(db, 'users', uid, 'sessions');
+
+		// Query for completed sessions of the same workout type, ordered by completion date
+		const q = query(
+			sessionsRef,
+			where('templateId', '==', templateId),
+			where('status', '==', 'completed'),
+			orderBy('completedAt', 'desc'),
+			limit(1) // Get only the most recent completed session
+		);
+
+		const snapshot = await getDocs(q);
+
+		if (snapshot.empty) {
+			return null; // No previous session found
+		}
+
+		const lastSession = snapshot.docs[0].data();
+
+		// Find the exercise in the last session
+		const exercise = lastSession.exercises?.find(
+			(ex) => ex.name === exerciseName
+		);
+
+		if (!exercise) {
+			return null; // Exercise not found in previous session
+		}
+
+		// Find the specific set
+		const set = exercise.sets?.find((s) => s.setIndex === setIndex && s.saved);
+
+		if (!set) {
+			return null; // Set not found or not saved
+		}
+
+		return {
+			weight: set.weight,
+			reps: set.reps
+		};
+	} catch (error) {
+		console.error('Error getting previous session weight:', error);
+		return null;
+	}
+}
+
+/**
+ * Get all previous session data for an entire exercise (all sets)
+ * @param {string} uid - User ID
+ * @param {string} templateId - Current workout template ID
+ * @param {string} exerciseName - Name of the exercise
+ * @param {string} currentSessionId - ID of current session to exclude from results
+ * @returns {Promise<Array<{setIndex: number, weight: number, reps: number}> | null>} Array of previous sets or null
+ */
+export async function getPreviousExerciseData(
+	uid,
+	templateId,
+	exerciseName,
+	currentSessionId = null
+) {
+	try {
+		const sessionsRef = collection(db, 'users', uid, 'sessions');
+
+		const q = query(
+			sessionsRef,
+			where('templateId', '==', templateId),
+			where('status', '==', 'completed'),
+			orderBy('completedAt', 'desc'),
+			limit(5) // Get last 5 to ensure we skip current session if needed
+		);
+
+		const snapshot = await getDocs(q);
+
+		if (snapshot.empty) {
+			return null;
+		}
+
+		// Find first session that's not the current session
+		let lastSession = null;
+		for (const doc of snapshot.docs) {
+			if (doc.id !== currentSessionId) {
+				lastSession = doc.data();
+				break;
+			}
+		}
+
+		if (!lastSession) {
+			return null;
+		}
+
+		const exercise = lastSession.exercises?.find(
+			(ex) => ex.name === exerciseName
+		);
+
+		if (!exercise) {
+			return null;
+		}
+
+		// Return all saved sets
+		return (
+			exercise.sets
+				?.filter((s) => s.saved)
+				.map((s) => ({
+					setIndex: s.setIndex,
+					weight: s.weight,
+					reps: s.reps
+				})) || null
+		);
+	} catch (error) {
+		console.error('Error getting previous exercise data:', error);
+		return null;
+	}
+}
+
 export function formatSessionForShare(session) {
 	if (!session) return 'Workout completed!';
 

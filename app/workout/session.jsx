@@ -13,6 +13,7 @@ import {
 	buildEmptySession,
 	upsertSession as firestoreUpsertSession,
 	getInProgressSessionForDay,
+	getPreviousExerciseData,
 	getSessionById,
 	markSessionCompleted
 } from '@/controllers/sessionController';
@@ -75,7 +76,8 @@ function SwipeableSetRow({
 	saveSet,
 	removeSet,
 	editSet,
-	normalizeNumberText
+	normalizeNumberText,
+	previousSet
 }) {
 	const swipeableRef = useRef(null);
 
@@ -108,8 +110,15 @@ function SwipeableSetRow({
 			overshootRight={false}
 		>
 			<View style={styles.tableRow}>
-				<Text style={[styles.tdSet, { width: 44 }]}>{set.setIndex}</Text>
+				{/* Set Number */}
+				<Text style={[styles.tdSet, { width: 50 }]}>{set.setIndex}</Text>
 
+				{/* PREV COLUMN - shows previous session data */}
+				<Text style={[styles.prevText, { flex: 1 }]}>
+					{previousSet ? `${previousSet.weight}lb x ${previousSet.reps}` : '—'}
+				</Text>
+
+				{/* Weight Input */}
 				<TextInput
 					value={String(set.weight)}
 					onChangeText={(t) =>
@@ -118,18 +127,17 @@ function SwipeableSetRow({
 						})
 					}
 					editable={!set.saved}
-					placeholder={
-						String(item.targetReps).toLowerCase() === 'time' ? '—' : '0'
-					}
+					placeholder='0'
 					placeholderTextColor='#9CA3AF'
 					keyboardType={Platform.OS === 'ios' ? 'decimal-pad' : 'numeric'}
 					style={[
 						styles.inputCell,
-						{ flex: 1 },
+						{ width: 80 }, // ✅ CHANGED from flex: 1
 						set.saved && styles.inputCellSaved
 					]}
 				/>
 
+				{/* Reps Input */}
 				<TextInput
 					value={String(set.reps)}
 					onChangeText={(t) =>
@@ -143,27 +151,27 @@ function SwipeableSetRow({
 					keyboardType='numeric'
 					style={[
 						styles.inputCell,
-						{ width: 110 },
+						{ width: 80 }, // ✅ CHANGED from width: 110
 						set.saved && styles.inputCellSaved
 					]}
 				/>
 
-				<View style={{ width: 84 }}>
+				{/* Checkmark / Save Button */}
+				<View style={{ width: 40 }}>
+					{/* ✅ CHANGED from width: 84 */}
 					{set.saved ? (
 						<TouchableOpacity
-							style={styles.editSetBtn}
 							onPress={() => editSet(exerciseIndex, set.setIndex)}
-							activeOpacity={0.9}
+							style={styles.checkmarkContainer}
 						>
-							<Text style={styles.editSetBtnText}>Edit</Text>
+							<Ionicons name='checkmark' size={18} color='#AFFF2B' />
 						</TouchableOpacity>
 					) : (
 						<TouchableOpacity
-							style={styles.saveSetBtn}
+							style={styles.checkmarkButton}
 							onPress={() => saveSet(exerciseIndex, set.setIndex)}
-							activeOpacity={0.9}
 						>
-							<Text style={styles.saveSetBtnText}>Save</Text>
+							<View style={styles.checkmarkEmpty} />
 						</TouchableOpacity>
 					)}
 				</View>
@@ -224,6 +232,7 @@ export default function WorkoutSessionScreen() {
 	const [swapExerciseIndex, setSwapExerciseIndex] = useState(null);
 	const [currentWeek, setCurrentWeek] = useState(1);
 	const [template, setTemplate] = useState(null);
+	const [previousSessionData, setPreviousSessionData] = useState({});
 
 	// Rest timer state - UPDATED TO USE TIMESTAMPS
 	const [restVisible, setRestVisible] = useState(false);
@@ -457,10 +466,40 @@ export default function WorkoutSessionScreen() {
 		};
 	}, [user?.uid, template, params.mode, params.sessionId, currentWeek]);
 
+	// Load previous session data for all exercises
+	useEffect(() => {
+		if (!user?.uid || !template || !session) return;
+
+		(async () => {
+			try {
+				const prevData = {};
+
+				// Fetch previous data for each exercise in the template
+				for (const exercise of template.exercises) {
+					const data = await getPreviousExerciseData(
+						user.uid,
+						template.id,
+						exercise.name
+					);
+
+					if (data) {
+						prevData[exercise.name] = data;
+					}
+				}
+
+				setPreviousSessionData(prevData);
+			} catch (error) {
+				console.error('Error loading previous session data:', error);
+			}
+		})();
+	}, [user?.uid, template?.id, session?.id]);
+
 	function openSwapModal(exerciseIndex) {
 		setSwapExerciseIndex(exerciseIndex);
 		setSwapModalVisible(true);
 	}
+
+	//console.log(previousSessionData);
 
 	function handleSwapExercise(alternative) {
 		if (swapExerciseIndex === null) return;
@@ -825,6 +864,15 @@ export default function WorkoutSessionScreen() {
 		}
 	}
 
+	// Get previous session data for a specific set
+	function getPreviousSet(exerciseName, setIndex) {
+		const exerciseData = previousSessionData[exerciseName];
+		if (!exerciseData) return null;
+
+		const prevSet = exerciseData.find((s) => s.setIndex === setIndex);
+		return prevSet || null;
+	}
+
 	function saveSet(exerciseIndex, setIndex) {
 		setSession((prev) => {
 			if (!prev) return prev;
@@ -1138,7 +1186,7 @@ export default function WorkoutSessionScreen() {
 
 								{item.expanded ? (
 									<View style={{ marginTop: 10 }}>
-										<View style={styles.tableHeader}>
+										{/* <View style={styles.tableHeader}>
 											<Text style={[styles.th, { width: 44 }]}>Set</Text>
 											<Text style={[styles.th, { flex: 1 }]}>Weight (lbs)</Text>
 											<Text style={[styles.th, { width: 110 }]}>
@@ -1151,23 +1199,44 @@ export default function WorkoutSessionScreen() {
 											>
 												Action
 											</Text>
+										</View> */}
+										{/* Table Header */}
+										<View style={styles.tableHeader}>
+											<Text style={[styles.tableHeaderText, { width: 50 }]}>
+												Set
+											</Text>
+											<Text style={[styles.tableHeaderText, { flex: 1 }]}>
+												Prev
+											</Text>
+											<Text style={[styles.tableHeaderText, { width: 80 }]}>
+												LB
+											</Text>
+											<Text style={[styles.tableHeaderText, { width: 80 }]}>
+												Reps
+											</Text>
+											<View style={{ width: 40 }} />
 										</View>
 
-										{item.sets.map((s) => (
-											<SwipeableSetRow
-												key={`${item.name}-${s.setIndex}`}
-												item={item}
-												set={s}
-												exerciseIndex={index}
-												setIndex={s.setIndex}
-												canRemove={!s.saved && item.sets.length > 1}
-												updateSetField={updateSetField}
-												saveSet={saveSet}
-												removeSet={removeSet}
-												editSet={editSet}
-												normalizeNumberText={normalizeNumberText}
-											/>
-										))}
+										{item.sets.map((s) => {
+											// ✅ GET PREVIOUS SET DATA FOR THIS SPECIFIC SET
+											const prevSet = getPreviousSet(item.name, s.setIndex);
+											return (
+												<SwipeableSetRow
+													key={`${item.name}-${s.setIndex}`}
+													item={item}
+													set={s}
+													exerciseIndex={index}
+													setIndex={s.setIndex}
+													canRemove={!s.saved && item.sets.length > 1}
+													updateSetField={updateSetField}
+													saveSet={saveSet}
+													removeSet={removeSet}
+													editSet={editSet}
+													normalizeNumberText={normalizeNumberText}
+													previousSet={prevSet}
+												/>
+											);
+										})}
 
 										{/* Add Set Button */}
 										<TouchableOpacity
@@ -1427,20 +1496,32 @@ const styles = StyleSheet.create({
 	tableHeader: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		backgroundColor: '#0D0D0D',
-		borderRadius: 12,
-		paddingVertical: 10,
-		paddingHorizontal: 10,
-		marginBottom: 8
+		paddingVertical: 8,
+		paddingHorizontal: 4,
+		gap: 8, // Same gap as tableRow
+		marginBottom: 4 // Add small margin
 	},
-	th: { fontSize: 12, fontWeight: '900', color: '#999999' },
+	tableHeaderText: {
+		fontSize: 12,
+		fontFamily: FontFamily.black,
+		color: '#9CA3AF',
+		textTransform: 'uppercase'
+	},
+	// th: { fontSize: 12, fontWeight: '900', color: '#999999' },
 
 	tableRow: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		gap: 10,
-		marginBottom: 8,
-		backgroundColor: '#1A1A1A'
+		paddingVertical: 8,
+		paddingHorizontal: 4,
+		gap: 8,
+		borderBottomWidth: 1,
+		borderBottomColor: '#374151'
+		// flexDirection: 'row',
+		// alignItems: 'center',
+		// gap: 10,
+		// marginBottom: 8,
+		// backgroundColor: '#1A1A1A'
 	},
 	tdSet: {
 		fontSize: 14,
@@ -1577,5 +1658,30 @@ const styles = StyleSheet.create({
 		color: '#FBBF24',
 		marginTop: 2,
 		marginBottom: 2
+	},
+	checkmarkContainer: {
+		width: 40,
+		height: 40,
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+	checkmarkButton: {
+		width: 40,
+		height: 40,
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+	checkmarkEmpty: {
+		width: 24,
+		height: 24,
+		borderRadius: 12,
+		borderWidth: 2,
+		borderColor: '#6B7280',
+		backgroundColor: 'transparent'
+	},
+	prevText: {
+		fontSize: 13,
+		fontFamily: FontFamily.regular,
+		color: '#6B7280'
 	}
 });
