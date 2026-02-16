@@ -172,6 +172,30 @@ export function computeSessionStats(session) {
 		});
 	});
 
+	// Calculate duration in seconds and formatted string
+	let durationSeconds = null;
+	let duration = null;
+
+	if (session.startedAt && session.completedAt) {
+		const startTime = new Date(session.startedAt).getTime();
+		const endTime = new Date(session.completedAt).getTime();
+
+		// Convert milliseconds to seconds
+		durationSeconds = Math.floor((endTime - startTime) / 1000);
+
+		// Ensure non-negative duration
+		if (durationSeconds >= 0) {
+			const hours = Math.floor(durationSeconds / 3600);
+			const minutes = Math.floor((durationSeconds % 3600) / 60);
+			const seconds = durationSeconds % 60;
+
+			// Format as HH:MM:SS
+			duration = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+		} else {
+			durationSeconds = null;
+		}
+	}
+
 	return {
 		exercisesCompleted,
 		exercisesPlanned: session.exercises.length,
@@ -179,7 +203,7 @@ export function computeSessionStats(session) {
 		totalReps,
 		totalVolume,
 		bestSet,
-		durationSeconds: null
+		duration
 	};
 }
 

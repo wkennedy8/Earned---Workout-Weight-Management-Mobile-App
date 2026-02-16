@@ -271,31 +271,31 @@ export default function WorkoutTab() {
 		);
 	}, []);
 
-	const renderExerciseItem = useCallback(
-		({ item }) => (
-			<TouchableOpacity
-				activeOpacity={0.85}
-				onPress={() => onPressExercise(item)}
-				style={styles.exerciseRow}
-			>
-				<View style={styles.exerciseLeft}>
-					<View style={styles.exerciseIcon}>
-						<Text style={styles.exerciseIconText}>•</Text>
-					</View>
-					<View>
-						<Text style={styles.exerciseName}>{item.name}</Text>
-						<Text style={styles.exerciseMeta}>
-							{item.sets} sets, {item.reps}{' '}
-							{String(item.reps).toLowerCase() === 'time' ? '' : 'reps'}
-							{item.note ? ` • ${item.note}` : ''}
-						</Text>
-					</View>
-				</View>
-				<Text style={styles.chevron}>›</Text>
-			</TouchableOpacity>
-		),
-		[onPressExercise]
-	);
+	// const renderExerciseItem = useCallback(
+	// 	({ item }) => (
+	// 		<TouchableOpacity
+	// 			activeOpacity={0.85}
+	// 			onPress={() => onPressExercise(item)}
+	// 			style={styles.exerciseRow}
+	// 		>
+	// 			<View style={styles.exerciseLeft}>
+	// 				<View style={styles.exerciseIcon}>
+	// 					<Text style={styles.exerciseIconText}>•</Text>
+	// 				</View>
+	// 				<View>
+	// 					<Text style={styles.exerciseName}>{item.name}</Text>
+	// 					<Text style={styles.exerciseMeta}>
+	// 						{item.sets} sets, {item.reps}{' '}
+	// 						{String(item.reps).toLowerCase() === 'time' ? '' : 'reps'}
+	// 						{item.note ? ` • ${item.note}` : ''}
+	// 					</Text>
+	// 				</View>
+	// 			</View>
+	// 			<Text style={styles.chevron}>›</Text>
+	// 		</TouchableOpacity>
+	// 	),
+	// 	[onPressExercise]
+	// );
 
 	async function handleSaveCardio(data) {
 		if (!user?.uid) return;

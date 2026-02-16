@@ -16,7 +16,6 @@ import {
 	getSessionById
 } from '@/controllers/sessionController';
 import { formatDisplayDate, formatTime } from '@/utils/dateUtils';
-import { formatDuration } from '@/utils/numberUtils';
 import { tagColor } from '@/utils/workoutPlan';
 import { FontFamily } from '../../constants/fonts';
 
@@ -215,9 +214,7 @@ export default function WorkoutDetailsScreen() {
 
 						<View style={styles.summaryRow}>
 							<Text style={styles.summaryLabel}>Duration</Text>
-							<Text style={styles.summaryValue}>
-								{formatDuration(stats.durationSeconds)}
-							</Text>
+							<Text style={styles.summaryValue}>{stats.duration}</Text>
 						</View>
 
 						<View style={styles.summaryRow}>
