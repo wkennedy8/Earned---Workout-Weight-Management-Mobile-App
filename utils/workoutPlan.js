@@ -338,20 +338,20 @@ export const PLAN = {
 						]
 					},
 					{
-						name: 'Plank',
+						name: 'Reverse Crunches',
 						sets: '3-4',
 						reps: 'time',
-						note: 'Week 1-2: 30 sec, Week 3-4: 40 sec, Week 5-6: 50 sec, Week 7-8: 60 sec',
+						//note: 'Week 1-2: 30 sec, Week 3-4: 40 sec, Week 5-6: 50 sec, Week 7-8: 60 sec',
 						weeklyProgression: [
-							{ weeks: [1, 2], sets: 3, reps: '30 sec' },
-							{ weeks: [3, 4], sets: 3, reps: '40 sec' },
-							{ weeks: [5, 6], sets: 4, reps: '50 sec' },
-							{ weeks: [7, 8], sets: 4, reps: '60 sec' }
+							{ weeks: [1, 2], sets: 3, reps: 25 },
+							{ weeks: [3, 4], sets: 3, reps: 30 },
+							{ weeks: [5, 6], sets: 4, reps: 25 },
+							{ weeks: [7, 8], sets: 4, reps: 30 }
 						],
 						alternatives: [
-							{ name: 'Side Plank', difficulty: 'same' },
-							{ name: 'RKC Plank', difficulty: 'harder' },
-							{ name: 'Plank with Shoulder Taps', difficulty: 'harder' }
+							{ name: 'Mountain Climbers', difficulty: 'same' },
+							{ name: 'V-Ups', difficulty: 'harder' }
+							//{ name: 'Plank with Shoulder Taps', difficulty: 'harder' }
 						]
 					}
 				]
