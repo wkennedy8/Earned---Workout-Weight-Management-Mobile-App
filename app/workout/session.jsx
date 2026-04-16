@@ -41,6 +41,7 @@ import {
 	Platform,
 	StyleSheet,
 	Text,
+	TouchableOpacity,
 	View
 } from 'react-native'
 import { useSharedValue, withTiming } from 'react-native-reanimated'
@@ -78,6 +79,7 @@ export default function WorkoutSessionScreen() {
 
 	// Rest timer state
 	const [restVisible, setRestVisible] = useState(false)
+	const [restMinimized, setRestMinimized] = useState(false)
 	const [restTimerEndTime, setRestTimerEndTime] = useState(null)
 	const [restSeconds, setRestSeconds] = useState(0)
 	const [restPaused, setRestPaused] = useState(false)
@@ -356,6 +358,7 @@ export default function WorkoutSessionScreen() {
 		setRestTimerEndTime(null)
 		setRestSeconds(0)
 		setRestVisible(false)
+		setRestMinimized(false)
 		setRestPaused(false)
 		setPausedAtSeconds(0)
 	}
@@ -795,7 +798,7 @@ export default function WorkoutSessionScreen() {
 				/>
 
 				<RestTimerModal
-					visible={restVisible}
+					visible={restVisible && !restMinimized}
 					restSeconds={restSeconds}
 					restContext={restContext}
 					restPaused={restPaused}
@@ -804,7 +807,29 @@ export default function WorkoutSessionScreen() {
 					onTogglePause={togglePause}
 					onAddTime={addRest}
 					onSubtractTime={subtractRest}
+					onMinimize={() => setRestMinimized(true)}
 				/>
+				{/* Minimized rest timer pill */}
+				{restVisible && restMinimized && (
+					<TouchableOpacity
+						style={styles.restPill}
+						onPress={() => setRestMinimized(false)}
+						activeOpacity={0.85}
+					>
+						<View style={styles.restPillDot} />
+						<Text style={styles.restPillTimer}>
+							{`${Math.floor(restSeconds / 60)}:${String(restSeconds % 60).padStart(2, '0')}`}
+						</Text>
+						<Text style={styles.restPillLabel}>Rest Timer</Text>
+						<TouchableOpacity
+							style={styles.restPillSkipBtn}
+							onPress={skipRest}
+							hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+						>
+							<Text style={styles.restPillSkipText}>Skip</Text>
+						</TouchableOpacity>
+					</TouchableOpacity>
+				)}
 
 				<FlatList
 					data={session.exercises}
@@ -853,5 +878,45 @@ const styles = StyleSheet.create({
 	safe: { flex: 1, backgroundColor: '#000000' },
 	container: { flex: 1, paddingHorizontal: 18, paddingTop: 8 },
 	loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-	loadingText: { fontSize: 14, color: '#999999', fontFamily: FontFamily.black }
+	loadingText: { fontSize: 14, color: '#999999', fontFamily: FontFamily.black },
+	restPill: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 10,
+		backgroundColor: '#1A1A1A',
+		borderWidth: 1,
+		borderColor: '#333333',
+		borderRadius: 14,
+		paddingHorizontal: 14,
+		paddingVertical: 10,
+		marginBottom: 8
+	},
+	restPillDot: {
+		width: 8,
+		height: 8,
+		borderRadius: 4,
+		backgroundColor: '#AFFF2B'
+	},
+	restPillTimer: {
+		fontSize: 20,
+		fontFamily: FontFamily.black,
+		color: '#AFFF2B'
+	},
+	restPillLabel: {
+		flex: 1,
+		fontSize: 13,
+		fontFamily: FontFamily.black,
+		color: '#666666'
+	},
+	restPillSkipBtn: {
+		paddingHorizontal: 12,
+		paddingVertical: 6,
+		borderRadius: 8,
+		backgroundColor: '#2A2A2A'
+	},
+	restPillSkipText: {
+		fontSize: 12,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
+	}
 })

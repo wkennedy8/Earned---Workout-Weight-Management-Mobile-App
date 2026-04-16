@@ -1,14 +1,15 @@
-import { FontFamily } from '@/constants/fonts';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Animated from 'react-native-reanimated';
-import Svg, { Circle } from 'react-native-svg';
+import { FontFamily } from '@/constants/fonts'
+import { Ionicons } from '@expo/vector-icons'
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import Animated from 'react-native-reanimated'
+import Svg, { Circle } from 'react-native-svg'
 
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
 function formatTimer(seconds) {
-	const m = Math.floor(seconds / 60);
-	const s = seconds % 60;
-	return `${m}:${String(s).padStart(2, '0')}`;
+	const m = Math.floor(seconds / 60)
+	const s = seconds % 60
+	return `${m}:${String(s).padStart(2, '0')}`
 }
 
 export default function RestTimerModal({
@@ -20,7 +21,8 @@ export default function RestTimerModal({
 	onSkip,
 	onTogglePause,
 	onAddTime,
-	onSubtractTime
+	onSubtractTime,
+	onMinimize
 }) {
 	return (
 		<Modal
@@ -31,6 +33,15 @@ export default function RestTimerModal({
 		>
 			<View style={styles.modalBackdrop}>
 				<View style={styles.modalCard}>
+					<TouchableOpacity
+						style={styles.minimizeBtn}
+						onPress={onMinimize}
+						activeOpacity={0.7}
+						hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+					>
+						<Ionicons name='chevron-down' size={20} color='#666666' />
+						<Text style={styles.minimizeText}>Minimize</Text>
+					</TouchableOpacity>
 					{/* Circular Progress */}
 					<View style={styles.circleContainer}>
 						<Svg width={200} height={200} viewBox='0 0 200 200'>
@@ -125,7 +136,7 @@ export default function RestTimerModal({
 				</View>
 			</View>
 		</Modal>
-	);
+	)
 }
 
 const styles = StyleSheet.create({
@@ -226,5 +237,20 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		fontFamily: FontFamily.black,
 		color: '#000000'
+	},
+	minimizeBtn: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		alignSelf: 'center',
+		gap: 4,
+		paddingVertical: 4,
+		paddingHorizontal: 10,
+		borderRadius: 20,
+		backgroundColor: '#2A2A2A'
+	},
+	minimizeText: {
+		fontSize: 12,
+		fontFamily: FontFamily.bold,
+		color: '#666666'
 	}
-});
+})
