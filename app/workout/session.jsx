@@ -1,18 +1,18 @@
-import SwapExerciseModal from '@/components/SwapExerciseModal';
-import ExerciseCard from '@/components/workout/session/ExerciseCard';
-import FinishWorkoutButton from '@/components/workout/session/FinishWorkoutButton';
-import RestTimerModal from '@/components/workout/session/RestTimerModal';
-import SessionHeader from '@/components/workout/session/SessionHeader';
-import { useAuth } from '@/context/AuthContext';
+import SwapExerciseModal from '@/components/SwapExerciseModal'
+import ExerciseCard from '@/components/workout/session/ExerciseCard'
+import FinishWorkoutButton from '@/components/workout/session/FinishWorkoutButton'
+import RestTimerModal from '@/components/workout/session/RestTimerModal'
+import SessionHeader from '@/components/workout/session/SessionHeader'
+import { useAuth } from '@/context/AuthContext'
 import {
 	getSmartDefaultWeight,
 	loadExerciseDefaults,
 	saveExerciseDefaults
-} from '@/controllers/exerciseDefaultsController';
+} from '@/controllers/exerciseDefaultsController'
 import {
 	applyWeeklyProgression,
 	getProgramWeek
-} from '@/controllers/programProgressController';
+} from '@/controllers/programProgressController'
 import {
 	buildEmptySession,
 	upsertSession as firestoreUpsertSession,
@@ -20,22 +20,19 @@ import {
 	getPreviousExerciseData,
 	getSessionById,
 	markSessionCompleted
-} from '@/controllers/sessionController';
-import { formatLocalDateKey } from '@/utils/dateUtils';
+} from '@/controllers/sessionController'
+import { formatLocalDateKey } from '@/utils/dateUtils'
 import {
 	isExerciseCompleted,
 	isNumericTargetReps,
 	validateSetBeforeSave
-} from '@/utils/sessionUtils';
-import { playChime } from '@/utils/timerUtils';
-import { PLAN } from '@/utils/workoutPlan';
-import {
-	normalizeExerciseKey,
-	normalizeNumberText
-} from '@/utils/workoutUtils';
-import * as Haptics from 'expo-haptics';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+} from '@/utils/sessionUtils'
+import { playChime } from '@/utils/timerUtils'
+import { PLAN } from '@/utils/workoutPlan'
+import { normalizeExerciseKey, normalizeNumberText } from '@/utils/workoutUtils'
+import * as Haptics from 'expo-haptics'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
 	Alert,
 	AppState,
@@ -45,51 +42,51 @@ import {
 	StyleSheet,
 	Text,
 	View
-} from 'react-native';
-import { useSharedValue, withTiming } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { FontFamily } from '../../constants/fonts';
+} from 'react-native'
+import { useSharedValue, withTiming } from 'react-native-reanimated'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { FontFamily } from '../../constants/fonts'
 
 export default function WorkoutSessionScreen() {
-	const router = useRouter();
-	const { user } = useAuth();
-	const params = useLocalSearchParams();
-	const templateId = String(params.templateId || 'push');
+	const router = useRouter()
+	const { user } = useAuth()
+	const params = useLocalSearchParams()
+	const templateId = String(params.templateId || 'push')
 
 	// Find which plan this workout belongs to
 	const { template: rawTemplate, planId } = useMemo(() => {
 		for (const [pId, plan] of Object.entries(PLAN)) {
 			if (plan.workouts && plan.workouts[templateId]) {
-				return { template: plan.workouts[templateId], planId: pId };
+				return { template: plan.workouts[templateId], planId: pId }
 			}
 		}
-		return { template: PLAN.ppl?.workouts?.push || null, planId: 'ppl' };
-	}, [templateId]);
+		return { template: PLAN.ppl?.workouts?.push || null, planId: 'ppl' }
+	}, [templateId])
 
-	const today = useMemo(() => new Date(), []);
-	const dateKey = useMemo(() => formatLocalDateKey(today), [today]);
+	const today = useMemo(() => new Date(), [])
+	const dateKey = useMemo(() => formatLocalDateKey(today), [today])
 
 	// State
-	const [session, setSession] = useState(null);
-	const [loading, setLoading] = useState(true);
-	const [exerciseDefaults, setExerciseDefaults] = useState({});
-	const [swapModalVisible, setSwapModalVisible] = useState(false);
-	const [swapExerciseIndex, setSwapExerciseIndex] = useState(null);
-	const [currentWeek, setCurrentWeek] = useState(1);
-	const [template, setTemplate] = useState(null);
-	const [previousSessionData, setPreviousSessionData] = useState({});
+	const [session, setSession] = useState(null)
+	const [loading, setLoading] = useState(true)
+	const [exerciseDefaults, setExerciseDefaults] = useState({})
+	const [swapModalVisible, setSwapModalVisible] = useState(false)
+	const [swapExerciseIndex, setSwapExerciseIndex] = useState(null)
+	const [currentWeek, setCurrentWeek] = useState(1)
+	const [template, setTemplate] = useState(null)
+	const [previousSessionData, setPreviousSessionData] = useState({})
 
 	// Rest timer state
-	const [restVisible, setRestVisible] = useState(false);
-	const [restTimerEndTime, setRestTimerEndTime] = useState(null);
-	const [restSeconds, setRestSeconds] = useState(0);
-	const [restPaused, setRestPaused] = useState(false);
-	const [pausedAtSeconds, setPausedAtSeconds] = useState(0);
-	const [initialRestSeconds, setInitialRestSeconds] = useState(0);
-	const [restContext, setRestContext] = useState(null);
-	const restIntervalRef = useRef(null);
-	const progress = useSharedValue(0);
-	const appState = useRef(AppState.currentState);
+	const [restVisible, setRestVisible] = useState(false)
+	const [restTimerEndTime, setRestTimerEndTime] = useState(null)
+	const [restSeconds, setRestSeconds] = useState(0)
+	const [restPaused, setRestPaused] = useState(false)
+	const [pausedAtSeconds, setPausedAtSeconds] = useState(0)
+	const [initialRestSeconds, setInitialRestSeconds] = useState(0)
+	const [restContext, setRestContext] = useState(null)
+	const restIntervalRef = useRef(null)
+	const progress = useSharedValue(0)
+	const appState = useRef(AppState.currentState)
 
 	// ============================================================================
 	// EFFECTS
@@ -97,20 +94,19 @@ export default function WorkoutSessionScreen() {
 
 	// Load program week and apply progression
 	useEffect(() => {
-		if (!user?.uid || !rawTemplate || !planId) return;
-
-		(async () => {
+		if (!user?.uid || !rawTemplate || !planId) return
+		;(async () => {
 			try {
-				const week = await getProgramWeek(user.uid, planId);
-				setCurrentWeek(week);
-				const progressedTemplate = applyWeeklyProgression(rawTemplate, week);
-				setTemplate(progressedTemplate);
+				const week = await getProgramWeek(user.uid, planId)
+				setCurrentWeek(week)
+				const progressedTemplate = applyWeeklyProgression(rawTemplate, week)
+				setTemplate(progressedTemplate)
 			} catch (error) {
-				console.error('Error loading program week:', error);
-				setTemplate(rawTemplate);
+				console.error('Error loading program week:', error)
+				setTemplate(rawTemplate)
 			}
-		})();
-	}, [user?.uid, rawTemplate, planId]);
+		})()
+	}, [user?.uid, rawTemplate, planId])
 
 	// Handle app state changes (background/foreground)
 	useEffect(() => {
@@ -120,78 +116,77 @@ export default function WorkoutSessionScreen() {
 				nextAppState === 'active'
 			) {
 				if (restTimerEndTime && !restPaused) {
-					const now = Date.now();
+					const now = Date.now()
 					const remaining = Math.max(
 						0,
 						Math.ceil((restTimerEndTime - now) / 1000)
-					);
-					setRestSeconds(remaining);
+					)
+					setRestSeconds(remaining)
 
 					if (remaining === 0) {
-						stopRestTimer();
-						playChime();
-						Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+						stopRestTimer()
+						playChime()
+						Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
 					}
 				}
 			}
-			appState.current = nextAppState;
-		});
+			appState.current = nextAppState
+		})
 
 		return () => {
-			subscription.remove();
-		};
-	}, [restTimerEndTime, restPaused]);
+			subscription.remove()
+		}
+	}, [restTimerEndTime, restPaused])
 
 	// Update timer display every second
 	useEffect(() => {
 		if (restTimerEndTime && !restPaused) {
 			if (restIntervalRef.current) {
-				clearInterval(restIntervalRef.current);
+				clearInterval(restIntervalRef.current)
 			}
 
 			restIntervalRef.current = setInterval(() => {
-				const now = Date.now();
+				const now = Date.now()
 				const remaining = Math.max(
 					0,
 					Math.ceil((restTimerEndTime - now) / 1000)
-				);
-				setRestSeconds(remaining);
+				)
+				setRestSeconds(remaining)
 
 				if (remaining === 0) {
-					stopRestTimer();
-					playChime();
-					Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+					stopRestTimer()
+					playChime()
+					Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
 				}
-			}, 1000);
+			}, 1000)
 
 			return () => {
 				if (restIntervalRef.current) {
-					clearInterval(restIntervalRef.current);
+					clearInterval(restIntervalRef.current)
 				}
-			};
+			}
 		}
-	}, [restTimerEndTime, restPaused]);
+	}, [restTimerEndTime, restPaused])
 
 	// Init session (resume or create)
 	useEffect(() => {
-		if (!user?.uid || !template) return;
-
-		(async () => {
+		if (!user?.uid || !template) return
+		;(async () => {
 			try {
-				setLoading(true);
+				setLoading(true)
 
-				const mode = String(params.mode || 'start');
-				const sessionId = params.sessionId ? String(params.sessionId) : null;
+				const mode = String(params.mode || 'start')
+				const sessionId = params.sessionId ? String(params.sessionId) : null
 
 				// EDIT MODE
 				if (mode === 'edit') {
 					if (!sessionId) {
-						throw new Error('Missing sessionId for edit mode');
+						throw new Error('Missing sessionId for edit mode')
 					}
 
-					const found = await getSessionById(user.uid, sessionId);
+					const found = await getSessionById(user.uid, sessionId)
 					if (!found) {
-						throw new Error('Session not found');
+						throw new Error('Session not found')
 					}
 
 					const normalized = {
@@ -205,16 +200,16 @@ export default function WorkoutSessionScreen() {
 								...s
 							}))
 						}))
-					};
+					}
 
-					setSession(normalized);
-					await firestoreUpsertSession(user.uid, normalized);
-					return;
+					setSession(normalized)
+					await firestoreUpsertSession(user.uid, normalized)
+					return
 				}
 
 				// RESUME MODE
 				if (mode === 'resume' && sessionId) {
-					const found = await getSessionById(user.uid, sessionId);
+					const found = await getSessionById(user.uid, sessionId)
 					if (found) {
 						const normalized = {
 							...found,
@@ -227,11 +222,11 @@ export default function WorkoutSessionScreen() {
 									...s
 								}))
 							}))
-						};
+						}
 
-						setSession(normalized);
-						await firestoreUpsertSession(user.uid, normalized);
-						return;
+						setSession(normalized)
+						await firestoreUpsertSession(user.uid, normalized)
+						return
 					}
 				}
 
@@ -239,7 +234,7 @@ export default function WorkoutSessionScreen() {
 				const existing = await getInProgressSessionForDay(user.uid, {
 					templateId: template.id,
 					dateKey
-				});
+				})
 
 				if (existing) {
 					const normalized = {
@@ -253,172 +248,168 @@ export default function WorkoutSessionScreen() {
 								...s
 							}))
 						}))
-					};
+					}
 
-					setSession(normalized);
-					await firestoreUpsertSession(user.uid, normalized);
-					return;
+					setSession(normalized)
+					await firestoreUpsertSession(user.uid, normalized)
+					return
 				}
 
 				// CREATE NEW SESSION WITH SMART DEFAULTS
-				const smartDefaults = {};
+				const smartDefaults = {}
 
 				for (const exercise of template.exercises) {
 					const smartWeight = await getSmartDefaultWeight(
 						user.uid,
 						exercise.name,
 						template.id
-					);
+					)
 
 					if (smartWeight !== null) {
-						const exerciseKey = normalizeExerciseKey(exercise.name);
+						const exerciseKey = normalizeExerciseKey(exercise.name)
 						smartDefaults[exerciseKey] = {
 							defaultWeight: smartWeight
-						};
+						}
 					}
 				}
 
-				setExerciseDefaults(smartDefaults);
+				setExerciseDefaults(smartDefaults)
 
 				const created = buildEmptySession({
 					template,
 					defaultsMap: smartDefaults
-				});
-				created.exercises[0].expanded = true;
-				created.programWeek = currentWeek;
+				})
+				created.exercises[0].expanded = true
+				created.programWeek = currentWeek
 
-				setSession(created);
-				await firestoreUpsertSession(user.uid, created);
+				setSession(created)
+				await firestoreUpsertSession(user.uid, created)
 			} catch (e) {
-				console.warn(e);
-				Alert.alert('Error', 'Could not initialize workout session.');
+				console.warn(e)
+				Alert.alert('Error', 'Could not initialize workout session.')
 			} finally {
-				setLoading(false);
+				setLoading(false)
 			}
-		})();
+		})()
 
 		return () => {
-			if (restIntervalRef.current) clearInterval(restIntervalRef.current);
-		};
-	}, [user?.uid, template, params.mode, params.sessionId, currentWeek]);
+			if (restIntervalRef.current) clearInterval(restIntervalRef.current)
+		}
+	}, [user?.uid, template, params.mode, params.sessionId, currentWeek])
 
 	// Load previous session data for all exercises
 	useEffect(() => {
-		if (!user?.uid || !template || !session) return;
-
-		(async () => {
+		if (!user?.uid || !template || !session) return
+		;(async () => {
 			try {
-				const prevData = {};
+				const prevData = {}
 
 				for (const exercise of template.exercises) {
 					const data = await getPreviousExerciseData(
 						user.uid,
 						template.id,
 						exercise.name
-					);
+					)
 
 					if (data) {
-						prevData[exercise.name] = data;
+						prevData[exercise.name] = data
 					}
 				}
 
-				setPreviousSessionData(prevData);
+				setPreviousSessionData(prevData)
 			} catch (error) {
-				console.error('Error loading previous session data:', error);
+				console.error('Error loading previous session data:', error)
 			}
-		})();
-	}, [user?.uid, template?.id, session?.id]);
+		})()
+	}, [user?.uid, template?.id, session?.id])
 
 	// Update progress animation
 	useEffect(() => {
 		if (initialRestSeconds > 0) {
-			const newProgress = restSeconds / initialRestSeconds;
-			progress.value = withTiming(newProgress, { duration: 300 });
+			const newProgress = restSeconds / initialRestSeconds
+			progress.value = withTiming(newProgress, { duration: 300 })
 		}
-	}, [restSeconds, initialRestSeconds]);
+	}, [restSeconds, initialRestSeconds])
 
 	// ============================================================================
 	// REST TIMER FUNCTIONS
 	// ============================================================================
 
 	function startRestTimer({ seconds, context }) {
-		if (restIntervalRef.current) clearInterval(restIntervalRef.current);
+		if (restIntervalRef.current) clearInterval(restIntervalRef.current)
 
-		const endTime = Date.now() + seconds * 1000;
+		const endTime = Date.now() + seconds * 1000
 
-		setRestContext(context);
-		setRestTimerEndTime(endTime);
-		setRestSeconds(seconds);
-		setInitialRestSeconds(seconds);
-		setRestVisible(true);
-		setRestPaused(false);
-		setPausedAtSeconds(0);
-		progress.value = 1;
+		setRestContext(context)
+		setRestTimerEndTime(endTime)
+		setRestSeconds(seconds)
+		setInitialRestSeconds(seconds)
+		setRestVisible(true)
+		setRestPaused(false)
+		setPausedAtSeconds(0)
+		progress.value = 1
 	}
 
 	function stopRestTimer() {
-		if (restIntervalRef.current) clearInterval(restIntervalRef.current);
-		restIntervalRef.current = null;
-		setRestTimerEndTime(null);
-		setRestSeconds(0);
-		setRestVisible(false);
-		setRestPaused(false);
-		setPausedAtSeconds(0);
+		if (restIntervalRef.current) clearInterval(restIntervalRef.current)
+		restIntervalRef.current = null
+		setRestTimerEndTime(null)
+		setRestSeconds(0)
+		setRestVisible(false)
+		setRestPaused(false)
+		setPausedAtSeconds(0)
 	}
 
 	function skipRest() {
-		stopRestTimer();
+		stopRestTimer()
 	}
 
 	function addRest(secondsToAdd) {
-		if (!restTimerEndTime) return;
+		if (!restTimerEndTime) return
 
 		if (restPaused) {
-			const newPausedSeconds = pausedAtSeconds + secondsToAdd;
-			setPausedAtSeconds(newPausedSeconds);
-			setRestSeconds(newPausedSeconds);
+			const newPausedSeconds = pausedAtSeconds + secondsToAdd
+			setPausedAtSeconds(newPausedSeconds)
+			setRestSeconds(newPausedSeconds)
 		} else {
-			const newEndTime = restTimerEndTime + secondsToAdd * 1000;
-			setRestTimerEndTime(newEndTime);
-			const remaining = Math.max(
-				0,
-				Math.ceil((newEndTime - Date.now()) / 1000)
-			);
-			setRestSeconds(remaining);
+			const newEndTime = restTimerEndTime + secondsToAdd * 1000
+			setRestTimerEndTime(newEndTime)
+			const remaining = Math.max(0, Math.ceil((newEndTime - Date.now()) / 1000))
+			setRestSeconds(remaining)
 		}
 	}
 
 	function subtractRest(secondsToSubtract) {
-		if (!restTimerEndTime) return;
+		if (!restTimerEndTime) return
 
 		if (restPaused) {
-			const newPausedSeconds = Math.max(0, pausedAtSeconds - secondsToSubtract);
-			setPausedAtSeconds(newPausedSeconds);
-			setRestSeconds(newPausedSeconds);
+			const newPausedSeconds = Math.max(0, pausedAtSeconds - secondsToSubtract)
+			setPausedAtSeconds(newPausedSeconds)
+			setRestSeconds(newPausedSeconds)
 		} else {
-			const newEndTime = restTimerEndTime - secondsToSubtract * 1000;
-			const now = Date.now();
+			const newEndTime = restTimerEndTime - secondsToSubtract * 1000
+			const now = Date.now()
 
 			if (newEndTime <= now) {
-				stopRestTimer();
+				stopRestTimer()
 			} else {
-				setRestTimerEndTime(newEndTime);
-				const remaining = Math.max(0, Math.ceil((newEndTime - now) / 1000));
-				setRestSeconds(remaining);
+				setRestTimerEndTime(newEndTime)
+				const remaining = Math.max(0, Math.ceil((newEndTime - now) / 1000))
+				setRestSeconds(remaining)
 			}
 		}
 	}
 
 	function togglePause() {
 		if (restPaused) {
-			const newEndTime = Date.now() + pausedAtSeconds * 1000;
-			setRestTimerEndTime(newEndTime);
-			setRestPaused(false);
+			const newEndTime = Date.now() + pausedAtSeconds * 1000
+			setRestTimerEndTime(newEndTime)
+			setRestPaused(false)
 		} else {
-			if (restIntervalRef.current) clearInterval(restIntervalRef.current);
-			restIntervalRef.current = null;
-			setPausedAtSeconds(restSeconds);
-			setRestPaused(true);
+			if (restIntervalRef.current) clearInterval(restIntervalRef.current)
+			restIntervalRef.current = null
+			setPausedAtSeconds(restSeconds)
+			setRestPaused(true)
 		}
 	}
 
@@ -427,81 +418,106 @@ export default function WorkoutSessionScreen() {
 	// ============================================================================
 
 	function openSwapModal(exerciseIndex) {
-		setSwapExerciseIndex(exerciseIndex);
-		setSwapModalVisible(true);
+		setSwapExerciseIndex(exerciseIndex)
+		setSwapModalVisible(true)
 	}
 
-	function handleSwapExercise(alternative) {
-		if (swapExerciseIndex === null) return;
+	async function handleSwapExercise(alternative) {
+		if (swapExerciseIndex === null) return
+
+		// Look up previous weight and session data for the incoming exercise
+		const [smartWeight, prevData] = await Promise.all([
+			user?.uid
+				? getSmartDefaultWeight(user.uid, alternative.name, template.id)
+				: null,
+			user?.uid
+				? getPreviousExerciseData(user.uid, template.id, alternative.name)
+				: null
+		])
+
+		// Make previous-set reference data available for the swapped exercise
+		if (prevData) {
+			setPreviousSessionData((prev) => ({
+				...prev,
+				[alternative.name]: prevData
+			}))
+		}
+
+		const defaultWeight = smartWeight != null ? String(smartWeight) : ''
 
 		setSession((prev) => {
-			if (!prev) return prev;
+			if (!prev) return prev
 
 			const next = {
 				...prev,
 				exercises: prev.exercises.map((ex, i) => {
-					if (i !== swapExerciseIndex) return ex;
+					if (i !== swapExerciseIndex) return ex
 
-					const originalName = ex.originalName || ex.name;
+					const originalName = ex.originalName || ex.name
 
 					return {
 						...ex,
 						name: alternative.name,
 						originalName: originalName,
-						isSwapped: true
-					};
+						isSwapped: true,
+						// Apply the looked-up weight to all unsaved sets
+						sets: ex.sets.map((s) => ({
+							...s,
+							weight: s.saved ? s.weight : defaultWeight
+						}))
+					}
 				})
-			};
+			}
 
-			if (user?.uid) firestoreUpsertSession(user.uid, next);
-			return next;
-		});
+			if (user?.uid) firestoreUpsertSession(user.uid, next)
+			return next
+		})
 
-		setSwapModalVisible(false);
-		setSwapExerciseIndex(null);
+		setSwapModalVisible(false)
+		setSwapExerciseIndex(null)
 	}
 
 	function toggleExpanded(exerciseIndex) {
 		setSession((prev) => {
-			if (!prev) return prev;
+			if (!prev) return prev
 			const next = {
 				...prev,
 				exercises: prev.exercises.map((ex, i) =>
 					i === exerciseIndex ? { ...ex, expanded: !ex.expanded } : ex
 				)
-			};
-			if (user?.uid) firestoreUpsertSession(user.uid, next);
-			return next;
-		});
+			}
+			if (user?.uid) firestoreUpsertSession(user.uid, next)
+			return next
+		})
 	}
 
 	function updateSetField(exerciseIndex, setIndex, patch) {
 		setSession((prev) => {
-			if (!prev) return prev;
-			const next = { ...prev };
+			if (!prev) return prev
+			const next = { ...prev }
 			next.exercises = prev.exercises.map((ex, i) => {
-				if (i !== exerciseIndex) return ex;
+				if (i !== exerciseIndex) return ex
 				const sets = ex.sets.map((s) =>
 					s.setIndex === setIndex ? { ...s, ...patch } : s
-				);
-				return { ...ex, sets };
-			});
-			if (user?.uid) firestoreUpsertSession(user.uid, next);
-			return next;
-		});
+				)
+				return { ...ex, sets }
+			})
+			if (user?.uid) firestoreUpsertSession(user.uid, next)
+			return next
+		})
 	}
 
 	function addSet(exerciseIndex) {
 		setSession((prev) => {
-			if (!prev) return prev;
-			const exercise = prev.exercises[exerciseIndex];
-			const newSetIndex = exercise.sets.length + 1;
+			if (!prev) return prev
+			const exercise = prev.exercises[exerciseIndex]
+			const newSetIndex = exercise.sets.length + 1
 
-			const exKey = normalizeExerciseKey(exercise.name);
+			const exKey = normalizeExerciseKey(exercise.name)
 			const defaultWeight =
 				exerciseDefaults?.[exKey]?.defaultWeight != null
 					? String(exerciseDefaults[exKey].defaultWeight)
-					: '';
+					: ''
 
 			const next = {
 				...prev,
@@ -522,27 +538,27 @@ export default function WorkoutSessionScreen() {
 							}
 						: ex
 				)
-			};
+			}
 
-			if (user?.uid) firestoreUpsertSession(user.uid, next);
-			return next;
-		});
+			if (user?.uid) firestoreUpsertSession(user.uid, next)
+			return next
+		})
 	}
 
 	function removeSet(exerciseIndex, setIndex) {
 		setSession((prev) => {
-			if (!prev) return prev;
-			const exercise = prev.exercises[exerciseIndex];
+			if (!prev) return prev
+			const exercise = prev.exercises[exerciseIndex]
 
 			if (exercise.sets.length <= 1) {
-				Alert.alert('Cannot remove', 'Exercise must have at least one set.');
-				return prev;
+				Alert.alert('Cannot remove', 'Exercise must have at least one set.')
+				return prev
 			}
 
-			const setToRemove = exercise.sets.find((s) => s.setIndex === setIndex);
+			const setToRemove = exercise.sets.find((s) => s.setIndex === setIndex)
 			if (setToRemove?.saved) {
-				Alert.alert('Cannot remove', 'Cannot remove a saved set.');
-				return prev;
+				Alert.alert('Cannot remove', 'Cannot remove a saved set.')
+				return prev
 			}
 
 			const next = {
@@ -557,11 +573,11 @@ export default function WorkoutSessionScreen() {
 							}
 						: ex
 				)
-			};
+			}
 
-			if (user?.uid) firestoreUpsertSession(user.uid, next);
-			return next;
-		});
+			if (user?.uid) firestoreUpsertSession(user.uid, next)
+			return next
+		})
 	}
 
 	function editSet(exerciseIndex, setIndex) {
@@ -574,7 +590,7 @@ export default function WorkoutSessionScreen() {
 				text: 'Unlock',
 				onPress: () => {
 					setSession((prev) => {
-						if (!prev) return prev;
+						if (!prev) return prev
 						const next = {
 							...prev,
 							exercises: prev.exercises.map((ex, i) =>
@@ -589,46 +605,46 @@ export default function WorkoutSessionScreen() {
 										}
 									: ex
 							)
-						};
+						}
 
-						if (user?.uid) firestoreUpsertSession(user.uid, next);
-						return next;
-					});
+						if (user?.uid) firestoreUpsertSession(user.uid, next)
+						return next
+					})
 				}
 			}
-		]);
+		])
 	}
 
 	async function maybeSuggestProgressiveOverload({ exercise, set }) {
-		if (!user?.uid) return;
+		if (!user?.uid) return
 
 		try {
-			if (!exercise || !set) return;
+			if (!exercise || !set) return
 
-			if (!isNumericTargetReps(exercise.targetReps)) return;
+			if (!isNumericTargetReps(exercise.targetReps)) return
 
-			const totalSets = exercise.sets?.length || 0;
-			const isLastSet = totalSets > 0 && set.setIndex === totalSets;
-			if (!isLastSet) return;
+			const totalSets = exercise.sets?.length || 0
+			const isLastSet = totalSets > 0 && set.setIndex === totalSets
+			if (!isLastSet) return
 
-			const reps = Number(set.reps);
-			const weight = Number(set.weight);
-			const target = Number(exercise.targetReps);
+			const reps = Number(set.reps)
+			const weight = Number(set.weight)
+			const target = Number(exercise.targetReps)
 
 			if (
 				!Number.isFinite(reps) ||
 				!Number.isFinite(weight) ||
 				!Number.isFinite(target)
 			)
-				return;
+				return
 
-			const hitTarget = reps >= target;
-			if (!hitTarget) return;
+			const hitTarget = reps >= target
+			if (!hitTarget) return
 
-			const nextWeight = weight + 5;
-			const key = normalizeExerciseKey(exercise.name);
+			const nextWeight = weight + 5
+			const key = normalizeExerciseKey(exercise.name)
 
-			const current = await loadExerciseDefaults(user.uid);
+			const current = await loadExerciseDefaults(user.uid)
 			const updated = {
 				...current,
 				[key]: {
@@ -636,49 +652,49 @@ export default function WorkoutSessionScreen() {
 					updatedAt: new Date().toISOString(),
 					reason: `Hit ${reps}/${target} on last set`
 				}
-			};
+			}
 
-			await saveExerciseDefaults(user.uid, updated);
-			setExerciseDefaults(updated);
+			await saveExerciseDefaults(user.uid, updated)
+			setExerciseDefaults(updated)
 
 			Alert.alert(
 				'Progressive Overload',
 				`Nice work! You hit ${reps} reps on your last set.\n\nNext time for ${exercise.name}, I'll prefill ${nextWeight} lbs (+5).`
-			);
+			)
 		} catch (e) {
-			console.warn('Progressive overload save failed:', e);
+			console.warn('Progressive overload save failed:', e)
 		}
 	}
 
 	function getPreviousSet(exerciseName, setIndex) {
-		const exerciseData = previousSessionData[exerciseName];
-		if (!exerciseData) return null;
+		const exerciseData = previousSessionData[exerciseName]
+		if (!exerciseData) return null
 
-		const prevSet = exerciseData.find((s) => s.setIndex === setIndex);
-		return prevSet || null;
+		const prevSet = exerciseData.find((s) => s.setIndex === setIndex)
+		return prevSet || null
 	}
 
 	function saveSet(exerciseIndex, setIndex) {
 		setSession((prev) => {
-			if (!prev) return prev;
-			const ex = prev.exercises[exerciseIndex];
-			const set = ex.sets.find((s) => s.setIndex === setIndex);
-			if (!set) return prev;
+			if (!prev) return prev
+			const ex = prev.exercises[exerciseIndex]
+			const set = ex.sets.find((s) => s.setIndex === setIndex)
+			if (!set) return prev
 
 			if (set.saved) {
-				Alert.alert('Already saved', 'This set is already saved.');
-				return prev;
+				Alert.alert('Already saved', 'This set is already saved.')
+				return prev
 			}
 
-			const err = validateSetBeforeSave(ex, set);
+			const err = validateSetBeforeSave(ex, set)
 			if (err) {
-				Alert.alert('Missing info', err);
-				return prev;
+				Alert.alert('Missing info', err)
+				return prev
 			}
 
-			const next = { ...prev };
+			const next = { ...prev }
 			next.exercises = prev.exercises.map((exercise, i) => {
-				if (i !== exerciseIndex) return exercise;
+				if (i !== exerciseIndex) return exercise
 				return {
 					...exercise,
 					sets: exercise.sets.map((s) =>
@@ -686,54 +702,54 @@ export default function WorkoutSessionScreen() {
 							? { ...s, saved: true, savedAt: new Date().toISOString() }
 							: s
 					)
-				};
-			});
+				}
+			})
 
-			if (user?.uid) firestoreUpsertSession(user.uid, next);
+			if (user?.uid) firestoreUpsertSession(user.uid, next)
 
-			const updatedExercise = next.exercises[exerciseIndex];
+			const updatedExercise = next.exercises[exerciseIndex]
 			const updatedSet = updatedExercise.sets.find(
 				(s) => s.setIndex === setIndex
-			);
+			)
 			maybeSuggestProgressiveOverload({
 				exercise: updatedExercise,
 				set: updatedSet
-			});
+			})
 
-			const completed = isExerciseCompleted(updatedExercise);
+			const completed = isExerciseCompleted(updatedExercise)
 
 			if (completed) {
 				startRestTimer({
 					seconds: 120,
 					context: { type: 'exercise', exerciseName: updatedExercise.name }
-				});
+				})
 			} else {
 				startRestTimer({
 					seconds: 90,
 					context: { type: 'set', exerciseName: updatedExercise.name, setIndex }
-				});
+				})
 			}
 
-			return next;
-		});
+			return next
+		})
 	}
 
 	async function finishWorkout() {
-		if (!session || !user?.uid) return;
+		if (!session || !user?.uid) return
 
 		const hasAnySaved = session.exercises.some((ex) =>
 			ex.sets.some((s) => s.saved)
-		);
+		)
 
 		if (!hasAnySaved) {
-			Alert.alert('Nothing saved', 'Save at least one set before finishing.');
-			return;
+			Alert.alert('Nothing saved', 'Save at least one set before finishing.')
+			return
 		}
 
 		try {
-			const result = await markSessionCompleted(user.uid, session.id);
+			const result = await markSessionCompleted(user.uid, session.id)
 
-			stopRestTimer();
+			stopRestTimer()
 
 			if (result?.weekAdvancement?.shouldAdvance) {
 				Alert.alert('🎉 Week Complete!', result.weekAdvancement.message, [
@@ -741,14 +757,14 @@ export default function WorkoutSessionScreen() {
 						text: 'Awesome!',
 						onPress: () => router.back()
 					}
-				]);
+				])
 			} else {
-				Alert.alert('Workout saved', 'Session marked as completed.');
-				router.back();
+				Alert.alert('Workout saved', 'Session marked as completed.')
+				router.back()
 			}
 		} catch (e) {
-			console.warn(e);
-			Alert.alert('Error', 'Could not finish the workout.');
+			console.warn(e)
+			Alert.alert('Error', 'Could not finish the workout.')
 		}
 	}
 
@@ -763,7 +779,7 @@ export default function WorkoutSessionScreen() {
 					<Text style={styles.loadingText}>Loading session…</Text>
 				</View>
 			</SafeAreaView>
-		);
+		)
 	}
 
 	return (
@@ -815,8 +831,8 @@ export default function WorkoutSessionScreen() {
 				<SwapExerciseModal
 					visible={swapModalVisible}
 					onClose={() => {
-						setSwapModalVisible(false);
-						setSwapExerciseIndex(null);
+						setSwapModalVisible(false)
+						setSwapExerciseIndex(null)
 					}}
 					exercise={
 						swapExerciseIndex !== null
@@ -830,7 +846,7 @@ export default function WorkoutSessionScreen() {
 				<FinishWorkoutButton onFinish={finishWorkout} />
 			</KeyboardAvoidingView>
 		</SafeAreaView>
-	);
+	)
 }
 
 const styles = StyleSheet.create({
@@ -838,4 +854,4 @@ const styles = StyleSheet.create({
 	container: { flex: 1, paddingHorizontal: 18, paddingTop: 8 },
 	loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 	loadingText: { fontSize: 14, color: '#999999', fontFamily: FontFamily.black }
-});
+})
