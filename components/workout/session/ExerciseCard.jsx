@@ -1,6 +1,6 @@
-import { StyleSheet, View } from 'react-native';
-import ExerciseHeader from './ExerciseHeader';
-import SetTable from './SetTable';
+import { StyleSheet, View } from 'react-native'
+import ExerciseHeader from './ExerciseHeader'
+import SetTable from './SetTable'
 
 export default function ExerciseCard({
 	exercise,
@@ -8,6 +8,7 @@ export default function ExerciseCard({
 	isCompleted,
 	onToggleExpanded,
 	onOpenSwap,
+	removeExercise,
 	updateSetField,
 	saveSet,
 	removeSet,
@@ -25,6 +26,7 @@ export default function ExerciseCard({
 				completed={isCompleted}
 				onToggle={() => onToggleExpanded(exerciseIndex)}
 				onOpenSwap={onOpenSwap}
+				removeExercise={removeExercise}
 			/>
 
 			{exercise.expanded && (
@@ -42,7 +44,7 @@ export default function ExerciseCard({
 				/>
 			)}
 		</View>
-	);
+	)
 }
 
 const styles = StyleSheet.create({
@@ -54,4 +56,4 @@ const styles = StyleSheet.create({
 		padding: 14,
 		marginBottom: 12
 	}
-});
+})

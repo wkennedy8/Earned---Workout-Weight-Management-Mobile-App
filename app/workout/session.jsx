@@ -1,3 +1,4 @@
+import AddExerciseModal from '@/components/AddExerciseModal'
 import SwapExerciseModal from '@/components/SwapExerciseModal'
 import ExerciseCard from '@/components/workout/session/ExerciseCard'
 import FinishWorkoutButton from '@/components/workout/session/FinishWorkoutButton'
@@ -30,6 +31,7 @@ import {
 import { playChime } from '@/utils/timerUtils'
 import { PLAN } from '@/utils/workoutPlan'
 import { normalizeExerciseKey, normalizeNumberText } from '@/utils/workoutUtils'
+import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -72,6 +74,7 @@ export default function WorkoutSessionScreen() {
 	const [loading, setLoading] = useState(true)
 	const [exerciseDefaults, setExerciseDefaults] = useState({})
 	const [swapModalVisible, setSwapModalVisible] = useState(false)
+	const [addModalVisible, setAddModalVisible] = useState(false)
 	const [swapExerciseIndex, setSwapExerciseIndex] = useState(null)
 	const [currentWeek, setCurrentWeek] = useState(1)
 	const [template, setTemplate] = useState(null)
@@ -425,6 +428,36 @@ export default function WorkoutSessionScreen() {
 		setSwapModalVisible(true)
 	}
 
+	function removeExercise(exerciseIndex) {
+		const exercise = session.exercises[exerciseIndex]
+		const hasSavedSets = exercise.sets.some((s) => s.saved)
+
+		Alert.alert(
+			'Remove Exercise',
+			hasSavedSets
+				? `${exercise.name} has saved sets. Are you sure you want to remove it?`
+				: `Remove ${exercise.name} from this session?`,
+			[
+				{ text: 'Cancel', style: 'cancel' },
+				{
+					text: 'Remove',
+					style: 'destructive',
+					onPress: () => {
+						setSession((prev) => {
+							if (!prev) return prev
+							const next = {
+								...prev,
+								exercises: prev.exercises.filter((_, i) => i !== exerciseIndex)
+							}
+							if (user?.uid) firestoreUpsertSession(user.uid, next)
+							return next
+						})
+					}
+				}
+			]
+		)
+	}
+
 	async function handleSwapExercise(alternative) {
 		if (swapExerciseIndex === null) return
 
@@ -478,6 +511,50 @@ export default function WorkoutSessionScreen() {
 
 		setSwapModalVisible(false)
 		setSwapExerciseIndex(null)
+	}
+
+	async function handleAddExercise(libraryExercise) {
+		const [smartWeight, prevData] = await Promise.all([
+			user?.uid
+				? getSmartDefaultWeight(user.uid, libraryExercise.name, template.id)
+				: null,
+			user?.uid
+				? getPreviousExerciseData(user.uid, template.id, libraryExercise.name)
+				: null
+		])
+
+		if (prevData) {
+			setPreviousSessionData((prev) => ({
+				...prev,
+				[libraryExercise.name]: prevData
+			}))
+		}
+
+		const defaultWeight = smartWeight != null ? String(smartWeight) : ''
+		const numSets = libraryExercise.defaultSets ?? 3
+
+		const newExercise = {
+			name: libraryExercise.name,
+			targetSets: String(numSets),
+			targetReps: libraryExercise.defaultReps ?? '10-12',
+			note: '',
+			isCustomAdded: true,
+			expanded: true,
+			sets: Array.from({ length: numSets }, (_, i) => ({
+				setIndex: i + 1,
+				weight: defaultWeight,
+				reps: '',
+				saved: false,
+				savedAt: null
+			}))
+		}
+
+		setSession((prev) => {
+			if (!prev) return prev
+			const next = { ...prev, exercises: [...prev.exercises, newExercise] }
+			if (user?.uid) firestoreUpsertSession(user.uid, next)
+			return next
+		})
 	}
 
 	function toggleExpanded(exerciseIndex) {
@@ -842,6 +919,7 @@ export default function WorkoutSessionScreen() {
 							isCompleted={isExerciseCompleted(item)}
 							onToggleExpanded={toggleExpanded}
 							onOpenSwap={openSwapModal}
+							removeExercise={removeExercise}
 							updateSetField={updateSetField}
 							saveSet={saveSet}
 							removeSet={removeSet}
@@ -851,6 +929,16 @@ export default function WorkoutSessionScreen() {
 							getPreviousSet={getPreviousSet}
 						/>
 					)}
+					ListFooterComponent={
+						<TouchableOpacity
+							style={styles.addExerciseBtn}
+							onPress={() => setAddModalVisible(true)}
+							activeOpacity={0.8}
+						>
+							<Ionicons name='add-circle-outline' size={20} color='#AFFF2B' />
+							<Text style={styles.addExerciseBtnText}>Add Exercise</Text>
+						</TouchableOpacity>
+					}
 				/>
 
 				<SwapExerciseModal
@@ -866,6 +954,12 @@ export default function WorkoutSessionScreen() {
 					}
 					templateId={template.id}
 					onSwap={handleSwapExercise}
+				/>
+
+				<AddExerciseModal
+					visible={addModalVisible}
+					onClose={() => setAddModalVisible(false)}
+					onAdd={handleAddExercise}
 				/>
 
 				<FinishWorkoutButton onFinish={finishWorkout} />
@@ -918,5 +1012,24 @@ const styles = StyleSheet.create({
 		fontSize: 12,
 		fontFamily: FontFamily.black,
 		color: '#FFFFFF'
+	},
+	addExerciseBtn: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+		gap: 8,
+		marginTop: 4,
+		marginBottom: 16,
+		paddingVertical: 14,
+		borderRadius: 14,
+		borderWidth: 1,
+		borderColor: '#AFFF2B',
+		borderStyle: 'dashed',
+		backgroundColor: 'rgba(175, 255, 43, 0.05)'
+	},
+	addExerciseBtnText: {
+		fontSize: 15,
+		fontFamily: FontFamily.black,
+		color: '#AFFF2B'
 	}
 })

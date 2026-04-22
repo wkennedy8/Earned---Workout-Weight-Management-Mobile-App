@@ -1,0 +1,1094 @@
+{
+	"exercises": [
+		{
+			"id": "barbell-bench-press",
+			"name": "Barbell Bench Press",
+			"muscleGroup": "Chest",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "8-10",
+			"tags": ["compound", "push", "chest"]
+		},
+		{
+			"id": "bench-press",
+			"name": "Bench Press",
+			"muscleGroup": "Chest",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "push", "chest"]
+		},
+		{
+			"id": "incline-db-bench-press",
+			"name": "Incline DB Bench Press",
+			"muscleGroup": "Chest",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "push", "chest"]
+		},
+		{
+			"id": "incline-barbell-bench-press",
+			"name": "Incline Barbell Bench Press",
+			"muscleGroup": "Chest",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "push", "chest"]
+		},
+		{
+			"id": "incline-machine-press",
+			"name": "Incline Machine Press",
+			"muscleGroup": "Chest",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "push", "chest"]
+		},
+		{
+			"id": "low-incline-db-press",
+			"name": "Low Incline DB Press",
+			"muscleGroup": "Chest",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "push", "chest"]
+		},
+		{
+			"id": "decline-barbell-bench-press",
+			"name": "Decline Barbell Bench Press",
+			"muscleGroup": "Chest",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "push", "chest"]
+		},
+		{
+			"id": "dumbbell-bench-press",
+			"name": "Dumbbell Bench Press",
+			"muscleGroup": "Chest",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "push", "chest"]
+		},
+		{
+			"id": "db-bench-press",
+			"name": "DB Bench Press",
+			"muscleGroup": "Chest",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "8-12",
+			"tags": ["compound", "push", "chest"]
+		},
+		{
+			"id": "machine-chest-press",
+			"name": "Machine Chest Press",
+			"muscleGroup": "Chest",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "push", "chest"]
+		},
+		{
+			"id": "cable-chest-fly",
+			"name": "Cable Chest Fly",
+			"muscleGroup": "Chest",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "push", "chest"]
+		},
+		{
+			"id": "dumbbell-chest-fly",
+			"name": "Dumbbell Chest Fly",
+			"muscleGroup": "Chest",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "push", "chest"]
+		},
+		{
+			"id": "incline-db-fly",
+			"name": "Incline DB Fly",
+			"muscleGroup": "Chest",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "push", "chest"]
+		},
+		{
+			"id": "pec-deck-machine",
+			"name": "Pec Deck Machine",
+			"muscleGroup": "Chest",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "push", "chest"]
+		},
+		{
+			"id": "cable-crossover",
+			"name": "Cable Crossover",
+			"muscleGroup": "Chest",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "push", "chest"]
+		},
+		{
+			"id": "resistance-band-fly",
+			"name": "Resistance Band Fly",
+			"muscleGroup": "Chest",
+			"equipment": "Resistance Band",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "push", "chest"]
+		},
+		{
+			"id": "push-ups",
+			"name": "Push-ups",
+			"muscleGroup": "Chest",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "AMRAP",
+			"tags": ["compound", "push", "chest", "bodyweight"]
+		},
+		{
+			"id": "diamond-push-ups",
+			"name": "Diamond Push-ups",
+			"muscleGroup": "Triceps",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "AMRAP",
+			"tags": ["compound", "push", "triceps", "bodyweight"]
+		},
+		{
+			"id": "chest-dips",
+			"name": "Chest Dips",
+			"muscleGroup": "Chest",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "AMRAP",
+			"tags": ["compound", "push", "chest", "bodyweight"]
+		},
+		{
+			"id": "pullups",
+			"name": "Pullups",
+			"muscleGroup": "Back",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "AMRAP",
+			"tags": ["compound", "pull", "back", "bodyweight"]
+		},
+		{
+			"id": "assisted-pullups",
+			"name": "Assisted Pullups",
+			"muscleGroup": "Back",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "AMRAP",
+			"tags": ["compound", "pull", "back"]
+		},
+		{
+			"id": "chin-ups",
+			"name": "Chin-ups",
+			"muscleGroup": "Back",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "AMRAP",
+			"tags": ["compound", "pull", "back", "biceps", "bodyweight"]
+		},
+		{
+			"id": "weighted-pullups",
+			"name": "Weighted Pullups",
+			"muscleGroup": "Back",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "8-10",
+			"tags": ["compound", "pull", "back"]
+		},
+		{
+			"id": "lat-pulldown",
+			"name": "Lat Pulldown",
+			"muscleGroup": "Back",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "pull", "back"]
+		},
+		{
+			"id": "wide-grip-pulldown",
+			"name": "Wide Grip Pulldown",
+			"muscleGroup": "Back",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "pull", "back"]
+		},
+		{
+			"id": "close-grip-pulldown",
+			"name": "Close Grip Pulldown",
+			"muscleGroup": "Back",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "pull", "back"]
+		},
+		{
+			"id": "single-arm-pulldown",
+			"name": "Single Arm Pulldown",
+			"muscleGroup": "Back",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "pull", "back"]
+		},
+		{
+			"id": "barbell-row",
+			"name": "Barbell Row",
+			"muscleGroup": "Back",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "8-10",
+			"tags": ["compound", "pull", "back"]
+		},
+		{
+			"id": "seated-cable-row",
+			"name": "Seated Cable Row",
+			"muscleGroup": "Back",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "pull", "back"]
+		},
+		{
+			"id": "high-row",
+			"name": "High Row",
+			"muscleGroup": "Back",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "pull", "back"]
+		},
+		{
+			"id": "cable-high-row",
+			"name": "Cable High Row",
+			"muscleGroup": "Back",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "pull", "back"]
+		},
+		{
+			"id": "chest-supported-row",
+			"name": "Chest Supported Row",
+			"muscleGroup": "Back",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "pull", "back"]
+		},
+		{
+			"id": "t-bar-row",
+			"name": "T-Bar Row",
+			"muscleGroup": "Back",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "pull", "back"]
+		},
+		{
+			"id": "dumbbell-row",
+			"name": "Dumbbell Row",
+			"muscleGroup": "Back",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "pull", "back"]
+		},
+		{
+			"id": "single-arm-db-row",
+			"name": "Single Arm DB Row",
+			"muscleGroup": "Back",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["compound", "pull", "back"]
+		},
+		{
+			"id": "machine-row",
+			"name": "Machine Row",
+			"muscleGroup": "Back",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "pull", "back"]
+		},
+		{
+			"id": "inverted-rows",
+			"name": "Inverted Rows",
+			"muscleGroup": "Back",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "pull", "back", "bodyweight"]
+		},
+		{
+			"id": "deadlift",
+			"name": "Deadlift",
+			"muscleGroup": "Back",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "6-8",
+			"tags": ["compound", "pull", "back", "legs"]
+		},
+		{
+			"id": "deadlift-conventional-or-trap-bar",
+			"name": "Deadlift (Conventional or Trap Bar)",
+			"muscleGroup": "Back",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "5-8",
+			"tags": ["compound", "pull", "back", "legs"]
+		},
+		{
+			"id": "rack-pulls",
+			"name": "Rack Pulls",
+			"muscleGroup": "Back",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "6-8",
+			"tags": ["compound", "pull", "back"]
+		},
+		{
+			"id": "face-pulls",
+			"name": "Face Pulls",
+			"muscleGroup": "Shoulders",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "15-20",
+			"tags": ["isolation", "pull", "shoulders", "rear-delt"]
+		},
+		{
+			"id": "rear-delt-cable-fly",
+			"name": "Rear Delt Cable Fly",
+			"muscleGroup": "Shoulders",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "pull", "shoulders", "rear-delt"]
+		},
+		{
+			"id": "reverse-pec-deck",
+			"name": "Reverse Pec Deck",
+			"muscleGroup": "Shoulders",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "pull", "shoulders", "rear-delt"]
+		},
+		{
+			"id": "bent-over-rear-delt-raise",
+			"name": "Bent Over Rear Delt Raise",
+			"muscleGroup": "Shoulders",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "pull", "shoulders", "rear-delt"]
+		},
+		{
+			"id": "seated-db-military-press",
+			"name": "Seated DB Military Press",
+			"muscleGroup": "Shoulders",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "push", "shoulders"]
+		},
+		{
+			"id": "seated-db-shoulder-press",
+			"name": "Seated DB Shoulder Press",
+			"muscleGroup": "Shoulders",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "8-12",
+			"tags": ["compound", "push", "shoulders"]
+		},
+		{
+			"id": "standing-military-press",
+			"name": "Standing Military Press",
+			"muscleGroup": "Shoulders",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "8-10",
+			"tags": ["compound", "push", "shoulders"]
+		},
+		{
+			"id": "seated-barbell-military-press",
+			"name": "Seated Barbell Military Press",
+			"muscleGroup": "Shoulders",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "8-10",
+			"tags": ["compound", "push", "shoulders"]
+		},
+		{
+			"id": "machine-shoulder-press",
+			"name": "Machine Shoulder Press",
+			"muscleGroup": "Shoulders",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "push", "shoulders"]
+		},
+		{
+			"id": "arnold-press",
+			"name": "Arnold Press",
+			"muscleGroup": "Shoulders",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "push", "shoulders"]
+		},
+		{
+			"id": "barbell-military-press",
+			"name": "Barbell Military Press",
+			"muscleGroup": "Shoulders",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "8-10",
+			"tags": ["compound", "push", "shoulders"]
+		},
+		{
+			"id": "lateral-raises",
+			"name": "Lateral Raises",
+			"muscleGroup": "Shoulders",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "push", "shoulders"]
+		},
+		{
+			"id": "cable-lateral-raises",
+			"name": "Cable Lateral Raises",
+			"muscleGroup": "Shoulders",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "push", "shoulders"]
+		},
+		{
+			"id": "machine-lateral-raises",
+			"name": "Machine Lateral Raises",
+			"muscleGroup": "Shoulders",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "push", "shoulders"]
+		},
+		{
+			"id": "front-raises",
+			"name": "Front Raises",
+			"muscleGroup": "Shoulders",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "push", "shoulders"]
+		},
+		{
+			"id": "upright-rows",
+			"name": "Upright Rows",
+			"muscleGroup": "Shoulders",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "pull", "shoulders"]
+		},
+		{
+			"id": "db-shrugs",
+			"name": "DB Shrugs",
+			"muscleGroup": "Shoulders",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "pull", "shoulders", "traps"]
+		},
+		{
+			"id": "barbell-shrugs",
+			"name": "Barbell Shrugs",
+			"muscleGroup": "Shoulders",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "pull", "shoulders", "traps"]
+		},
+		{
+			"id": "skull-crushers",
+			"name": "Skull Crushers",
+			"muscleGroup": "Triceps",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "push", "triceps"]
+		},
+		{
+			"id": "overhead-triceps-extension",
+			"name": "Overhead Triceps Extension",
+			"muscleGroup": "Triceps",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "push", "triceps"]
+		},
+		{
+			"id": "overhead-cable-extension",
+			"name": "Overhead Cable Extension",
+			"muscleGroup": "Triceps",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "push", "triceps"]
+		},
+		{
+			"id": "overhead-cable-triceps-extension",
+			"name": "Overhead Cable Triceps Extension",
+			"muscleGroup": "Triceps",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "push", "triceps"]
+		},
+		{
+			"id": "rope-pulldowns",
+			"name": "Rope Pulldowns",
+			"muscleGroup": "Triceps",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "push", "triceps"]
+		},
+		{
+			"id": "rope-triceps-pushdowns",
+			"name": "Rope Triceps Pushdowns",
+			"muscleGroup": "Triceps",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "push", "triceps"]
+		},
+		{
+			"id": "single-arm-cable-pushdown",
+			"name": "Single Arm Cable Pushdown",
+			"muscleGroup": "Triceps",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "push", "triceps"]
+		},
+		{
+			"id": "close-grip-bench-press",
+			"name": "Close Grip Bench Press",
+			"muscleGroup": "Triceps",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "push", "triceps", "chest"]
+		},
+		{
+			"id": "triceps-dips",
+			"name": "Triceps Dips",
+			"muscleGroup": "Triceps",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "AMRAP",
+			"tags": ["compound", "push", "triceps", "bodyweight"]
+		},
+		{
+			"id": "tricep-kickbacks",
+			"name": "Tricep Kickbacks",
+			"muscleGroup": "Triceps",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "push", "triceps"]
+		},
+		{
+			"id": "hammer-curls",
+			"name": "Hammer Curls",
+			"muscleGroup": "Biceps",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "pull", "biceps"]
+		},
+		{
+			"id": "dumbbell-curls",
+			"name": "Dumbbell Curls",
+			"muscleGroup": "Biceps",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "pull", "biceps"]
+		},
+		{
+			"id": "barbell-curls",
+			"name": "Barbell Curls",
+			"muscleGroup": "Biceps",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "pull", "biceps"]
+		},
+		{
+			"id": "ez-bar-curls",
+			"name": "EZ Bar Curls",
+			"muscleGroup": "Biceps",
+			"equipment": "EZ Bar",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "pull", "biceps"]
+		},
+		{
+			"id": "cable-curls",
+			"name": "Cable Curls",
+			"muscleGroup": "Biceps",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "pull", "biceps"]
+		},
+		{
+			"id": "preacher-curls",
+			"name": "Preacher Curls",
+			"muscleGroup": "Biceps",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "pull", "biceps"]
+		},
+		{
+			"id": "machine-preacher-curls",
+			"name": "Machine Preacher Curls",
+			"muscleGroup": "Biceps",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "pull", "biceps"]
+		},
+		{
+			"id": "cable-preacher-curls",
+			"name": "Cable Preacher Curls",
+			"muscleGroup": "Biceps",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "pull", "biceps"]
+		},
+		{
+			"id": "spider-curls",
+			"name": "Spider Curls",
+			"muscleGroup": "Biceps",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "pull", "biceps"]
+		},
+		{
+			"id": "concentration-curls",
+			"name": "Concentration Curls",
+			"muscleGroup": "Biceps",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "pull", "biceps"]
+		},
+		{
+			"id": "incline-db-curl",
+			"name": "Incline DB Curl",
+			"muscleGroup": "Biceps",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "pull", "biceps"]
+		},
+		{
+			"id": "reverse-curls",
+			"name": "Reverse Curls",
+			"muscleGroup": "Biceps",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "pull", "biceps", "forearms"]
+		},
+		{
+			"id": "squat",
+			"name": "Squat",
+			"muscleGroup": "Legs",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "8-12",
+			"tags": ["compound", "legs", "quads", "glutes"]
+		},
+		{
+			"id": "back-squat",
+			"name": "Back Squat",
+			"muscleGroup": "Legs",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "8-10",
+			"tags": ["compound", "legs", "quads", "glutes"]
+		},
+		{
+			"id": "front-squat",
+			"name": "Front Squat",
+			"muscleGroup": "Legs",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "8-10",
+			"tags": ["compound", "legs", "quads"]
+		},
+		{
+			"id": "goblet-squat",
+			"name": "Goblet Squat",
+			"muscleGroup": "Legs",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "legs", "quads"]
+		},
+		{
+			"id": "sumo-squat",
+			"name": "Sumo Squat",
+			"muscleGroup": "Legs",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "legs", "quads", "glutes"]
+		},
+		{
+			"id": "hack-squat",
+			"name": "Hack Squat",
+			"muscleGroup": "Legs",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "legs", "quads"]
+		},
+		{
+			"id": "leg-press",
+			"name": "Leg Press",
+			"muscleGroup": "Legs",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "legs", "quads", "glutes"]
+		},
+		{
+			"id": "bulgarian-split-squat",
+			"name": "Bulgarian Split Squat",
+			"muscleGroup": "Legs",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "legs", "quads", "glutes"]
+		},
+		{
+			"id": "walking-lunges",
+			"name": "Walking Lunges",
+			"muscleGroup": "Legs",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "legs", "quads", "glutes"]
+		},
+		{
+			"id": "step-ups",
+			"name": "Step-ups",
+			"muscleGroup": "Legs",
+			"equipment": "Dumbbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "legs", "quads", "glutes"]
+		},
+		{
+			"id": "leg-extensions",
+			"name": "Leg Extensions",
+			"muscleGroup": "Legs",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "legs", "quads"]
+		},
+		{
+			"id": "sissy-squat",
+			"name": "Sissy Squat",
+			"muscleGroup": "Legs",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "legs", "quads", "bodyweight"]
+		},
+		{
+			"id": "romanian-deadlift",
+			"name": "Romanian Deadlift",
+			"muscleGroup": "Legs",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "legs", "hamstrings", "glutes"]
+		},
+		{
+			"id": "seated-leg-curl",
+			"name": "Seated Leg Curl",
+			"muscleGroup": "Legs",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "legs", "hamstrings"]
+		},
+		{
+			"id": "lying-leg-curl",
+			"name": "Lying Leg Curl",
+			"muscleGroup": "Legs",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "legs", "hamstrings"]
+		},
+		{
+			"id": "standing-leg-curl",
+			"name": "Standing Leg Curl",
+			"muscleGroup": "Legs",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "legs", "hamstrings"]
+		},
+		{
+			"id": "nordic-curl",
+			"name": "Nordic Curl",
+			"muscleGroup": "Legs",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "8-10",
+			"tags": ["isolation", "legs", "hamstrings", "bodyweight"]
+		},
+		{
+			"id": "good-mornings",
+			"name": "Good Mornings",
+			"muscleGroup": "Legs",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "legs", "hamstrings", "back"]
+		},
+		{
+			"id": "standing-calf-raises",
+			"name": "Standing Calf Raises",
+			"muscleGroup": "Legs",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "legs", "calves"]
+		},
+		{
+			"id": "seated-calf-raises",
+			"name": "Seated Calf Raises",
+			"muscleGroup": "Legs",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "legs", "calves"]
+		},
+		{
+			"id": "calf-press-on-leg-press",
+			"name": "Calf Press on Leg Press",
+			"muscleGroup": "Legs",
+			"equipment": "Machine",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "legs", "calves"]
+		},
+		{
+			"id": "single-leg-calf-raises",
+			"name": "Single Leg Calf Raises",
+			"muscleGroup": "Legs",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "legs", "calves", "bodyweight"]
+		},
+		{
+			"id": "hip-thrust",
+			"name": "Hip Thrust",
+			"muscleGroup": "Glutes",
+			"equipment": "Barbell",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "glutes", "legs"]
+		},
+		{
+			"id": "glute-bridge",
+			"name": "Glute Bridge",
+			"muscleGroup": "Glutes",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["compound", "glutes", "legs", "bodyweight"]
+		},
+		{
+			"id": "cable-kickbacks",
+			"name": "Cable Kickbacks",
+			"muscleGroup": "Glutes",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "glutes"]
+		},
+		{
+			"id": "hyperextensions",
+			"name": "Hyperextensions",
+			"muscleGroup": "Back",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "back", "hamstrings", "glutes"]
+		},
+		{
+			"id": "box-jumps",
+			"name": "Box Jumps",
+			"muscleGroup": "Legs",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "8-10",
+			"tags": ["compound", "legs", "power", "bodyweight"]
+		},
+		{
+			"id": "cable-crunch",
+			"name": "Cable Crunch",
+			"muscleGroup": "Core",
+			"equipment": "Cable",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "core", "abs"]
+		},
+		{
+			"id": "weighted-crunch",
+			"name": "Weighted Crunch",
+			"muscleGroup": "Core",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "core", "abs"]
+		},
+		{
+			"id": "ab-wheel-rollout",
+			"name": "Ab Wheel Rollout",
+			"muscleGroup": "Core",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["compound", "core", "abs", "bodyweight"]
+		},
+		{
+			"id": "hanging-leg-raises",
+			"name": "Hanging Leg Raises",
+			"muscleGroup": "Core",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "core", "abs", "bodyweight"]
+		},
+		{
+			"id": "reverse-crunches",
+			"name": "Reverse Crunches",
+			"muscleGroup": "Core",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "15-20",
+			"tags": ["isolation", "core", "abs", "bodyweight"]
+		},
+		{
+			"id": "plank",
+			"name": "Plank",
+			"muscleGroup": "Core",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "time",
+			"tags": ["isolation", "core", "abs", "bodyweight"]
+		},
+		{
+			"id": "mountain-climbers",
+			"name": "Mountain Climbers",
+			"muscleGroup": "Core",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "time",
+			"tags": ["compound", "core", "abs", "bodyweight"]
+		},
+		{
+			"id": "v-ups",
+			"name": "V-Ups",
+			"muscleGroup": "Core",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "core", "abs", "bodyweight"]
+		},
+		{
+			"id": "russian-twists",
+			"name": "Russian Twists",
+			"muscleGroup": "Core",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "20",
+			"tags": ["isolation", "core", "abs", "obliques", "bodyweight"]
+		},
+		{
+			"id": "bicycle-crunches",
+			"name": "Bicycle Crunches",
+			"muscleGroup": "Core",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "20",
+			"tags": ["isolation", "core", "abs", "obliques", "bodyweight"]
+		},
+		{
+			"id": "dead-bug",
+			"name": "Dead Bug",
+			"muscleGroup": "Core",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "10-12",
+			"tags": ["isolation", "core", "abs", "bodyweight"]
+		},
+		{
+			"id": "leg-raises",
+			"name": "Leg Raises",
+			"muscleGroup": "Core",
+			"equipment": "Bodyweight",
+			"defaultSets": 3,
+			"defaultReps": "12-15",
+			"tags": ["isolation", "core", "abs", "bodyweight"]
+		}
+	],
+	"muscleGroups": [
+		"Chest",
+		"Back",
+		"Shoulders",
+		"Biceps",
+		"Triceps",
+		"Legs",
+		"Glutes",
+		"Core"
+	],
+	"equipment": [
+		"Barbell",
+		"Dumbbell",
+		"Cable",
+		"Machine",
+		"Bodyweight",
+		"EZ Bar",
+		"Resistance Band"
+	]
+}

@@ -1,6 +1,6 @@
-import { FontFamily } from '@/constants/fonts';
-import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FontFamily } from '@/constants/fonts'
+import { Ionicons } from '@expo/vector-icons'
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
 export default function ExerciseHeader({
 	exercise,
@@ -8,7 +8,8 @@ export default function ExerciseHeader({
 	expanded,
 	completed,
 	onToggle,
-	onOpenSwap
+	onOpenSwap,
+	removeExercise
 }) {
 	return (
 		<TouchableOpacity
@@ -50,18 +51,30 @@ export default function ExerciseHeader({
 				<TouchableOpacity
 					style={styles.swapButton}
 					onPress={(e) => {
-						e.stopPropagation();
-						onOpenSwap(exerciseIndex);
+						e.stopPropagation()
+						onOpenSwap(exerciseIndex)
 					}}
 					activeOpacity={0.7}
 				>
 					<Ionicons name='swap-horizontal' size={18} color='#AFFF2B' />
 				</TouchableOpacity>
 
+				{/* Remove Button */}
+				<TouchableOpacity
+					style={styles.removeButton}
+					onPress={(e) => {
+						e.stopPropagation()
+						removeExercise(exerciseIndex)
+					}}
+					activeOpacity={0.7}
+				>
+					<Ionicons name='trash-outline' size={16} color='#F87171' />
+				</TouchableOpacity>
+
 				<Text style={styles.chevron}>{expanded ? '˅' : '›'}</Text>
 			</View>
 		</TouchableOpacity>
-	);
+	)
 }
 
 const styles = StyleSheet.create({
@@ -129,5 +142,15 @@ const styles = StyleSheet.create({
 		fontWeight: '900',
 		color: '#666666',
 		marginLeft: 10
+	},
+	removeButton: {
+		width: 36,
+		height: 36,
+		borderRadius: 10,
+		backgroundColor: 'rgba(248, 113, 113, 0.1)',
+		borderWidth: 1,
+		borderColor: '#F87171',
+		alignItems: 'center',
+		justifyContent: 'center'
 	}
-});
+})
