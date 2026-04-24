@@ -1,7 +1,7 @@
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
-import { BlurView } from 'expo-blur';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { IconSymbol } from '@/components/ui/icon-symbol'
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6'
+import { BlurView } from 'expo-blur'
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
 export default function CustomTabBar({ state, descriptors, navigation }) {
 	return (
@@ -9,32 +9,32 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
 			<BlurView intensity={80} tint='dark' style={styles.blurContainer}>
 				<View style={styles.tabBar}>
 					{state.routes.map((route, index) => {
-						const { options } = descriptors[route.key];
+						const { options } = descriptors[route.key]
 						const label =
 							options.tabBarLabel !== undefined
 								? options.tabBarLabel
 								: options.title !== undefined
 									? options.title
-									: route.name;
+									: route.name
 
-						const isFocused = state.index === index;
+						const isFocused = state.index === index
 
 						const onPress = () => {
 							const event = navigation.emit({
 								type: 'tabPress',
 								target: route.key,
 								canPreventDefault: true
-							});
+							})
 
 							if (!isFocused && !event.defaultPrevented) {
-								navigation.navigate(route.name);
+								navigation.navigate(route.name)
 							}
-						};
+						}
 
 						// Render icon based on route name
 						const renderIcon = () => {
-							const iconColor = isFocused ? '#AFFF2B' : '#FFFFFF';
-							const iconOpacity = isFocused ? 1 : 0.5;
+							const iconColor = isFocused ? '#AFFF2B' : '#FFFFFF'
+							const iconOpacity = isFocused ? 1 : 0.5
 
 							switch (route.name) {
 								case 'index':
@@ -45,7 +45,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
 											color={iconColor}
 											style={{ opacity: iconOpacity }}
 										/>
-									);
+									)
 								case 'workout':
 									return (
 										<FontAwesome6
@@ -54,7 +54,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
 											color={iconColor}
 											style={{ opacity: iconOpacity }}
 										/>
-									);
+									)
 								case 'analytics':
 									return (
 										<IconSymbol
@@ -63,11 +63,20 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
 											color={iconColor}
 											style={{ opacity: iconOpacity }}
 										/>
-									);
+									)
+								case 'calendar':
+									return (
+										<FontAwesome6
+											size={20}
+											name='calendar-days'
+											color={iconColor}
+											style={{ opacity: iconOpacity }}
+										/>
+									)
 								default:
-									return null;
+									return null
 							}
-						};
+						}
 
 						return (
 							<TouchableOpacity
@@ -85,12 +94,12 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
 									{label}
 								</Text>
 							</TouchableOpacity>
-						);
+						)
 					})}
 				</View>
 			</BlurView>
 		</View>
-	);
+	)
 }
 
 const styles = StyleSheet.create({
@@ -141,4 +150,4 @@ const styles = StyleSheet.create({
 		fontWeight: '700',
 		color: '#AFFF2B'
 	}
-});
+})

@@ -280,9 +280,23 @@ export default function WorkoutSessionScreen() {
 
 				setExerciseDefaults(smartDefaults)
 
+				const prevSetsCountMap = {}
+				for (const exercise of template.exercises) {
+					const prevData = await getPreviousExerciseData(
+						user.uid,
+						template.id,
+						exercise.name
+					)
+					if (prevData && prevData.length > 0) {
+						prevSetsCountMap[normalizeExerciseKey(exercise.name)] =
+							prevData.length
+					}
+				}
+
 				const created = buildEmptySession({
 					template,
-					defaultsMap: smartDefaults
+					defaultsMap: smartDefaults,
+					prevSetsCountMap
 				})
 				created.exercises[0].expanded = true
 				created.programWeek = currentWeek
