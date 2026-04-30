@@ -1,6 +1,14 @@
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
+const PROGRAM_WEEKS = 8;
+
+function calcEndDate(startDate) {
+	const end = new Date(startDate);
+	end.setDate(end.getDate() + PROGRAM_WEEKS * 7);
+	return end.toISOString();
+}
+
 /**
  * Get the current program week for a user's workout plan
  * @param {string} uid - User ID
@@ -13,20 +21,83 @@ export async function getProgramWeek(uid, planId) {
 		const snapshot = await getDoc(docRef);
 
 		if (!snapshot.exists()) {
-			// First time - initialize at week 1
+			const startDate = new Date().toISOString();
 			await setDoc(docRef, {
 				currentWeek: 1,
-				startDate: new Date().toISOString(),
-				lastUpdated: new Date().toISOString()
+				cycleNumber: 1,
+				startDate,
+				endDate: calcEndDate(startDate),
+				lastUpdated: startDate
 			});
 			return 1;
 		}
 
 		const data = snapshot.data();
+
+		// Backfill endDate and cycleNumber for existing users
+		if (!data.endDate || data.cycleNumber == null) {
+			await setDoc(
+				docRef,
+				{
+					endDate: calcEndDate(data.startDate),
+					cycleNumber: 1
+				},
+				{ merge: true }
+			);
+		}
+
 		return data.currentWeek || 1;
 	} catch (error) {
 		console.error('Error getting program week:', error);
-		return 1; // Default to week 1 on error
+		return 1;
+	}
+}
+
+/**
+ * Get the full lifecycle state of a program
+ * @param {string} uid - User ID
+ * @param {string} planId - Plan ID
+ * @returns {Promise<{ currentWeek: number, cycleNumber: number, startDate: string, endDate: string, completedAt: string|null }>}
+ */
+export async function getProgramProgress(uid, planId) {
+	try {
+		const docRef = doc(db, 'users', uid, 'programProgress', planId);
+		const snapshot = await getDoc(docRef);
+
+		if (!snapshot.exists()) {
+			const startDate = new Date().toISOString();
+			const initial = {
+				currentWeek: 1,
+				cycleNumber: 1,
+				startDate,
+				endDate: calcEndDate(startDate),
+				completedAt: null,
+				lastUpdated: startDate
+			};
+			await setDoc(docRef, initial);
+			return initial;
+		}
+
+		const data = snapshot.data();
+
+		// Backfill missing fields for existing users
+		const updates = {};
+		if (!data.endDate) updates.endDate = calcEndDate(data.startDate);
+		if (data.cycleNumber == null) updates.cycleNumber = 1;
+		if (Object.keys(updates).length > 0) {
+			await setDoc(docRef, updates, { merge: true });
+		}
+
+		return {
+			currentWeek: data.currentWeek || 1,
+			cycleNumber: data.cycleNumber ?? 1,
+			startDate: data.startDate,
+			endDate: data.endDate ?? updates.endDate,
+			completedAt: data.completedAt ?? null
+		};
+	} catch (error) {
+		console.error('Error getting program progress:', error);
+		return { currentWeek: 1, cycleNumber: 1, startDate: null, endDate: null, completedAt: null };
 	}
 }
 
@@ -36,23 +107,25 @@ export async function getProgramWeek(uid, planId) {
  * @param {string} planId - Plan ID
  * @param {number} maxWeeks - Maximum weeks in the program (default: 8)
  */
-export async function advanceProgramWeek(uid, planId, maxWeeks = 8) {
+export async function advanceProgramWeek(uid, planId, maxWeeks = PROGRAM_WEEKS) {
 	try {
 		const currentWeek = await getProgramWeek(uid, planId);
-		const nextWeek = currentWeek >= maxWeeks ? 1 : currentWeek + 1; // Cycle back to week 1 after max weeks
+
+		// Stop at maxWeeks — completion/cycling is handled by weekCompletionController
+		if (currentWeek >= maxWeeks) return currentWeek;
 
 		const docRef = doc(db, 'users', uid, 'programProgress', planId);
 		await setDoc(
 			docRef,
 			{
-				currentWeek: nextWeek,
+				currentWeek: currentWeek + 1,
 				lastUpdated: new Date().toISOString(),
 				previousWeek: currentWeek
 			},
 			{ merge: true }
 		);
 
-		return nextWeek;
+		return currentWeek + 1;
 	} catch (error) {
 		console.error('Error advancing program week:', error);
 		throw error;
@@ -78,6 +151,85 @@ export async function setProgramWeek(uid, planId, weekNumber) {
 		);
 	} catch (error) {
 		console.error('Error setting program week:', error);
+		throw error;
+	}
+}
+
+/**
+ * Reset the current program back to week 1 without incrementing cycleNumber.
+ * Used for mid-cycle restarts where the user didn't complete the program.
+ * @param {string} uid - User ID
+ * @param {string} planId - Plan ID
+ */
+export async function resetProgram(uid, planId) {
+	try {
+		const docRef = doc(db, 'users', uid, 'programProgress', planId);
+		const startDate = new Date().toISOString();
+
+		await setDoc(
+			docRef,
+			{
+				currentWeek: 1,
+				startDate,
+				endDate: calcEndDate(startDate),
+				completedAt: null,
+				lastUpdated: startDate
+			},
+			{ merge: true }
+		);
+	} catch (error) {
+		console.error('Error resetting program:', error);
+		throw error;
+	}
+}
+
+/**
+ * Start a new program cycle — resets week to 1 and increments cycleNumber
+ * @param {string} uid - User ID
+ * @param {string} planId - Plan ID
+ */
+export async function startNewCycle(uid, planId) {
+	try {
+		const docRef = doc(db, 'users', uid, 'programProgress', planId);
+		const snapshot = await getDoc(docRef);
+		const cycleNumber = (snapshot.exists() ? snapshot.data().cycleNumber ?? 1 : 1) + 1;
+		const startDate = new Date().toISOString();
+
+		await setDoc(
+			docRef,
+			{
+				currentWeek: 1,
+				cycleNumber,
+				startDate,
+				endDate: calcEndDate(startDate),
+				completedAt: null,
+				lastUpdated: startDate
+			},
+			{ merge: true }
+		);
+
+		return cycleNumber;
+	} catch (error) {
+		console.error('Error starting new cycle:', error);
+		throw error;
+	}
+}
+
+/**
+ * Mark the current program cycle as completed
+ * @param {string} uid - User ID
+ * @param {string} planId - Plan ID
+ */
+export async function completeProgramCycle(uid, planId) {
+	try {
+		const docRef = doc(db, 'users', uid, 'programProgress', planId);
+		await setDoc(
+			docRef,
+			{ completedAt: new Date().toISOString() },
+			{ merge: true }
+		);
+	} catch (error) {
+		console.error('Error completing program cycle:', error);
 		throw error;
 	}
 }

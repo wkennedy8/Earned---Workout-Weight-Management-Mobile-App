@@ -142,7 +142,7 @@ export const PLAN = {
 						weeklyProgression: [
 							{ weeks: [1, 2], sets: 3, reps: 'AMRAP' },
 							{ weeks: [3, 4], sets: 4, reps: 'AMRAP' },
-							{ weeks: [5, 6], sets: 4, reps: 'AMRAP' },
+							{ weeks: [5, 6], sets: 5, reps: 'AMRAP' },
 							{ weeks: [7, 8], sets: 5, reps: 'AMRAP' }
 						],
 						alternatives: [
@@ -340,8 +340,7 @@ export const PLAN = {
 					{
 						name: 'Reverse Crunches',
 						sets: '3-4',
-						reps: 'time',
-						//note: 'Week 1-2: 30 sec, Week 3-4: 40 sec, Week 5-6: 50 sec, Week 7-8: 60 sec',
+						reps: '25-30',
 						weeklyProgression: [
 							{ weeks: [1, 2], sets: 3, reps: 25 },
 							{ weeks: [3, 4], sets: 3, reps: 30 },
@@ -581,7 +580,7 @@ export const PLAN = {
 						weeklyProgression: [
 							{ weeks: [1, 2], sets: 3, reps: 'AMRAP' },
 							{ weeks: [3, 4], sets: 4, reps: 'AMRAP' },
-							{ weeks: [5, 6], sets: 4, reps: 'AMRAP' },
+							{ weeks: [5, 6], sets: 5, reps: 'AMRAP' },
 							{ weeks: [7, 8], sets: 5, reps: 'AMRAP' }
 						]
 					},
@@ -724,25 +723,25 @@ export const PLAN = {
 					},
 					{
 						name: 'Chest Dips',
-						sets: '3-4',
+						sets: '3-5',
 						reps: 'AMRAP',
 						weeklyProgression: [
 							{ weeks: [1, 2], sets: 3, reps: 'AMRAP' },
-							{ weeks: [3, 4], sets: 3, reps: 'AMRAP' },
-							{ weeks: [5, 6], sets: 4, reps: 'AMRAP' },
-							{ weeks: [7, 8], sets: 4, reps: 'AMRAP' }
+							{ weeks: [3, 4], sets: 4, reps: 'AMRAP' },
+							{ weeks: [5, 6], sets: 5, reps: 'AMRAP' },
+							{ weeks: [7, 8], sets: 5, reps: 'AMRAP' }
 						]
 					},
 					{
 						name: 'Push-ups',
-						sets: '3',
+						sets: '3-4',
 						reps: 'AMRAP',
 						note: 'Burnout set',
 						weeklyProgression: [
 							{ weeks: [1, 2], sets: 3, reps: 'AMRAP' },
 							{ weeks: [3, 4], sets: 3, reps: 'AMRAP' },
-							{ weeks: [5, 6], sets: 3, reps: 'AMRAP' },
-							{ weeks: [7, 8], sets: 3, reps: 'AMRAP' }
+							{ weeks: [5, 6], sets: 4, reps: 'AMRAP' },
+							{ weeks: [7, 8], sets: 4, reps: 'AMRAP' }
 						]
 					}
 				]
@@ -782,7 +781,7 @@ export const PLAN = {
 						weeklyProgression: [
 							{ weeks: [1, 2], sets: 3, reps: 'AMRAP' },
 							{ weeks: [3, 4], sets: 4, reps: 'AMRAP' },
-							{ weeks: [5, 6], sets: 4, reps: 'AMRAP' },
+							{ weeks: [5, 6], sets: 5, reps: 'AMRAP' },
 							{ weeks: [7, 8], sets: 5, reps: 'AMRAP' }
 						]
 					},
@@ -821,13 +820,13 @@ export const PLAN = {
 					},
 					{
 						name: 'Face Pulls',
-						sets: '3-4',
+						sets: '3-5',
 						reps: '15-20',
 						weeklyProgression: [
 							{ weeks: [1, 2], sets: 3, reps: 15 },
-							{ weeks: [3, 4], sets: 3, reps: 20 },
-							{ weeks: [5, 6], sets: 4, reps: 15 },
-							{ weeks: [7, 8], sets: 4, reps: 20 }
+							{ weeks: [3, 4], sets: 4, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 20 },
+							{ weeks: [7, 8], sets: 5, reps: 20 }
 						]
 					}
 				]
@@ -1002,13 +1001,13 @@ export const PLAN = {
 					},
 					{
 						name: 'Seated Calf Raises',
-						sets: '3-4',
+						sets: '3-5',
 						reps: '15-20',
 						weeklyProgression: [
 							{ weeks: [1, 2], sets: 3, reps: 15 },
-							{ weeks: [3, 4], sets: 3, reps: 20 },
-							{ weeks: [5, 6], sets: 4, reps: 15 },
-							{ weeks: [7, 8], sets: 4, reps: 20 }
+							{ weeks: [3, 4], sets: 4, reps: 15 },
+							{ weeks: [5, 6], sets: 4, reps: 20 },
+							{ weeks: [7, 8], sets: 5, reps: 20 }
 						]
 					}
 				]

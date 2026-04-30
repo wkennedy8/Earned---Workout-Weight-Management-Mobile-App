@@ -4,6 +4,7 @@ import {
 	getUserWorkoutPlan,
 	setUserWorkoutPlan
 } from '@/controllers/plansController';
+import { resetProgram } from '@/controllers/programProgressController';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -46,6 +47,30 @@ export default function WorkoutPlanScreen() {
 			}
 		})();
 	}, [user?.uid]);
+
+	async function handleRestartProgram() {
+		if (!user?.uid || !selectedPlan?.id) return;
+
+		Alert.alert(
+			'Restart Program',
+			`Reset ${selectedPlan.title} back to Week 1? Your session history will be kept but your week progress will reset.`,
+			[
+				{ text: 'Cancel', style: 'cancel' },
+				{
+					text: 'Restart',
+					style: 'destructive',
+					onPress: async () => {
+						try {
+							await resetProgram(user.uid, selectedPlan.id);
+							Alert.alert('Restarted', `${selectedPlan.title} has been reset to Week 1.`);
+						} catch (error) {
+							Alert.alert('Error', 'Could not restart the program.');
+						}
+					}
+				}
+			]
+		);
+	}
 
 	async function handleSelectPlan(planId) {
 		if (!user?.uid) return;
@@ -136,6 +161,17 @@ export default function WorkoutPlanScreen() {
 									{Object.keys(plan.workouts).length} workouts per week
 								</Text>
 							</View>
+
+							{selectedPlan?.id === plan.id && (
+								<TouchableOpacity
+									style={styles.restartButton}
+									onPress={handleRestartProgram}
+									activeOpacity={0.8}
+								>
+									<Ionicons name='refresh-outline' size={14} color='#000000' />
+									<Text style={styles.restartButtonText}>Restart Program</Text>
+								</TouchableOpacity>
+							)}
 						</TouchableOpacity>
 					))}
 				</View>
@@ -241,6 +277,21 @@ const styles = StyleSheet.create({
 	planMetaTextActive: {
 		color: '#000000',
 		opacity: 0.6
+	},
+	restartButton: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+		gap: 6,
+		marginTop: 14,
+		paddingVertical: 10,
+		borderRadius: 10,
+		backgroundColor: 'rgba(0,0,0,0.15)'
+	},
+	restartButtonText: {
+		fontSize: 13,
+		fontFamily: FontFamily.black,
+		color: '#000000'
 	},
 
 	comingSoon: {

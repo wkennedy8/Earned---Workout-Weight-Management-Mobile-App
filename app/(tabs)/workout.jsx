@@ -6,8 +6,9 @@ import {
 } from '@/controllers/cardioController';
 import { getUserWorkoutPlan } from '@/controllers/plansController';
 import {
-	getProgramWeek,
-	resolveExerciseProgression
+	getProgramProgress,
+	resolveExerciseProgression,
+	startNewCycle
 } from '@/controllers/programProgressController';
 import {
 	getScheduleOverride,
@@ -90,8 +91,10 @@ export default function WorkoutTab() {
 	const [userPlan, setUserPlan] = useState(null);
 	const [loadingPlan, setLoadingPlan] = useState(true);
 	const [workout, setWorkout] = useState(null);
-	const [currentWeek, setCurrentWeek] = useState(1);
+	const [programProgress, setProgramProgress] = useState(null);
 	const [planId, setPlanId] = useState(null);
+
+	const currentWeek = programProgress?.currentWeek ?? 1;
 
 	const [cardioModalVisible, setCardioModalVisible] = useState(false);
 	const [cardioSession, setCardioSession] = useState(null);
@@ -112,9 +115,9 @@ export default function WorkoutTab() {
 				setUserPlan(plan);
 				setPlanId(plan?.id || 'ppl');
 
-				// Get current program week
-				const week = await getProgramWeek(user.uid, plan?.id || 'ppl');
-				setCurrentWeek(week);
+				const progress = await getProgramProgress(user.uid, plan?.id || 'ppl');
+				setProgramProgress(progress);
+				const week = progress.currentWeek;
 
 				// Load today's workout with override support
 				const todayWorkout = await getWorkoutForDateWithOverride(
@@ -175,9 +178,10 @@ export default function WorkoutTab() {
 			if (!user?.uid || !userPlan) return;
 			(async () => {
 				try {
-					// Reload program week (in case it was advanced elsewhere)
-					const week = await getProgramWeek(user.uid, planId || 'ppl');
-					setCurrentWeek(week);
+					// Reload program progress (picks up completedAt, endDate, week advances)
+					const progress = await getProgramProgress(user.uid, planId || 'ppl');
+					setProgramProgress(progress);
+					const week = progress.currentWeek;
 
 					// Check for schedule override
 					const overriddenWorkout = await getWorkoutForDateWithOverride(
@@ -365,6 +369,17 @@ export default function WorkoutTab() {
 		);
 	}
 
+	async function handleStartNewCycle() {
+		if (!user?.uid || !planId) return;
+		try {
+			await startNewCycle(user.uid, planId);
+			const progress = await getProgramProgress(user.uid, planId);
+			setProgramProgress(progress);
+		} catch (error) {
+			Alert.alert('Error', 'Could not start new cycle.');
+		}
+	}
+
 	// Loading state
 	if (loadingPlan || !workout) {
 		return (
@@ -397,7 +412,18 @@ export default function WorkoutTab() {
 					{/* Week Badge */}
 					{!isRestDay && (
 						<View style={styles.weekBadge}>
-							<Text style={styles.weekBadgeText}>Week {currentWeek}</Text>
+							<Text style={styles.weekBadgeText}>
+								Week {currentWeek} / 8
+							</Text>
+							{programProgress?.endDate && (
+								<Text style={styles.weekBadgeSubtext}>
+									ends{' '}
+									{new Date(programProgress.endDate).toLocaleDateString(
+										undefined,
+										{ month: 'short', day: 'numeric' }
+									)}
+								</Text>
+							)}
 						</View>
 					)}
 				</View>
@@ -594,6 +620,40 @@ export default function WorkoutTab() {
 					</View>
 				) : null}
 
+				{/* Program completion card */}
+				{programProgress?.completedAt && (
+					<View style={styles.completionCard}>
+						<View style={styles.completionIconWrap}>
+							<Ionicons name='trophy' size={32} color='#AFFF2B' />
+						</View>
+						<Text style={styles.completionTitle}>Program Complete!</Text>
+						<Text style={styles.completionSubtitle}>
+							You finished all 8 weeks of {userPlan?.title ?? 'your program'}.
+							{programProgress.cycleNumber > 1
+								? ` Cycle ${programProgress.cycleNumber - 1} done.`
+								: ''}
+						</Text>
+						<View style={styles.completionActions}>
+							<TouchableOpacity
+								style={styles.completionPrimary}
+								onPress={handleStartNewCycle}
+								activeOpacity={0.9}
+							>
+								<Text style={styles.completionPrimaryText}>
+									Start New Cycle
+								</Text>
+							</TouchableOpacity>
+							<TouchableOpacity
+								style={styles.completionSecondary}
+								onPress={() => router.push('/profile/workout-plan')}
+								activeOpacity={0.9}
+							>
+								<Text style={styles.completionSecondaryText}>Switch Plan</Text>
+							</TouchableOpacity>
+						</View>
+					</View>
+				)}
+
 				{/* Exercise list */}
 				{isRestDay ? (
 					<View style={styles.restCard}>
@@ -711,12 +771,80 @@ const styles = StyleSheet.create({
 		borderRadius: 8,
 		backgroundColor: 'rgba(175, 255, 43, 0.15)',
 		borderWidth: 1,
-		borderColor: '#AFFF2B'
+		borderColor: '#AFFF2B',
+		alignItems: 'center'
 	},
 	weekBadgeText: {
 		fontSize: 12,
 		fontFamily: FontFamily.black,
 		color: '#AFFF2B'
+	},
+	weekBadgeSubtext: {
+		fontSize: 10,
+		fontFamily: FontFamily.bold,
+		color: 'rgba(175, 255, 43, 0.7)',
+		marginTop: 1
+	},
+	completionCard: {
+		borderWidth: 1,
+		borderColor: '#AFFF2B',
+		borderRadius: 16,
+		backgroundColor: 'rgba(175, 255, 43, 0.06)',
+		padding: 20,
+		marginBottom: 12,
+		alignItems: 'center'
+	},
+	completionIconWrap: {
+		width: 64,
+		height: 64,
+		borderRadius: 32,
+		backgroundColor: 'rgba(175, 255, 43, 0.15)',
+		alignItems: 'center',
+		justifyContent: 'center',
+		marginBottom: 14
+	},
+	completionTitle: {
+		fontSize: 20,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF',
+		marginBottom: 6
+	},
+	completionSubtitle: {
+		fontSize: 13,
+		fontFamily: FontFamily.bold,
+		color: '#999999',
+		textAlign: 'center',
+		lineHeight: 20,
+		marginBottom: 20,
+		paddingHorizontal: 10
+	},
+	completionActions: {
+		width: '100%',
+		gap: 10
+	},
+	completionPrimary: {
+		height: 50,
+		borderRadius: 14,
+		backgroundColor: '#AFFF2B',
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+	completionPrimaryText: {
+		fontSize: 16,
+		fontFamily: FontFamily.black,
+		color: '#000000'
+	},
+	completionSecondary: {
+		height: 50,
+		borderRadius: 14,
+		backgroundColor: '#2A2A2A',
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+	completionSecondaryText: {
+		fontSize: 16,
+		fontFamily: FontFamily.black,
+		color: '#FFFFFF'
 	},
 	settingsIcon: { fontSize: 20, color: '#999999' },
 

@@ -5,11 +5,7 @@ import FinishWorkoutButton from '@/components/workout/session/FinishWorkoutButto
 import RestTimerModal from '@/components/workout/session/RestTimerModal'
 import SessionHeader from '@/components/workout/session/SessionHeader'
 import { useAuth } from '@/context/AuthContext'
-import {
-	getSmartDefaultWeight,
-	loadExerciseDefaults,
-	saveExerciseDefaults
-} from '@/controllers/exerciseDefaultsController'
+import { getSmartDefaultWeight } from '@/controllers/exerciseDefaultsController'
 import {
 	applyWeeklyProgression,
 	getProgramWeek
@@ -22,10 +18,13 @@ import {
 	getSessionById,
 	markSessionCompleted
 } from '@/controllers/sessionController'
+import {
+	acknowledgeWeightSuggestion,
+	getWeightSuggestion
+} from '@/controllers/weightSuggestionsController'
 import { formatLocalDateKey } from '@/utils/dateUtils'
 import {
 	isExerciseCompleted,
-	isNumericTargetReps,
 	validateSetBeforeSave
 } from '@/utils/sessionUtils'
 import { playChime } from '@/utils/timerUtils'
@@ -79,6 +78,7 @@ export default function WorkoutSessionScreen() {
 	const [currentWeek, setCurrentWeek] = useState(1)
 	const [template, setTemplate] = useState(null)
 	const [previousSessionData, setPreviousSessionData] = useState({})
+	const [weightSuggestions, setWeightSuggestions] = useState({})
 
 	// Rest timer state
 	const [restVisible, setRestVisible] = useState(false)
@@ -303,6 +303,16 @@ export default function WorkoutSessionScreen() {
 
 				setSession(created)
 				await firestoreUpsertSession(user.uid, created)
+
+				// Load cross-session weight suggestions
+				const suggestions = {}
+				await Promise.all(
+					created.exercises.map(async (ex) => {
+						const suggestion = await getWeightSuggestion(user.uid, ex.name)
+						if (suggestion) suggestions[ex.name] = suggestion
+					})
+				)
+				setWeightSuggestions(suggestions)
 			} catch (e) {
 				console.warn(e)
 				Alert.alert('Error', 'Could not initialize workout session.')
@@ -709,55 +719,13 @@ export default function WorkoutSessionScreen() {
 		])
 	}
 
-	async function maybeSuggestProgressiveOverload({ exercise, set }) {
-		if (!user?.uid) return
-
-		try {
-			if (!exercise || !set) return
-
-			if (!isNumericTargetReps(exercise.targetReps)) return
-
-			const totalSets = exercise.sets?.length || 0
-			const isLastSet = totalSets > 0 && set.setIndex === totalSets
-			if (!isLastSet) return
-
-			const reps = Number(set.reps)
-			const weight = Number(set.weight)
-			const target = Number(exercise.targetReps)
-
-			if (
-				!Number.isFinite(reps) ||
-				!Number.isFinite(weight) ||
-				!Number.isFinite(target)
-			)
-				return
-
-			const hitTarget = reps >= target
-			if (!hitTarget) return
-
-			const nextWeight = weight + 5
-			const key = normalizeExerciseKey(exercise.name)
-
-			const current = await loadExerciseDefaults(user.uid)
-			const updated = {
-				...current,
-				[key]: {
-					defaultWeight: nextWeight,
-					updatedAt: new Date().toISOString(),
-					reason: `Hit ${reps}/${target} on last set`
-				}
-			}
-
-			await saveExerciseDefaults(user.uid, updated)
-			setExerciseDefaults(updated)
-
-			Alert.alert(
-				'Progressive Overload',
-				`Nice work! You hit ${reps} reps on your last set.\n\nNext time for ${exercise.name}, I'll prefill ${nextWeight} lbs (+5).`
-			)
-		} catch (e) {
-			console.warn('Progressive overload save failed:', e)
-		}
+	async function handleAcknowledgeSuggestion(exerciseName) {
+		setWeightSuggestions((prev) => {
+			const next = { ...prev }
+			delete next[exerciseName]
+			return next
+		})
+		if (user?.uid) await acknowledgeWeightSuggestion(user.uid, exerciseName)
 	}
 
 	function getPreviousSet(exerciseName, setIndex) {
@@ -802,14 +770,6 @@ export default function WorkoutSessionScreen() {
 			if (user?.uid) firestoreUpsertSession(user.uid, next)
 
 			const updatedExercise = next.exercises[exerciseIndex]
-			const updatedSet = updatedExercise.sets.find(
-				(s) => s.setIndex === setIndex
-			)
-			maybeSuggestProgressiveOverload({
-				exercise: updatedExercise,
-				set: updatedSet
-			})
-
 			const completed = isExerciseCompleted(updatedExercise)
 
 			if (completed) {
@@ -845,12 +805,13 @@ export default function WorkoutSessionScreen() {
 
 			stopRestTimer()
 
-			if (result?.weekAdvancement?.shouldAdvance) {
+			if (result?.weekAdvancement?.programCompleted) {
+				Alert.alert('Program Complete! 🏆', result.weekAdvancement.message, [
+					{ text: 'Amazing!', onPress: () => router.back() }
+				])
+			} else if (result?.weekAdvancement?.shouldAdvance) {
 				Alert.alert('🎉 Week Complete!', result.weekAdvancement.message, [
-					{
-						text: 'Awesome!',
-						onPress: () => router.back()
-					}
+					{ text: 'Awesome!', onPress: () => router.back() }
 				])
 			} else {
 				Alert.alert('Workout saved', 'Session marked as completed.')
@@ -941,6 +902,8 @@ export default function WorkoutSessionScreen() {
 							addSet={addSet}
 							normalizeNumberText={normalizeNumberText}
 							getPreviousSet={getPreviousSet}
+							weightSuggestion={weightSuggestions[item.name] ?? null}
+							onAcknowledgeSuggestion={handleAcknowledgeSuggestion}
 						/>
 					)}
 					ListFooterComponent={
@@ -983,7 +946,7 @@ export default function WorkoutSessionScreen() {
 }
 
 const styles = StyleSheet.create({
-	safe: { flex: 1, backgroundColor: '#000000' },
+	safe: { flex: 1, backgroundColor: '#000000', marginTop: 48 },
 	container: { flex: 1, paddingHorizontal: 18, paddingTop: 8 },
 	loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 	loadingText: { fontSize: 14, color: '#999999', fontFamily: FontFamily.black },

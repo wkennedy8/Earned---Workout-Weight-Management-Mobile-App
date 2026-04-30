@@ -17,6 +17,7 @@ import { formatLocalDateKey } from '../utils/dateUtils'
 import { PLAN } from '../utils/workoutPlan'
 import { normalizeExerciseKey } from '../utils/workoutUtils'
 import { checkAndAdvanceWeek } from './weekCompletionController'
+import { evaluateSessionForSuggestions } from './weightSuggestionsController'
 
 function sessionsCol(uid) {
 	return collection(db, 'users', uid, 'sessions')
@@ -78,15 +79,18 @@ export async function markSessionCompleted(uid, sessionId) {
 			const planId = plan?.id || 'ppl'
 
 			// Check if week should advance
-			const result = await checkAndAdvanceWeek(uid, planId, session)
+			const result = await checkAndAdvanceWeek(uid, planId)
 
-			// Return result so UI can show congratulations message
+			// Evaluate progressive overload suggestions (fire-and-forget)
+			evaluateSessionForSuggestions(uid, session)
+
 			return {
 				success: true,
 				weekAdvancement: result
 			}
 		}
 
+		evaluateSessionForSuggestions(uid, session)
 		return { success: true }
 	} catch (error) {
 		console.error('Error marking session completed:', error)
