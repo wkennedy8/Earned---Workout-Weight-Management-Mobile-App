@@ -1,15 +1,20 @@
 import { FontFamily } from '@/constants/fonts';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-export default function FinishWorkoutButton({ onFinish }) {
+export default function FinishWorkoutButton({ onFinish, disabled = false }) {
 	return (
 		<View style={styles.bottomCta}>
 			<TouchableOpacity
-				style={styles.finishButton}
+				style={[styles.finishButton, disabled && styles.finishButtonDisabled]}
 				onPress={onFinish}
 				activeOpacity={0.9}
+				disabled={disabled}
 			>
-				<Text style={styles.finishButtonText}>Finish Workout</Text>
+				{disabled ? (
+					<ActivityIndicator size='small' color='#000000' />
+				) : (
+					<Text style={styles.finishButtonText}>Finish Workout</Text>
+				)}
 			</TouchableOpacity>
 		</View>
 	);

@@ -18,15 +18,17 @@ function getRequiredWorkoutTypes(planId) {
 }
 
 /**
- * Get all completed sessions tagged with a given program week.
+ * Get completed sessions for a given program week, scoped to the current
+ * cycle via startDate so sessions from previous cycles are excluded.
  */
-async function getCompletedSessionsForWeek(uid, week) {
+async function getCompletedSessionsForWeek(uid, week, startDate) {
 	try {
 		const sessionsRef = collection(db, 'users', uid, 'sessions');
 		const q = query(
 			sessionsRef,
 			where('status', '==', 'completed'),
-			where('programWeek', '==', week)
+			where('programWeek', '==', week),
+			where('completedAt', '>=', startDate)
 		);
 		const snapshot = await getDocs(q);
 		return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -42,12 +44,12 @@ async function getCompletedSessionsForWeek(uid, week) {
  * For plans where each type appears twice per week (PPL), one session per type
  * is enough — missing the second session shouldn't block advancement.
  */
-async function isWeekCompleted(uid, planId, week) {
+async function isWeekCompleted(uid, planId, week, startDate) {
 	try {
 		const requiredTypes = getRequiredWorkoutTypes(planId);
 		if (requiredTypes.size === 0) return false;
 
-		const completedSessions = await getCompletedSessionsForWeek(uid, week);
+		const completedSessions = await getCompletedSessionsForWeek(uid, week, startDate);
 		const completedTypes = new Set(completedSessions.map((s) => s.templateId));
 
 		for (const type of requiredTypes) {
@@ -88,7 +90,7 @@ export async function checkAndAdvanceWeek(uid, planId) {
 		const currentWeek = progress.currentWeek;
 
 		const [workoutsComplete, timedOut] = await Promise.all([
-			isWeekCompleted(uid, planId, currentWeek),
+			isWeekCompleted(uid, planId, currentWeek, progress.startDate),
 			Promise.resolve(isWeekTimedOut(progress.startDate, currentWeek))
 		]);
 
@@ -147,10 +149,10 @@ export async function checkAndAdvanceWeek(uid, planId) {
  * @param {number} week - Week number
  * @returns {Promise<object>}
  */
-export async function getWeekCompletionStatus(uid, planId, week) {
+export async function getWeekCompletionStatus(uid, planId, week, startDate) {
 	try {
 		const requiredTypes = getRequiredWorkoutTypes(planId);
-		const completedSessions = await getCompletedSessionsForWeek(uid, week);
+		const completedSessions = await getCompletedSessionsForWeek(uid, week, startDate);
 
 		const completedCounts = {};
 		completedSessions.forEach((session) => {

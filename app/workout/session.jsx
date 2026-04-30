@@ -79,6 +79,7 @@ export default function WorkoutSessionScreen() {
 	const [template, setTemplate] = useState(null)
 	const [previousSessionData, setPreviousSessionData] = useState({})
 	const [weightSuggestions, setWeightSuggestions] = useState({})
+	const [finishing, setFinishing] = useState(false)
 
 	// Rest timer state
 	const [restVisible, setRestVisible] = useState(false)
@@ -789,7 +790,7 @@ export default function WorkoutSessionScreen() {
 	}
 
 	async function finishWorkout() {
-		if (!session || !user?.uid) return
+		if (!session || !user?.uid || finishing) return
 
 		const hasAnySaved = session.exercises.some((ex) =>
 			ex.sets.some((s) => s.saved)
@@ -800,6 +801,7 @@ export default function WorkoutSessionScreen() {
 			return
 		}
 
+		setFinishing(true)
 		try {
 			const result = await markSessionCompleted(user.uid, session.id)
 
@@ -819,6 +821,7 @@ export default function WorkoutSessionScreen() {
 			}
 		} catch (e) {
 			console.warn(e)
+			setFinishing(false)
 			Alert.alert('Error', 'Could not finish the workout.')
 		}
 	}
@@ -939,14 +942,14 @@ export default function WorkoutSessionScreen() {
 					onAdd={handleAddExercise}
 				/>
 
-				<FinishWorkoutButton onFinish={finishWorkout} />
+				<FinishWorkoutButton onFinish={finishWorkout} disabled={finishing} />
 			</KeyboardAvoidingView>
 		</SafeAreaView>
 	)
 }
 
 const styles = StyleSheet.create({
-	safe: { flex: 1, backgroundColor: '#000000', marginTop: 48 },
+	safe: { flex: 1, backgroundColor: '#000000', paddingTop: 48 },
 	container: { flex: 1, paddingHorizontal: 18, paddingTop: 8 },
 	loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 	loadingText: { fontSize: 14, color: '#999999', fontFamily: FontFamily.black },
